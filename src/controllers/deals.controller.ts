@@ -3,17 +3,25 @@ import { prisma } from '../utils/prisma.js';
 
 const analytics = new AnalyticsService();
 
+let cachedLocations: string[] | null = null;
+let locationsCachedAt = 0;
+const LOCATIONS_TTL_MS = 60 * 60_000; // 60 min — location list changes at most every scrape cycle
+
 /** GET /api/deals/locations — distinct location names that have at least one listing */
 export async function getLocations(_req: Request): Promise<Response> {
   try {
-    const rows = await prisma.$queryRaw<{ location_name: string }[]>`
-      SELECT DISTINCT location_name
-      FROM "Property"
-      WHERE location_name IS NOT NULL
-      ORDER BY location_name ASC
-    `;
-    const data = rows.map((r) => r.location_name);
-    return Response.json({ data });
+    const now = Date.now();
+    if (cachedLocations === null || now - locationsCachedAt > LOCATIONS_TTL_MS) {
+      const rows = await prisma.$queryRaw<{ location_name: string }[]>`
+        SELECT DISTINCT location_name
+        FROM "Property"
+        WHERE location_name IS NOT NULL
+        ORDER BY location_name ASC
+      `;
+      cachedLocations = rows.map((r) => r.location_name);
+      locationsCachedAt = now;
+    }
+    return Response.json({ data: cachedLocations });
   } catch (err) {
     console.error('[DealsController] getLocations:', err);
     return Response.json({ error: 'Failed to fetch locations' }, { status: 500 });
