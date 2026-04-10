@@ -63,12 +63,14 @@ export abstract class BaseScraper implements IScraper {
   abstract readonly platform: string;
   abstract scrape(options?: ScraperOptions): Promise<ScrapedListing[]>;
 
+  private static readonly URGENCY_RE = /t[əe]c[iİ]l[iİ]|[əea]l[iİ]m\s+yand[ıiIİ]|срочно/i;
+
   /**
    * Returns true if the listing text contains the Azerbaijani word for "urgent".
    * Listings marked "təcili" are typically priced to sell quickly.
    */
   protected isUrgent(text: string): boolean {
-    return /t[əe]c[iİ]l[iİ]|[əea]l[iİ]m\s+yand[ıiIİ]|срочно/i.test(text);
+    return BaseScraper.URGENCY_RE.test(text);
   }
 
   /**

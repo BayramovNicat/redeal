@@ -28,40 +28,40 @@ export class ScrapingService {
   }
 
   /**
-   * Triggers all registered scrapers sequentially and persists results.
+   * Triggers all registered scrapers concurrently and persists results.
    * Returns a per-platform summary of what was upserted vs skipped.
    */
   async runAll(options?: ScraperOptions): Promise<ScrapeResult[]> {
-    const results: ScrapeResult[] = [];
+    const results = await Promise.all(
+      this.scrapers.map(async (scraper) => {
+        const result: ScrapeResult = {
+          platform: scraper.platform,
+          persisted: 0,
+          skipped: 0,
+          errors: [],
+        };
 
-    for (const scraper of this.scrapers) {
-      const result: ScrapeResult = {
-        platform: scraper.platform,
-        persisted: 0,
-        skipped: 0,
-        errors: [],
-      };
+        try {
+          const listings = await scraper.scrape(options);
+          options?.onProgress?.({ type: 'persisting', platform: scraper.platform, count: listings.length });
+          const { persisted, skipped, errors } = await this.persistListings(listings);
+          result.persisted = persisted;
+          result.skipped = skipped;
+          result.errors = errors;
+          console.log(
+            `[ScrapingService] ${scraper.platform}: persisted=${persisted} skipped=${skipped}`,
+          );
+          options?.onProgress?.({ type: 'done', platform: scraper.platform, persisted, skipped });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error(`[ScrapingService] ${scraper.platform} failed: ${message}`);
+          result.errors.push(message);
+          options?.onProgress?.({ type: 'error', platform: scraper.platform, message });
+        }
 
-      try {
-        const listings = await scraper.scrape(options);
-        options?.onProgress?.({ type: 'persisting', platform: scraper.platform, count: listings.length });
-        const { persisted, skipped, errors } = await this.persistListings(listings);
-        result.persisted = persisted;
-        result.skipped = skipped;
-        result.errors = errors;
-        console.log(
-          `[ScrapingService] ${scraper.platform}: persisted=${persisted} skipped=${skipped}`,
-        );
-        options?.onProgress?.({ type: 'done', platform: scraper.platform, persisted, skipped });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(`[ScrapingService] ${scraper.platform} failed: ${message}`);
-        result.errors.push(message);
-        options?.onProgress?.({ type: 'error', platform: scraper.platform, message });
-      }
-
-      results.push(result);
-    }
+        return result;
+      }),
+    );
 
     const total_persisted = results.reduce((sum, r) => sum + r.persisted, 0);
     options?.onProgress?.({ type: 'complete', total_persisted });

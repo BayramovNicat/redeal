@@ -17,6 +17,7 @@
  */
 
 import { prisma } from '../utils/prisma.js';
+import { Prisma } from '@prisma/client';
 
 type DealTier = 'High Value Deal' | 'Good Deal' | 'Fair Price' | 'Overpriced';
 
@@ -48,6 +49,7 @@ export class AnalyticsService {
   /**
    * Returns properties in a location priced at least `thresholdPercent`% below
    * the location average price_per_sqm, with deal-score metadata attached.
+   * Uses a single CTE query to compute the avg and fetch matching rows together.
    *
    * @param location - Exact location_name value (e.g. "Memar Əcəmi m.")
    * @param thresholdPercent - Minimum discount to qualify (default: 10%)
@@ -72,12 +74,6 @@ export class AnalyticsService {
       category?: string;
     } = {},
   ) {
-    const avg = await this.getLocationAvgPricePerSqm(location);
-
-    if (avg === 0) return [];
-
-    const maxPricePerSqm = avg * (1 - thresholdPercent / 100);
-
     const {
       minPrice, maxPrice, minArea, maxArea,
       minRooms, maxRooms, minFloor, maxFloor,
@@ -85,44 +81,69 @@ export class AnalyticsService {
       hasRepair, isUrgent, category,
     } = filters;
 
-    const properties = await prisma.property.findMany({
-      where: {
-        location_name: location,
-        price_per_sqm: { gt: 0, lte: maxPricePerSqm },
-        ...(minPrice !== undefined || maxPrice !== undefined
-          ? { price: { ...(minPrice !== undefined && { gte: minPrice }), ...(maxPrice !== undefined && { lte: maxPrice }) } }
-          : {}),
-        ...(minArea !== undefined || maxArea !== undefined
-          ? { area_sqm: { ...(minArea !== undefined && { gte: minArea }), ...(maxArea !== undefined && { lte: maxArea }) } }
-          : {}),
-        ...(minRooms !== undefined || maxRooms !== undefined
-          ? { rooms: { ...(minRooms !== undefined && { gte: minRooms }), ...(maxRooms !== undefined && { lte: maxRooms }) } }
-          : {}),
-        ...(minFloor !== undefined || maxFloor !== undefined
-          ? { floor: { ...(minFloor !== undefined && { gte: minFloor }), ...(maxFloor !== undefined && { lte: maxFloor }) } }
-          : {}),
-        ...(maxTotalFloors !== undefined && { total_floors: { lte: maxTotalFloors } }),
-        ...(hasDocument !== undefined && { has_document: hasDocument }),
-        ...(hasMortgage !== undefined && { has_mortgage: hasMortgage }),
-        ...(hasRepair !== undefined && { has_repair: hasRepair }),
-        ...(isUrgent !== undefined && { is_urgent: isUrgent }),
-        ...(category !== undefined && { category }),
-      },
-      orderBy: { price_per_sqm: 'asc' },
-    });
+    const factor = (100 - thresholdPercent) / 100.0;
 
-    return properties.map((p) => {
-      const pricePerSqm = parseFloat(p.price_per_sqm.toString());
-      const discountPercent = parseFloat(
-        (((avg - pricePerSqm) / avg) * 100).toFixed(2),
-      );
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`p.location_name = ${location}`,
+      Prisma.sql`p.price_per_sqm > 0`,
+      Prisma.sql`p.price_per_sqm <= avg_cte.avg_ppsm * ${factor}`,
+    ];
 
+    if (minPrice !== undefined)       conditions.push(Prisma.sql`p.price >= ${minPrice}`);
+    if (maxPrice !== undefined)       conditions.push(Prisma.sql`p.price <= ${maxPrice}`);
+    if (minArea !== undefined)        conditions.push(Prisma.sql`p.area_sqm >= ${minArea}`);
+    if (maxArea !== undefined)        conditions.push(Prisma.sql`p.area_sqm <= ${maxArea}`);
+    if (minRooms !== undefined)       conditions.push(Prisma.sql`p.rooms >= ${minRooms}`);
+    if (maxRooms !== undefined)       conditions.push(Prisma.sql`p.rooms <= ${maxRooms}`);
+    if (minFloor !== undefined)       conditions.push(Prisma.sql`p.floor >= ${minFloor}`);
+    if (maxFloor !== undefined)       conditions.push(Prisma.sql`p.floor <= ${maxFloor}`);
+    if (maxTotalFloors !== undefined) conditions.push(Prisma.sql`p.total_floors <= ${maxTotalFloors}`);
+    if (hasDocument !== undefined)    conditions.push(Prisma.sql`p.has_document = ${hasDocument}`);
+    if (hasMortgage !== undefined)    conditions.push(Prisma.sql`p.has_mortgage = ${hasMortgage}`);
+    if (hasRepair !== undefined)      conditions.push(Prisma.sql`p.has_repair = ${hasRepair}`);
+    if (isUrgent !== undefined)       conditions.push(Prisma.sql`p.is_urgent = ${isUrgent}`);
+    if (category !== undefined)       conditions.push(Prisma.sql`p.category = ${category}`);
+
+    type Row = {
+      id: number; source_url: string;
+      price: string; area_sqm: string; price_per_sqm: string;
+      district: string; location_name: string | null;
+      latitude: number | null; longitude: number | null;
+      rooms: number | null; floor: number | null; total_floors: number | null;
+      category: string | null; has_document: boolean | null;
+      has_mortgage: boolean | null; has_repair: boolean | null;
+      description: string | null; is_urgent: boolean;
+      posted_date: Date | null; created_at: Date; updated_at: Date;
+      avg_ppsm: string;
+    };
+
+    const rows = await prisma.$queryRaw<Row[]>`
+      WITH avg_cte AS (
+        SELECT AVG(price_per_sqm) AS avg_ppsm
+        FROM "Property"
+        WHERE location_name = ${location} AND price_per_sqm > 0
+      )
+      SELECT p.*, avg_cte.avg_ppsm
+      FROM "Property" p, avg_cte
+      WHERE ${Prisma.join(conditions, ' AND ')}
+      ORDER BY p.price_per_sqm ASC
+    `;
+
+    if (rows.length === 0) return [];
+
+    const avg = parseFloat(rows[0]!.avg_ppsm);
+    if (avg === 0) return [];
+    const roundedAvg = parseFloat(avg.toFixed(2));
+
+    return rows.map(({ avg_ppsm: _, ...p }) => {
+      const pricePerSqm = parseFloat(p.price_per_sqm);
+      const discountPercent = parseFloat((((avg - pricePerSqm) / avg) * 100).toFixed(2));
       return {
         ...p,
-        price: parseFloat(p.price.toString()),
-        area_sqm: parseFloat(p.area_sqm.toString()),
+        price: parseFloat(p.price),
+        area_sqm: parseFloat(p.area_sqm),
         price_per_sqm: pricePerSqm,
-        location_avg_price_per_sqm: parseFloat(avg.toFixed(2)),
+        location_avg_price_per_sqm: roundedAvg,
         discount_percent: discountPercent,
         tier: classifyDeal(discountPercent),
       };

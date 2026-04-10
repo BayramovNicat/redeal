@@ -1,4 +1,4 @@
-import { getUndervaluedDeals } from './controllers/deals.controller.js';
+import { getUndervaluedDeals, getLocations } from './controllers/deals.controller.js';
 import { streamScrape } from './controllers/scrape.controller.js';
 import { ScrapingService } from './services/scraping.service.js';
 import { BinaScraper } from './scrapers/bina.scraper.js';
@@ -6,15 +6,24 @@ import { prisma } from './utils/prisma.js';
 
 const PORT = Number(process.env['PORT'] ?? 3000);
 
+let cachedCount = 0;
+let countCachedAt = 0;
+const COUNT_TTL_MS = 30_000;
+
 Bun.serve({
   port: PORT,
   routes: {
     '/health': {
       GET: async () => {
-        const count = await prisma.property.count();
-        return Response.json({ status: 'ok', timestamp: new Date().toISOString(), properties: count });
+        const now = Date.now();
+        if (now - countCachedAt > COUNT_TTL_MS) {
+          cachedCount = await prisma.property.count();
+          countCachedAt = now;
+        }
+        return Response.json({ status: 'ok', timestamp: new Date().toISOString(), properties: cachedCount });
       },
     },
+    '/api/deals/locations':   { GET: getLocations },
     '/api/deals/undervalued': { GET: getUndervaluedDeals },
     '/api/scrape/stream':     { GET: streamScrape },
   },

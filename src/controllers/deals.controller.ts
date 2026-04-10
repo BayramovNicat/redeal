@@ -1,6 +1,24 @@
 import { AnalyticsService } from '../services/analytics.service.js';
+import { prisma } from '../utils/prisma.js';
 
 const analytics = new AnalyticsService();
+
+/** GET /api/deals/locations — distinct location names that have at least one listing */
+export async function getLocations(_req: Request): Promise<Response> {
+  try {
+    const rows = await prisma.property.findMany({
+      where: { location_name: { not: null } },
+      select: { location_name: true },
+      distinct: ['location_name'],
+      orderBy: { location_name: 'asc' },
+    });
+    const data = rows.map((r) => r.location_name as string);
+    return Response.json({ data });
+  } catch (err) {
+    console.error('[DealsController] getLocations:', err);
+    return Response.json({ error: 'Failed to fetch locations' }, { status: 500 });
+  }
+}
 
 /** GET /api/deals/undervalued */
 export async function getUndervaluedDeals(req: Request): Promise<Response> {
