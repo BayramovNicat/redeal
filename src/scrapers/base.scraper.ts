@@ -68,7 +68,7 @@ export abstract class BaseScraper implements IScraper {
    * Listings marked "təcili" are typically priced to sell quickly.
    */
   protected isUrgent(text: string): boolean {
-    return /t[əe]cili|[əea]lim\s+yand[ıi]|срочно/i.test(text);
+    return /t[əe]c[iİ]l[iİ]|[əea]l[iİ]m\s+yand[ıiIİ]|срочно/i.test(text);
   }
 
   /**
