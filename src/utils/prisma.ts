@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 /**
  * Singleton PrismaClient.
@@ -46,3 +46,27 @@ export const prisma = client.$extends({
     },
   },
 });
+
+/**
+ * Timeout-wrapped $queryRaw. Use instead of prisma.$queryRaw for all raw
+ * SELECT queries — the ORM extension above does not cover raw operations.
+ */
+export function queryRaw<T = unknown>(
+  query: TemplateStringsArray | Prisma.Sql,
+  ...values: unknown[]
+): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return raceTimeout((client.$queryRaw as any)(query, ...values) as Promise<T>);
+}
+
+/**
+ * Timeout-wrapped $executeRaw. Use instead of prisma.$executeRaw for all raw
+ * INSERT/UPDATE/DELETE queries — the ORM extension above does not cover raw operations.
+ */
+export function executeRaw(
+  query: TemplateStringsArray | Prisma.Sql,
+  ...values: unknown[]
+): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return raceTimeout((client.$executeRaw as any)(query, ...values) as Promise<number>);
+}

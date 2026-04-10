@@ -5,7 +5,7 @@
  */
 
 import type { IScraper, ScrapedListing, ScraperOptions, ScrapeProgressEvent } from '../scrapers/base.scraper.js';
-import { prisma } from '../utils/prisma.js';
+import { prisma, executeRaw } from '../utils/prisma.js';
 import { Prisma } from '@prisma/client';
 
 export interface ScrapeResult {
@@ -117,7 +117,7 @@ export class ScrapingService {
           )`,
         );
 
-        const affected = await prisma.$executeRaw`
+        const affected = await executeRaw`
           INSERT INTO "Property" (
             source_url, price, area_sqm, price_per_sqm,
             district, location_name, latitude, longitude,

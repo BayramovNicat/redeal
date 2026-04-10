@@ -1,5 +1,5 @@
 import { AnalyticsService } from '../services/analytics.service.js';
-import { prisma } from '../utils/prisma.js';
+import { queryRaw } from '../utils/prisma.js';
 
 const analytics = new AnalyticsService();
 
@@ -12,7 +12,7 @@ export async function getLocations(_req: Request): Promise<Response> {
   try {
     const now = Date.now();
     if (cachedLocations === null || now - locationsCachedAt > LOCATIONS_TTL_MS) {
-      const rows = await prisma.$queryRaw<{ location_name: string }[]>`
+      const rows = await queryRaw<{ location_name: string }[]>`
         SELECT DISTINCT location_name
         FROM "Property"
         WHERE location_name IS NOT NULL
@@ -70,7 +70,7 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
   }
 
   try {
-    const listings = await analytics.getUndervaluedByLocation(location, thresholdPct, {
+    const { total, data } = await analytics.getUndervaluedByLocation(location, thresholdPct, {
       minPrice:       optNum(q.get('minPrice')),
       maxPrice:       optNum(q.get('maxPrice')),
       minArea:        optNum(q.get('minArea')),
@@ -88,7 +88,7 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
       limit,
       offset,
     });
-    return Response.json({ location, threshold_pct: thresholdPct, limit, offset, count: listings.length, data: listings }, {
+    return Response.json({ location, threshold_pct: thresholdPct, limit, offset, count: data.length, total, data }, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (err) {

@@ -16,7 +16,7 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-import { prisma } from '../utils/prisma.js';
+import { queryRaw } from '../utils/prisma.js';
 import { Prisma } from '@prisma/client';
 
 type DealTier = 'High Value Deal' | 'Good Deal' | 'Fair Price' | 'Overpriced';
@@ -106,9 +106,10 @@ export class AnalyticsService {
       posted_date: Date | null; created_at: Date; updated_at: Date;
       location_avg_price_per_sqm: number;
       discount_percent: number;
+      total_count: bigint;
     };
 
-    const rows = await prisma.$queryRaw<Row[]>`
+    const rows = await queryRaw<Row[]>`
       WITH avg_cte AS (
         SELECT AVG(price_per_sqm) AS avg_ppsm
         FROM "Property"
@@ -117,19 +118,24 @@ export class AnalyticsService {
       SELECT
         p.*,
         ROUND(avg_cte.avg_ppsm::numeric, 2)                                          AS location_avg_price_per_sqm,
-        ROUND(((avg_cte.avg_ppsm - p.price_per_sqm) / avg_cte.avg_ppsm * 100)::numeric, 2) AS discount_percent
+        ROUND(((avg_cte.avg_ppsm - p.price_per_sqm) / avg_cte.avg_ppsm * 100)::numeric, 2) AS discount_percent,
+        COUNT(*) OVER ()                                                               AS total_count
       FROM "Property" p, avg_cte
       WHERE ${Prisma.join(conditions, ' AND ')}
       ORDER BY p.price_per_sqm ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
-    if (rows.length === 0) return [];
+    if (rows.length === 0) return { total: 0, data: [] };
 
-    return rows.map((p) => ({
-      ...p,
-      tier: classifyDeal(p.discount_percent),
-    }));
+    const total = Number(rows[0]!.total_count);
+    return {
+      total,
+      data: rows.map(({ total_count: _, ...p }) => ({
+        ...p,
+        tier: classifyDeal(p.discount_percent),
+      })),
+    };
   }
 
 }
