@@ -2,6 +2,7 @@ import { getLocations, getUrgentDeals, getUndervaluedDeals } from './controllers
 import { triggerScrape, streamScrape } from './controllers/scrape.controller.js';
 import { ScrapingService } from './services/scraping.service.js';
 import { BinaScraper } from './scrapers/bina.scraper.js';
+import { prisma } from './utils/prisma.js';
 
 const PORT = Number(process.env['PORT'] ?? 3000);
 
@@ -9,7 +10,10 @@ Bun.serve({
   port: PORT,
   routes: {
     '/health': {
-      GET: () => Response.json({ status: 'ok', timestamp: new Date().toISOString() }),
+      GET: async () => {
+        const count = await prisma.property.count();
+        return Response.json({ status: 'ok', timestamp: new Date().toISOString(), properties: count });
+      },
     },
     '/api/deals/locations':   { GET: getLocations },
     '/api/deals/urgent':      { GET: getUrgentDeals },
