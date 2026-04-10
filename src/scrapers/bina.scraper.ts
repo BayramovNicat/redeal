@@ -102,22 +102,32 @@ export class BinaScraper extends BaseScraper {
   readonly platform = 'bina.az';
 
   async scrape(options: ScraperOptions = {}): Promise<ScrapedListing[]> {
-    const { maxPages = 20, delayMs = 800 } = options;
+    const { maxPages: defaultMax = 20, startPage = 1, endPage, delayMs = 800 } = options;
+    const finalMaxPages = endPage ?? defaultMax;
     const all: ScrapedListing[] = [];
 
     let cursor: string | null = null;
     let page = 0;
     let hasNext = true;
 
-    console.log(`[${this.platform}] Starting GraphQL scrape (maxPages=${maxPages})...`);
-    options.onProgress?.({ type: 'start', platform: this.platform, maxPages });
+    console.log(`[${this.platform}] Starting GraphQL scrape (startPage=${startPage}, limit=${finalMaxPages})...`);
+    options.onProgress?.({ type: 'start', platform: this.platform, maxPages: finalMaxPages, startPage, endPage });
 
-    while (hasNext && page < maxPages) {
+    while (hasNext && page < finalMaxPages) {
       page++;
 
       const { edges, pageInfo } = await this.fetchPage(cursor);
 
       if (edges.length === 0) break;
+
+      if (page < startPage) {
+        console.log(`[${this.platform}] Skipping page ${page} (waiting for startPage=${startPage})`);
+        hasNext = pageInfo.hasNextPage;
+        cursor = pageInfo.endCursor;
+        // Optionally delay slightly to avoid spamming the API while skipping
+        await this.delay(150);
+        continue;
+      }
 
       // Fetch full item details in one batched GraphQL request
       const ids = edges.map((e) => e.node.id);
@@ -174,7 +184,7 @@ export class BinaScraper extends BaseScraper {
       hasNext = pageInfo.hasNextPage;
       cursor = pageInfo.endCursor;
 
-      if (hasNext && page < maxPages) {
+      if (hasNext && page < finalMaxPages) {
         // Occasionally pause longer (simulates reading a page)
         const longPause = Math.random() < 0.15;
         const jitter = Math.random() * 600;

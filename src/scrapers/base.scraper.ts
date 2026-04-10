@@ -27,7 +27,7 @@ export interface ScrapedListing {
 }
 
 export type ScrapeProgressEvent =
-  | { type: "start"; platform: string; maxPages: number }
+  | { type: "start"; platform: string; maxPages: number; startPage?: number; endPage?: number }
   | {
       type: "page";
       platform: string;
@@ -43,6 +43,10 @@ export type ScrapeProgressEvent =
 export interface ScraperOptions {
   /** Maximum number of listing pages to crawl (default: unlimited) */
   maxPages?: number;
+  /** Page to start fetching details from (1-indexed). Pagination skips past earlier pages. */
+  startPage?: number;
+  /** Page to stop scraping. Can be used instead of maxPages to scrape a page range. */
+  endPage?: number;
   /** Milliseconds to wait between HTTP requests to avoid rate-limiting */
   delayMs?: number;
   /** Optional callback for streaming progress events */
