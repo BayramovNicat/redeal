@@ -27,12 +27,18 @@ export interface ScrapedListing {
 }
 
 export type ScrapeProgressEvent =
-  | { type: 'start'; platform: string; maxPages: number }
-  | { type: 'page'; platform: string; page: number; fetched: number; total: number }
-  | { type: 'persisting'; platform: string; count: number }
-  | { type: 'done'; platform: string; persisted: number; skipped: number }
-  | { type: 'error'; platform: string; message: string }
-  | { type: 'complete'; total_persisted: number };
+  | { type: "start"; platform: string; maxPages: number }
+  | {
+      type: "page";
+      platform: string;
+      page: number;
+      fetched: number;
+      total: number;
+    }
+  | { type: "persisting"; platform: string; count: number }
+  | { type: "done"; platform: string; persisted: number; skipped: number }
+  | { type: "error"; platform: string; message: string }
+  | { type: "complete"; total_persisted: number };
 
 export interface ScraperOptions {
   /** Maximum number of listing pages to crawl (default: unlimited) */
@@ -60,7 +66,7 @@ export abstract class BaseScraper implements IScraper {
    * Listings marked "təcili" are typically priced to sell quickly.
    */
   protected isUrgent(text: string): boolean {
-    return /təcili/i.test(text);
+    return /t[əe]cili|[əea]lim\s+yand[ıi]|срочно/i.test(text);
   }
 
   /**
@@ -68,7 +74,7 @@ export abstract class BaseScraper implements IScraper {
    * Handles formats like "125 000 AZN", "₼125,000", "95000".
    */
   protected parsePrice(raw: string): number {
-    const cleaned = raw.replace(/[^\d.]/g, '');
+    const cleaned = raw.replace(/[^\d.]/g, "");
     return parseFloat(cleaned) || 0;
   }
 
@@ -77,7 +83,7 @@ export abstract class BaseScraper implements IScraper {
    * Handles formats like "78 m²", "78.5 kv.m", "110kvm".
    */
   protected parseArea(raw: string): number {
-    const cleaned = raw.replace(/[^\d.]/g, '');
+    const cleaned = raw.replace(/[^\d.]/g, "");
     return parseFloat(cleaned) || 0;
   }
 
