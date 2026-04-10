@@ -75,7 +75,7 @@ export class AnalyticsService {
   async getUrgentListings() {
     return prisma.property.findMany({
       where: { is_urgent: true },
-      orderBy: { scraped_at: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
   }
 
