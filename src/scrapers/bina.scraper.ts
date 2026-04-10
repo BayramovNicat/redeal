@@ -113,21 +113,22 @@ export class BinaScraper extends BaseScraper {
     console.log(`[${this.platform}] Starting GraphQL scrape (startPage=${startPage}, limit=${finalMaxPages})...`);
     options.onProgress?.({ type: 'start', platform: this.platform, maxPages: finalMaxPages, startPage, endPage });
 
+    // Advance the cursor cheaply to startPage without fetching edge data.
+    while (page < startPage - 1 && hasNext) {
+      page++;
+      console.log(`[${this.platform}] Advancing cursor to startPage (${page}/${startPage - 1})...`);
+      const pageInfo = await this.fetchCursor(cursor);
+      hasNext = pageInfo.hasNextPage;
+      cursor = pageInfo.endCursor;
+      await this.delay(150);
+    }
+
     while (hasNext && page < finalMaxPages) {
       page++;
 
       const { edges, pageInfo } = await this.fetchPage(cursor);
 
       if (edges.length === 0) break;
-
-      if (page < startPage) {
-        console.log(`[${this.platform}] Skipping page ${page} (waiting for startPage=${startPage})`);
-        hasNext = pageInfo.hasNextPage;
-        cursor = pageInfo.endCursor;
-        // Optionally delay slightly to avoid spamming the API while skipping
-        await this.delay(150);
-        continue;
-      }
 
       // Fetch full item details in one batched GraphQL request
       const ids = edges.map((e) => e.node.id);
@@ -195,6 +196,30 @@ export class BinaScraper extends BaseScraper {
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
+
+  /**
+   * Advances the cursor by one page without fetching edge data.
+   * Used to skip pages cheaply when startPage > 1.
+   */
+  private async fetchCursor(after: string | null): Promise<PageInfo> {
+    const afterArg = after ? `, after: "${after}"` : '';
+    const query = /* graphql */ `
+      {
+        itemsConnection(
+          filter: {
+            categoryId: "${DEFAULT_FILTER.categoryId}"
+            cityId: "${DEFAULT_FILTER.cityId}"
+            leased: ${DEFAULT_FILTER.leased}
+          }
+          ${afterArg}
+        ) {
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    `;
+    const json = await this.gql<{ itemsConnection: { pageInfo: PageInfo } }>(query);
+    return json.itemsConnection.pageInfo;
+  }
 
   /**
    * Fetches one page of listings from itemsConnection.
