@@ -79,6 +79,7 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
       maxRooms:       optNum(q.get('maxRooms')),
       minFloor:       optNum(q.get('minFloor')),
       maxFloor:       optNum(q.get('maxFloor')),
+      minTotalFloors: optNum(q.get('minTotalFloors')),
       maxTotalFloors: optNum(q.get('maxTotalFloors')),
       hasDocument:    optBool(q.get('hasDocument')),
       hasMortgage:    optBool(q.get('hasMortgage')),

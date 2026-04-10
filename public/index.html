@@ -456,6 +456,7 @@
         <div class="field"><span class="flabel">Max rooms</span><input type="number" id="maxRooms" class="num-input" placeholder="4" /></div>
         <div class="field"><span class="flabel">Min floor</span><input type="number" id="minFloor" class="num-input" placeholder="2" /></div>
         <div class="field"><span class="flabel">Max floor</span><input type="number" id="maxFloor" class="num-input" placeholder="15" /></div>
+        <div class="field"><span class="flabel">Min building floors</span><input type="number" id="minTotalFloors" class="num-input" placeholder="2" /></div>
         <div class="field"><span class="flabel">Max building floors</span><input type="number" id="maxTotalFloors" class="num-input" placeholder="5" /></div>
         <div class="field"><span class="flabel">Category</span>
           <select id="category" class="sel-input">
@@ -786,7 +787,7 @@ function updateChips() {
   checks.forEach(([id, lbl]) => {
     if (ge(id).checked) chips.push(`<span class="chip">${lbl}<button class="chip-x" onclick="ge('${id}').checked=false;updateChips()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`);
   });
-  const nums = [['minPrice','Min ₼'],['maxPrice','Max ₼'],['minArea','Min m²'],['maxArea','Max m²'],['minRooms','Min rooms'],['maxRooms','Max rooms']];
+  const nums = [['minPrice','Min ₼'],['maxPrice','Max ₼'],['minArea','Min m²'],['maxArea','Max m²'],['minRooms','Min rooms'],['maxRooms','Max rooms'],['minFloor','Min flr'],['maxFloor','Max flr'],['minTotalFloors','Min bldg flr'],['maxTotalFloors','Max bldg flr']];
   nums.forEach(([id, lbl]) => {
     const v = ge(id).value; if (v) chips.push(`<span class="chip">${lbl}: ${v}<button class="chip-x" onclick="ge('${id}').value='';updateChips()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`);
   });
@@ -823,7 +824,7 @@ async function doSearch(more = false) {
     set('minArea','minArea'); set('maxArea','maxArea');
     set('minRooms','minRooms'); set('maxRooms','maxRooms');
     set('minFloor','minFloor'); set('maxFloor','maxFloor');
-    set('maxTotalFloors','maxTotalFloors'); set('category','category');
+    set('minTotalFloors','minTotalFloors'); set('maxTotalFloors','maxTotalFloors'); set('category','category');
     if (cb('hasRepair'))   p.set('hasRepair','true');
     if (cb('hasDocument')) p.set('hasDocument','true');
     if (cb('hasMortgage')) p.set('hasMortgage','true');
@@ -907,7 +908,7 @@ document.addEventListener('keydown', e => {
 
 // Live chip updates
 ['hasRepair','hasDocument','hasMortgage','isUrgent'].forEach(id => ge(id).addEventListener('change', updateChips));
-['minPrice','maxPrice','minArea','maxArea','minRooms','maxRooms','minFloor','maxFloor','maxTotalFloors','category'].forEach(id => ge(id).addEventListener('input', updateChips));
+['minPrice','maxPrice','minArea','maxArea','minRooms','maxRooms','minFloor','maxFloor','minTotalFloors','maxTotalFloors','category'].forEach(id => ge(id).addEventListener('input', updateChips));
 
 // ── Init ──────────────────────────────────────────────────────────────────
 (async () => {

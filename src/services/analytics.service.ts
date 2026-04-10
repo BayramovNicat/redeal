@@ -53,6 +53,7 @@ export class AnalyticsService {
       maxRooms?: number;
       minFloor?: number;
       maxFloor?: number;
+      minTotalFloors?: number;
       maxTotalFloors?: number;
       hasDocument?: boolean;
       hasMortgage?: boolean;
@@ -66,7 +67,7 @@ export class AnalyticsService {
     const {
       minPrice, maxPrice, minArea, maxArea,
       minRooms, maxRooms, minFloor, maxFloor,
-      maxTotalFloors, hasDocument, hasMortgage,
+      minTotalFloors, maxTotalFloors, hasDocument, hasMortgage,
       hasRepair, isUrgent, category,
       limit = 200, offset = 0,
     } = filters;
@@ -87,6 +88,7 @@ export class AnalyticsService {
     if (maxRooms !== undefined)       conditions.push(Prisma.sql`p.rooms <= ${maxRooms}`);
     if (minFloor !== undefined)       conditions.push(Prisma.sql`p.floor >= ${minFloor}`);
     if (maxFloor !== undefined)       conditions.push(Prisma.sql`p.floor <= ${maxFloor}`);
+    if (minTotalFloors !== undefined) conditions.push(Prisma.sql`p.total_floors >= ${minTotalFloors}`);
     if (maxTotalFloors !== undefined) conditions.push(Prisma.sql`p.total_floors <= ${maxTotalFloors}`);
     if (hasDocument !== undefined)    conditions.push(Prisma.sql`p.has_document = ${hasDocument}`);
     if (hasMortgage !== undefined)    conditions.push(Prisma.sql`p.has_mortgage = ${hasMortgage}`);
