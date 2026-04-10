@@ -8,7 +8,7 @@ const PORT = Number(process.env['PORT'] ?? 3000);
 
 let cachedCount = 0;
 let countCachedAt = 0;
-const COUNT_TTL_MS = 30_000;
+const COUNT_TTL_MS = 5 * 60_000; // 5 min — approximate stats update on that cadence anyway
 
 Bun.serve({
   port: PORT,
@@ -17,7 +17,12 @@ Bun.serve({
       GET: async () => {
         const now = Date.now();
         if (now - countCachedAt > COUNT_TTL_MS) {
-          cachedCount = await prisma.property.count();
+          const result = await prisma.$queryRaw<[{ estimate: bigint }]>`
+            SELECT reltuples::bigint AS estimate
+            FROM pg_class
+            WHERE relname = 'Property'
+          `;
+          cachedCount = Number(result[0]?.estimate ?? 0);
           countCachedAt = now;
         }
         return Response.json({ status: 'ok', timestamp: new Date().toISOString(), properties: cachedCount });

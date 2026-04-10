@@ -6,13 +6,13 @@ const analytics = new AnalyticsService();
 /** GET /api/deals/locations — distinct location names that have at least one listing */
 export async function getLocations(_req: Request): Promise<Response> {
   try {
-    const rows = await prisma.property.findMany({
-      where: { location_name: { not: null } },
-      select: { location_name: true },
-      distinct: ['location_name'],
-      orderBy: { location_name: 'asc' },
-    });
-    const data = rows.map((r) => r.location_name as string);
+    const rows = await prisma.$queryRaw<{ location_name: string }[]>`
+      SELECT DISTINCT location_name
+      FROM "Property"
+      WHERE location_name IS NOT NULL
+      ORDER BY location_name ASC
+    `;
+    const data = rows.map((r) => r.location_name);
     return Response.json({ data });
   } catch (err) {
     console.error('[DealsController] getLocations:', err);

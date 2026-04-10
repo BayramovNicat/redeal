@@ -106,7 +106,7 @@ export class AnalyticsService {
 
     type Row = {
       id: number; source_url: string;
-      price: string; area_sqm: string; price_per_sqm: string;
+      price: number; area_sqm: number; price_per_sqm: number;
       district: string; location_name: string | null;
       latitude: number | null; longitude: number | null;
       rooms: number | null; floor: number | null; total_floors: number | null;
@@ -114,7 +114,8 @@ export class AnalyticsService {
       has_mortgage: boolean | null; has_repair: boolean | null;
       description: string | null; is_urgent: boolean;
       posted_date: Date | null; created_at: Date; updated_at: Date;
-      avg_ppsm: string;
+      location_avg_price_per_sqm: number;
+      discount_percent: number;
     };
 
     const rows = await prisma.$queryRaw<Row[]>`
@@ -123,7 +124,10 @@ export class AnalyticsService {
         FROM "Property"
         WHERE location_name = ${location} AND price_per_sqm > 0
       )
-      SELECT p.*, avg_cte.avg_ppsm
+      SELECT
+        p.*,
+        ROUND(avg_cte.avg_ppsm::numeric, 2)                                          AS location_avg_price_per_sqm,
+        ROUND(((avg_cte.avg_ppsm - p.price_per_sqm) / avg_cte.avg_ppsm * 100)::numeric, 2) AS discount_percent
       FROM "Property" p, avg_cte
       WHERE ${Prisma.join(conditions, ' AND ')}
       ORDER BY p.price_per_sqm ASC
@@ -131,23 +135,10 @@ export class AnalyticsService {
 
     if (rows.length === 0) return [];
 
-    const avg = parseFloat(rows[0]!.avg_ppsm);
-    if (avg === 0) return [];
-    const roundedAvg = parseFloat(avg.toFixed(2));
-
-    return rows.map(({ avg_ppsm: _, ...p }) => {
-      const pricePerSqm = parseFloat(p.price_per_sqm);
-      const discountPercent = parseFloat((((avg - pricePerSqm) / avg) * 100).toFixed(2));
-      return {
-        ...p,
-        price: parseFloat(p.price),
-        area_sqm: parseFloat(p.area_sqm),
-        price_per_sqm: pricePerSqm,
-        location_avg_price_per_sqm: roundedAvg,
-        discount_percent: discountPercent,
-        tier: classifyDeal(discountPercent),
-      };
-    });
+    return rows.map((p) => ({
+      ...p,
+      tier: classifyDeal(p.discount_percent),
+    }));
   }
 
 }
