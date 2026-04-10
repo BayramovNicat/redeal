@@ -2,28 +2,6 @@ import { AnalyticsService } from '../services/analytics.service.js';
 
 const analytics = new AnalyticsService();
 
-/** GET /api/deals/locations */
-export async function getLocations(_req: Request): Promise<Response> {
-  try {
-    const locations = await analytics.getDistinctLocations();
-    return Response.json({ count: locations.length, data: locations });
-  } catch (err) {
-    console.error('[DealsController] getLocations:', err);
-    return Response.json({ error: 'Failed to fetch locations' }, { status: 500 });
-  }
-}
-
-/** GET /api/deals/urgent */
-export async function getUrgentDeals(_req: Request): Promise<Response> {
-  try {
-    const listings = await analytics.getUrgentListings();
-    return Response.json({ count: listings.length, data: listings });
-  } catch (err) {
-    console.error('[DealsController] getUrgentDeals:', err);
-    return Response.json({ error: 'Failed to fetch urgent listings' }, { status: 500 });
-  }
-}
-
 /** GET /api/deals/undervalued */
 export async function getUndervaluedDeals(req: Request): Promise<Response> {
   const url = new URL(req.url);

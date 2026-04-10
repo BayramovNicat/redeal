@@ -1,5 +1,5 @@
-import { getLocations, getUrgentDeals, getUndervaluedDeals } from './controllers/deals.controller.js';
-import { triggerScrape, streamScrape } from './controllers/scrape.controller.js';
+import { getUndervaluedDeals } from './controllers/deals.controller.js';
+import { streamScrape } from './controllers/scrape.controller.js';
 import { ScrapingService } from './services/scraping.service.js';
 import { BinaScraper } from './scrapers/bina.scraper.js';
 import { prisma } from './utils/prisma.js';
@@ -15,10 +15,7 @@ Bun.serve({
         return Response.json({ status: 'ok', timestamp: new Date().toISOString(), properties: count });
       },
     },
-    '/api/deals/locations':   { GET: getLocations },
-    '/api/deals/urgent':      { GET: getUrgentDeals },
     '/api/deals/undervalued': { GET: getUndervaluedDeals },
-    '/api/scrape/trigger':    { POST: triggerScrape },
     '/api/scrape/stream':     { GET: streamScrape },
   },
   async fetch(req) {
@@ -34,10 +31,7 @@ Bun.serve({
 console.log(`Server listening on http://localhost:${PORT}`);
 console.log('Routes:');
 console.log('  GET  /health');
-console.log('  GET  /api/deals/locations');
-console.log('  GET  /api/deals/urgent');
 console.log('  GET  /api/deals/undervalued?location=Yasamal&threshold=10');
-console.log('  POST /api/scrape/trigger');
 console.log('  GET  /api/scrape/stream?maxPages=20&delayMs=800');
 
 // Hourly cron: scrape 20 pages every 60 minutes

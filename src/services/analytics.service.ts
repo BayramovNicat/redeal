@@ -18,18 +18,7 @@
 
 import { prisma } from '../utils/prisma.js';
 
-export type DealTier = 'High Value Deal' | 'Good Deal' | 'Fair Price' | 'Overpriced';
-
-export interface DealScore {
-  propertyId: number;
-  source_url: string;
-  location_name: string;
-  price_per_sqm: number;
-  location_avg_price_per_sqm: number;
-  /** Positive = cheaper than average; negative = more expensive */
-  discount_percent: number;
-  tier: DealTier;
-}
+type DealTier = 'High Value Deal' | 'Good Deal' | 'Fair Price' | 'Overpriced';
 
 /**
  * Maps a discount percentage to a human-readable deal tier.
@@ -54,29 +43,6 @@ export class AnalyticsService {
     });
 
     return parseFloat((result._avg.price_per_sqm ?? 0).toString());
-  }
-
-  /**
-   * Returns all distinct non-null location_name values, sorted alphabetically.
-   */
-  async getDistinctLocations(): Promise<string[]> {
-    const rows = await prisma.property.findMany({
-      where: { location_name: { not: null } },
-      select: { location_name: true },
-      distinct: ['location_name'],
-      orderBy: { location_name: 'asc' },
-    });
-    return rows.map(r => r.location_name as string);
-  }
-
-  /**
-   * Returns all properties with is_urgent = true, newest first.
-   */
-  async getUrgentListings() {
-    return prisma.property.findMany({
-      where: { is_urgent: true },
-      orderBy: { created_at: 'desc' },
-    });
   }
 
   /**
@@ -163,34 +129,4 @@ export class AnalyticsService {
     });
   }
 
-  /**
-   * Calculates the full deal-score breakdown for every listing in a location.
-   * Useful for building leaderboard / ranking views.
-   */
-  async getDealScoresForLocation(location: string): Promise<DealScore[]> {
-    const avg = await this.getLocationAvgPricePerSqm(location);
-
-    if (avg === 0) return [];
-
-    const properties = await prisma.property.findMany({
-      where: { location_name: location, price_per_sqm: { gt: 0 } },
-    });
-
-    return properties.map((p) => {
-      const pricePerSqm = parseFloat(p.price_per_sqm.toString());
-      const discountPercent = parseFloat(
-        (((avg - pricePerSqm) / avg) * 100).toFixed(2),
-      );
-
-      return {
-        propertyId: p.id,
-        source_url: p.source_url,
-        location_name: p.location_name ?? '',
-        price_per_sqm: pricePerSqm,
-        location_avg_price_per_sqm: parseFloat(avg.toFixed(2)),
-        discount_percent: discountPercent,
-        tier: classifyDeal(discountPercent),
-      };
-    });
-  }
 }
