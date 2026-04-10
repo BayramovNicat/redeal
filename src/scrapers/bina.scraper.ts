@@ -21,16 +21,41 @@ const ITEM_BASE_URL = 'https://bina.az/items';
 /** Filter params for "apartments for sale in Baku" */
 const DEFAULT_FILTER = { categoryId: '1', cityId: '1', leased: false };
 
-const REQUEST_HEADERS: Record<string, string> = {
-  'Content-Type': 'application/json',
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-    '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'application/json',
-  'Origin': 'https://bina.az',
-  'Referer': 'https://bina.az/baki/alqi-satqi/menziller',
-  'Accept-Language': 'az-AZ,az;q=0.9,en;q=0.8',
-};
+const USER_AGENTS = [
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
+];
+
+const ACCEPT_LANGUAGES = [
+  'az-AZ,az;q=0.9,en;q=0.8',
+  'az-AZ,az;q=0.9,en-US;q=0.8,en;q=0.7',
+  'az,en-US;q=0.9,en;q=0.8',
+];
+
+function randomHeaders(): Record<string, string> {
+  const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]!;
+  const lang = ACCEPT_LANGUAGES[Math.floor(Math.random() * ACCEPT_LANGUAGES.length)]!;
+  return {
+    'Content-Type': 'application/json',
+    'User-Agent': ua,
+    'Accept': 'application/json, text/plain, */*',
+    'Origin': 'https://bina.az',
+    'Referer': 'https://bina.az/baki/alqi-satqi/menziller',
+    'Accept-Language': lang,
+    'Accept-Encoding': 'gzip, deflate, br',
+    'sec-ch-ua': `"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"`,
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': ua.includes('Windows') ? '"Windows"' : ua.includes('Linux') ? '"Linux"' : '"macOS"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+  };
+}
 
 // ── GraphQL response shapes ───────────────────────────────────────────────────
 
@@ -132,7 +157,10 @@ export class BinaScraper extends BaseScraper {
       cursor = pageInfo.endCursor;
 
       if (hasNext && page < maxPages) {
-        await this.delay(delayMs + Math.random() * 400);
+        // Occasionally pause longer (simulates reading a page)
+        const longPause = Math.random() < 0.15;
+        const jitter = Math.random() * 600;
+        await this.delay(longPause ? delayMs * 3 + jitter : delayMs + jitter);
       }
     }
 
@@ -213,7 +241,7 @@ export class BinaScraper extends BaseScraper {
   private async gql<T>(query: string): Promise<T> {
     const resp = await fetch(GRAPHQL_URL, {
       method: 'POST',
-      headers: REQUEST_HEADERS,
+      headers: randomHeaders(),
       body: JSON.stringify({ query }),
     });
 
@@ -239,7 +267,7 @@ export class BinaScraper extends BaseScraper {
   private async gqlRaw<T extends Record<string, unknown>>(query: string): Promise<T> {
     const resp = await fetch(GRAPHQL_URL, {
       method: 'POST',
-      headers: REQUEST_HEADERS,
+      headers: randomHeaders(),
       body: JSON.stringify({ query }),
     });
 
