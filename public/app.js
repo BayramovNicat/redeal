@@ -852,9 +852,6 @@ ge("heatmap-btn").addEventListener("click", () => {
 	});
 });
 
-ge("heatmap-close").addEventListener("click", () =>
-	ge("heatmap-modal").close(),
-);
 ge("heatmap-modal").addEventListener("click", (e) => {
 	if (e.target === e.currentTarget) e.currentTarget.close();
 });
