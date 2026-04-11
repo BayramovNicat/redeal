@@ -1457,6 +1457,7 @@
       let currentOffset = 0;
       let currentView = "grid";
       let showingSaved = false;
+      let renderedSet = new Set();
       let bookmarks = new Set(
         JSON.parse(localStorage.getItem("re-bm") || "[]"),
       );
@@ -1691,9 +1692,16 @@
 
         const wrap = document.createElement("div");
         wrap.className = currentView === "grid" ? "cards-grid" : "cards-list";
+        let newCount = 0;
         list.forEach((p, i) => {
           const el = currentView === "grid" ? buildCard(p) : buildRow(p);
-          el.style.animationDelay = `${Math.min(i, 15) * 22}ms`;
+          if (renderedSet.has(p.source_url)) {
+            el.style.animation = "none";
+          } else {
+            el.style.animationDelay = `${Math.min(newCount, 15) * 22}ms`;
+            renderedSet.add(p.source_url);
+            newCount++;
+          }
           wrap.appendChild(el);
         });
         ct.appendChild(wrap);
@@ -1797,6 +1805,7 @@
           currentOffset = 0;
           currentTotal = 0;
           showingSaved = false;
+          renderedSet.clear();
           ge("saved-btn").classList.remove("on");
           hide("s-welcome");
           hide("s-empty");
@@ -1927,24 +1936,30 @@
         updateThreshBg();
       });
       updateThreshBg();
-      ge("sort-sel").addEventListener("change", render);
+      ge("sort-sel").addEventListener("change", () => {
+        renderedSet.clear();
+        render();
+      });
 
       ge("vgrid").addEventListener("click", () => {
         currentView = "grid";
         ge("vgrid").classList.add("on");
         ge("vlist").classList.remove("on");
+        renderedSet.clear();
         render();
       });
       ge("vlist").addEventListener("click", () => {
         currentView = "list";
         ge("vlist").classList.add("on");
         ge("vgrid").classList.remove("on");
+        renderedSet.clear();
         render();
       });
 
       ge("saved-btn").addEventListener("click", () => {
         showingSaved = !showingSaved;
         ge("saved-btn").classList.toggle("on", showingSaved);
+        renderedSet.clear();
         render();
       });
 
