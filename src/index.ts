@@ -47,7 +47,7 @@ console.log("  GET  /health");
 console.log("  GET  /api/deals/undervalued?location=Yasamal&threshold=10");
 console.log("  GET  /api/scrape/stream?maxPages=20&delayMs=800");
 
-// Hourly cron: scrape 20 pages every 60 minutes
+// Hourly cron: scrape 40 pages every 60 minutes = 1000items
 const cronService = new ScrapingService([new BinaScraper()]);
 const CRON_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -61,7 +61,7 @@ async function runCronScrape() {
 	scrapeRunning = true;
 	console.log("[Cron] Hourly scrape started", new Date().toISOString());
 	try {
-		const results = await cronService.runAll({ maxPages: 20, delayMs: 800 });
+		const results = await cronService.runAll({ maxPages: 40, delayMs: 800 });
 		const total = results.reduce((sum, r) => sum + r.persisted, 0);
 		console.log(`[Cron] Hourly scrape done — persisted=${total}`);
 	} catch (err) {
