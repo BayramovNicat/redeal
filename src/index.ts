@@ -15,9 +15,14 @@ Bun.serve({
   routes: {
     "/health": {
       GET: async () => {
+        const result = await queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*)::bigint AS count FROM "Property"
+        `;
+        const count = Number(result[0]?.count ?? 0);
         return Response.json({
           status: "ok",
           timestamp: new Date().toISOString(),
+          properties: count,
         });
       },
     },

@@ -2268,8 +2268,10 @@
 
       (async () => {
         try {
-          await fetch("/health");
-          ge("health-txt").textContent = "Live";
+          const r = await fetch("/health");
+          const d = await r.json();
+          ge("health-txt").textContent =
+            `${(d.properties || 0).toLocaleString()} listings`;
         } catch {
           ge("health-txt").textContent = "Down";
         }
