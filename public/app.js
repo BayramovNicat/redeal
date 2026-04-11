@@ -786,7 +786,7 @@ function priceColor(val, min, max) {
 
 function renderHeatmap(data) {
 	hmap.invalidateSize();
-	hmLayers.forEach((l) => hmap.removeLayer(l));
+	hmLayers.forEach((l) => {hmap.removeLayer(l)});
 	hmLayers.length = 0;
 
 	const prices = data.map((d) => d.avg_price_per_sqm);
