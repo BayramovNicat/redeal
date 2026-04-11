@@ -750,20 +750,6 @@ updateChips();
 })();
 
 // ── Heatmap ───────────────────────────────────────────────────────────────
-const DISTRICT_COORDS = {
-	Nasimi: [40.3777, 49.8432],
-	Yasamal: [40.3853, 49.8213],
-	Nərimanov: [40.4109, 49.868],
-	Sabunçu: [40.4352, 49.938],
-	Nizami: [40.3924, 49.8528],
-	Binəqədi: [40.4426, 49.8345],
-	Xətai: [40.3777, 49.8792],
-	Suraxanı: [40.3951, 49.9641],
-	Səbail: [40.3642, 49.835],
-	Qaradağ: [40.2032, 49.9462],
-	Pirallahı: [40.5157, 49.9965],
-	Abşeron: [40.5127, 49.8372],
-};
 
 let hmap = null;
 const hmLayers = [];
@@ -795,11 +781,9 @@ function renderHeatmap(data) {
 	const maxCount = Math.max(...data.map((d) => d.count));
 
 	data.forEach((d) => {
-		const coords = DISTRICT_COORDS[d.district];
-		if (!coords) return;
 		const color = priceColor(d.avg_price_per_sqm, minP, maxP);
-		const radius = 350 + (d.count / maxCount) * 550;
-		const circle = L.circle(coords, {
+		const radius = 200 + (d.count / maxCount) * 400;
+		const circle = L.circle([d.lat, d.lng], {
 			radius,
 			color,
 			fillColor: color,
@@ -809,7 +793,7 @@ function renderHeatmap(data) {
 		}).addTo(hmap);
 		circle.bindTooltip(
 			`<div class="hm-tip">
-        <div class="hm-tip-name">${d.district}</div>
+        <div class="hm-tip-name">${d.location_name}</div>
         <div class="hm-tip-price">₼ ${fmt(d.avg_price_per_sqm, 0)}<span>/m²</span></div>
         <div class="hm-tip-count">${d.count.toLocaleString()} listings</div>
       </div>`,

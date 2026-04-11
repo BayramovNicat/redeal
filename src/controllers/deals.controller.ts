@@ -77,27 +77,39 @@ export async function getTrend(req: Request): Promise<Response> {
 	}
 }
 
-/** GET /api/heatmap — avg price_per_sqm + listing count per district */
+/** GET /api/heatmap — avg price_per_sqm + listing count per location_name */
 export async function getHeatmap(_req: Request): Promise<Response> {
 	try {
 		const rows = await queryRaw<
-			{ district: string; avg_ppsm: number; count: bigint }[]
+			{
+				location_name: string;
+				avg_ppsm: number;
+				count: bigint;
+				lat: number;
+				lng: number;
+			}[]
 		>`
       SELECT
-        district,
+        location_name,
         ROUND(AVG(price_per_sqm))::int AS avg_ppsm,
-        COUNT(*)::bigint AS count
+        COUNT(*)::bigint AS count,
+        AVG(latitude)::float8 AS lat,
+        AVG(longitude)::float8 AS lng
       FROM "Property"
-      WHERE district IS NOT NULL
-        AND district != 'Unknown'
+      WHERE location_name IS NOT NULL
         AND price_per_sqm > 0
-      GROUP BY district
+        AND latitude IS NOT NULL
+        AND longitude IS NOT NULL
+      GROUP BY location_name
+      HAVING COUNT(*) >= 3
       ORDER BY avg_ppsm DESC
     `;
 		const data = rows.map((r) => ({
-			district: r.district,
+			location_name: r.location_name,
 			avg_price_per_sqm: Number(r.avg_ppsm),
 			count: Number(r.count),
+			lat: Number(r.lat),
+			lng: Number(r.lng),
 		}));
 		return Response.json(
 			{ data },
