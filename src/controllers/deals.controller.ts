@@ -10,32 +10,21 @@ type TrendCacheEntry = {
 const trendCache = new Map<string, TrendCacheEntry>();
 const TREND_TTL_MS = 30 * 60_000; // 30 min — data changes only on scrape cycles
 
-let cachedLocations: string[] | null = null;
-let locationsCachedAt = 0;
-const LOCATIONS_TTL_MS = 60 * 60_000; // 60 min — location list changes at most every scrape cycle
-
 /** GET /api/deals/locations — distinct location names that have at least one listing */
 export async function getLocations(_req: Request): Promise<Response> {
 	try {
-		const now = Date.now();
-		if (
-			cachedLocations === null ||
-			now - locationsCachedAt > LOCATIONS_TTL_MS
-		) {
-			const rows = await queryRaw<{ location_name: string }[]>`
-        SELECT DISTINCT location_name
-        FROM "Property"
-        WHERE location_name IS NOT NULL
-        ORDER BY location_name ASC
-      `;
-			cachedLocations = rows.map((r) => r.location_name);
-			locationsCachedAt = now;
-		}
+		const rows = await queryRaw<{ location_name: string }[]>`
+      SELECT DISTINCT location_name
+      FROM "Property"
+      WHERE location_name IS NOT NULL
+      ORDER BY location_name ASC
+    `;
+		const data = rows.map((r) => r.location_name);
 		return Response.json(
-			{ data: cachedLocations },
+			{ data },
 			{
 				headers: {
-					"Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+					"Cache-Control": "public, max-age=60, stale-while-revalidate=30",
 				},
 			},
 		);
