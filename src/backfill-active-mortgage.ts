@@ -9,7 +9,7 @@
  *   bun run backfill:active-mortgage
  */
 
-import { prisma } from "../src/utils/prisma.js";
+import { prisma } from "./utils/prisma.js";
 
 /** Must match BaseScraper.ACTIVE_MORTGAGE_RE */
 const ACTIVE_MORTGAGE_RE =

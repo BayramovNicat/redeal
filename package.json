@@ -11,7 +11,7 @@
 		"db:migrate": "prisma migrate dev",
 		"db:push": "prisma db push",
 		"db:studio": "prisma studio",
-		"backfill:active-mortgage": "bun scripts/backfill-active-mortgage.ts",
+		"backfill:active-mortgage": "bun ./src/backfill-active-mortgage.ts",
 		"lint": "biome lint",
 		"lint:fix": "biome lint --write",
 		"lint:fix:unsafe": "biome lint --write --unsafe",
