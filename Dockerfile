@@ -11,6 +11,12 @@ FROM deps AS prisma
 COPY prisma ./prisma
 RUN bunx prisma generate
 
+# Build frontend
+FROM deps AS build
+COPY frontend ./frontend
+COPY scripts ./scripts
+RUN bun run build:frontend
+
 # Production image
 FROM base AS runner
 ENV NODE_ENV=production
@@ -18,7 +24,7 @@ ENV NODE_ENV=production
 COPY --from=prisma /app/node_modules ./node_modules
 COPY --from=prisma /app/prisma ./prisma
 COPY src ./src
-COPY public ./public
+COPY --from=build /app/public ./public
 COPY package.json ./
 
 EXPOSE 3000
