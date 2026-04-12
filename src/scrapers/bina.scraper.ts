@@ -44,10 +44,12 @@ const ACCEPT_LANGUAGES = [
 function randomHeaders(): Record<string, string> {
 	const ua =
 		USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)] ??
-		USER_AGENTS[0];
+		USER_AGENTS[0] ??
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 	const lang =
 		ACCEPT_LANGUAGES[Math.floor(Math.random() * ACCEPT_LANGUAGES.length)] ??
-		ACCEPT_LANGUAGES[0];
+		ACCEPT_LANGUAGES[0] ??
+		"az-AZ,az;q=0.9,en;q=0.8";
 	return {
 		"Content-Type": "application/json",
 		"User-Agent": ua,
