@@ -973,12 +973,6 @@ ge("heatmap-modal").addEventListener("click", (e) => {
 });
 
 // ── Alert modal ───────────────────────────────────────────────────────────
-const savedAlerts = JSON.parse(localStorage.getItem("re-alerts") || "[]");
-
-function saveAlerts() {
-	localStorage.setItem("re-alerts", JSON.stringify(savedAlerts));
-}
-
 function getCurrentFilters() {
 	function v(id) { return ge(id).value.trim(); }
 	function cb(id) { return ge(id).checked; }
@@ -1017,52 +1011,71 @@ function buildFilterPreview(f) {
 	return parts.join(" · ");
 }
 
-function renderAlertList() {
+function renderAlertList(alerts) {
 	const listEl = ge("alert-list");
 	const itemsEl = ge("alert-list-items");
-	if (savedAlerts.length === 0) {
+	if (!alerts || alerts.length === 0) {
 		listEl.style.display = "none";
 		return;
 	}
 	listEl.style.display = "block";
 	itemsEl.innerHTML = "";
-	savedAlerts.forEach((a) => {
+	alerts.forEach((a) => {
+		const preview = buildFilterPreview({ ...(a.filters || {}), threshold: (a.filters || {}).threshold ?? 10 });
 		const row = document.createElement("div");
 		row.style.cssText = "display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px";
 		row.innerHTML = `
 			<div style="flex:1;min-width:0">
-				<div style="font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.label || "Unnamed"}</div>
-				<div style="font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.preview}</div>
+				<div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.label || "Unnamed"}</div>
+				<div style="font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}</div>
 			</div>
 			<button type="button" class="icon-btn" style="color:var(--red);flex-shrink:0" title="Delete alert">
 				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
 			</button>`;
-		row.querySelector("button").addEventListener("click", () => deleteAlert(a.token, row));
+		row.querySelector("button").addEventListener("click", () => deleteAlertRow(a.token, row));
 		itemsEl.appendChild(row);
 	});
 }
 
-async function deleteAlert(token, rowEl) {
+async function fetchAndRenderAlerts(chatId) {
+	if (!chatId || !/^\d+$/.test(chatId)) {
+		renderAlertList([]);
+		return;
+	}
+	try {
+		const res = await fetch(`/api/alerts?chat_id=${encodeURIComponent(chatId)}`);
+		const d = await res.json();
+		renderAlertList(d.alerts || []);
+	} catch {
+		renderAlertList([]);
+	}
+}
+
+async function deleteAlertRow(token, rowEl) {
 	try {
 		await fetch(`/api/alerts/${token}`, { method: "DELETE" });
 	} catch {
-		// best effort — remove locally regardless
+		// best effort
 	}
-	const idx = savedAlerts.findIndex((a) => a.token === token);
-	if (idx !== -1) savedAlerts.splice(idx, 1);
-	saveAlerts();
 	rowEl.remove();
-	if (savedAlerts.length === 0) ge("alert-list").style.display = "none";
+	const remaining = ge("alert-list-items").children.length;
+	if (remaining === 0) ge("alert-list").style.display = "none";
 	toast("Alert deleted");
 }
 
 ge("alert-btn").addEventListener("click", () => {
 	const f = getCurrentFilters();
 	ge("alert-filter-preview").textContent = buildFilterPreview(f);
-	ge("alert-chat-id").value = "";
+	const savedChatId = localStorage.getItem("re-chatid") || "";
+	ge("alert-chat-id").value = savedChatId;
 	ge("alert-label").value = "";
-	renderAlertList();
+	fetchAndRenderAlerts(savedChatId);
 	ge("alert-modal").showModal();
+});
+
+ge("alert-chat-id").addEventListener("change", () => {
+	const chatId = ge("alert-chat-id").value.trim();
+	if (/^\d+$/.test(chatId)) fetchAndRenderAlerts(chatId);
 });
 
 ge("alert-cancel").addEventListener("click", () => ge("alert-modal").close());
@@ -1091,13 +1104,7 @@ ge("alert-save").addEventListener("click", async () => {
 			toast(d.error ?? "Failed to create alert", true);
 			return;
 		}
-		savedAlerts.push({
-			token: d.token,
-			label: label || "",
-			preview: buildFilterPreview(filters),
-			created_at: new Date().toISOString(),
-		});
-		saveAlerts();
+		localStorage.setItem("re-chatid", chatId);
 		ge("alert-modal").close();
 		toast("Alert saved! You'll get a Telegram message when new deals appear.");
 	} catch (e) {

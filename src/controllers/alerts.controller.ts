@@ -1,5 +1,30 @@
 import { prisma } from "../utils/prisma.js";
 
+/** GET /api/alerts?chat_id=xxx — list active alerts for a Telegram chat */
+export async function getAlerts(req: Request): Promise<Response> {
+	const chatId = new URL(req.url).searchParams.get("chat_id") ?? "";
+	if (!/^\d+$/.test(chatId)) {
+		return Response.json(
+			{ error: "chat_id must be a numeric Telegram chat ID" },
+			{ status: 400 },
+		);
+	}
+
+	const alerts = await prisma.alert.findMany({
+		where: { chat_id: chatId, is_active: true },
+		select: {
+			id: true,
+			token: true,
+			label: true,
+			filters: true,
+			created_at: true,
+		},
+		orderBy: { created_at: "desc" },
+	});
+
+	return Response.json({ ok: true, alerts });
+}
+
 /** POST /api/alerts — create a new Telegram alert */
 export async function createAlert(req: Request): Promise<Response> {
 	let body: Record<string, unknown>;

@@ -5,7 +5,7 @@ import {
 	getTrend,
 	getUndervaluedDeals,
 } from "./controllers/deals.controller.js";
-import { createAlert, deleteAlert } from "./controllers/alerts.controller.js";
+import { createAlert, deleteAlert, getAlerts } from "./controllers/alerts.controller.js";
 import { streamScrape } from "./controllers/scrape.controller.js";
 import { BinaScraper } from "./scrapers/bina.scraper.js";
 import { ScrapingService } from "./services/scraping.service.js";
@@ -37,7 +37,7 @@ Bun.serve({
 		"/api/deals/by-urls": { POST: getDealsByUrls },
 		"/api/heatmap": { GET: getHeatmap },
 		"/api/scrape/stream": { GET: streamScrape },
-		"/api/alerts": { POST: createAlert },
+		"/api/alerts": { GET: getAlerts, POST: createAlert },
 		"/api/alerts/:token": { DELETE: deleteAlert },
 		"/api/telegram/webhook": { POST: handleWebhook },
 	},
