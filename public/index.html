@@ -475,13 +475,19 @@
 
     <!-- Alert modal -->
     <dialog id="alert-modal">
-      <div class="modal-box" style="width:min(420px,calc(100vw - 2rem));padding:24px">
-        <div style="margin-bottom:18px">
-          <div style="font-size:15px;font-weight:600;color:var(--text-1);margin-bottom:4px">Get Telegram alerts</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.6">
-            1. Open <a href="https://t.me/BakuDealsBot" id="alert-bot-link" target="_blank" rel="noopener" style="color:var(--blue)">your bot</a> in Telegram and send <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px">/start</code><br>
-            2. Copy your Chat ID and paste it below
-          </div>
+      <div class="modal-box" style="width:min(440px,calc(100vw - 2rem));padding:24px">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px">Telegram alerts</div>
+
+        <!-- Existing alerts list -->
+        <div id="alert-list" style="display:none;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Active alerts</div>
+          <div id="alert-list-items" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="height:1px;background:var(--border);margin:16px 0"></div>
+        </div>
+
+        <!-- Create new -->
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+          Open <a href="https://t.me/BakuDealsBot" target="_blank" rel="noopener" style="color:var(--blue)">@BakuDealsBot</a> and send <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px">/start</code> to get your Chat ID.
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="field">
@@ -494,7 +500,7 @@
           </div>
           <div style="font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px" id="alert-filter-preview"></div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-            <button type="button" class="vbtn" id="alert-cancel">Cancel</button>
+            <button type="button" class="btn-secondary" id="alert-cancel">Cancel</button>
             <button type="button" class="btn-primary" id="alert-save">Save alert</button>
           </div>
         </div>

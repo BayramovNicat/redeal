@@ -36,7 +36,7 @@ export async function createAlert(req: Request): Promise<Response> {
 		select: { id: true, token: true },
 	});
 
-	return Response.json({ ok: true, id: alert.id });
+	return Response.json({ ok: true, id: alert.id, token: alert.token });
 }
 
 /** DELETE /api/alerts/:token — deactivate one alert */

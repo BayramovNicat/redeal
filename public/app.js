@@ -973,6 +973,12 @@ ge("heatmap-modal").addEventListener("click", (e) => {
 });
 
 // ── Alert modal ───────────────────────────────────────────────────────────
+const savedAlerts = JSON.parse(localStorage.getItem("re-alerts") || "[]");
+
+function saveAlerts() {
+	localStorage.setItem("re-alerts", JSON.stringify(savedAlerts));
+}
+
 function getCurrentFilters() {
 	function v(id) { return ge(id).value.trim(); }
 	function cb(id) { return ge(id).checked; }
@@ -1011,11 +1017,51 @@ function buildFilterPreview(f) {
 	return parts.join(" · ");
 }
 
+function renderAlertList() {
+	const listEl = ge("alert-list");
+	const itemsEl = ge("alert-list-items");
+	if (savedAlerts.length === 0) {
+		listEl.style.display = "none";
+		return;
+	}
+	listEl.style.display = "block";
+	itemsEl.innerHTML = "";
+	savedAlerts.forEach((a) => {
+		const row = document.createElement("div");
+		row.style.cssText = "display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px";
+		row.innerHTML = `
+			<div style="flex:1;min-width:0">
+				<div style="font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.label || "Unnamed"}</div>
+				<div style="font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.preview}</div>
+			</div>
+			<button type="button" class="icon-btn" style="color:var(--red);flex-shrink:0" title="Delete alert">
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+			</button>`;
+		row.querySelector("button").addEventListener("click", () => deleteAlert(a.token, row));
+		itemsEl.appendChild(row);
+	});
+}
+
+async function deleteAlert(token, rowEl) {
+	try {
+		await fetch(`/api/alerts/${token}`, { method: "DELETE" });
+	} catch {
+		// best effort — remove locally regardless
+	}
+	const idx = savedAlerts.findIndex((a) => a.token === token);
+	if (idx !== -1) savedAlerts.splice(idx, 1);
+	saveAlerts();
+	rowEl.remove();
+	if (savedAlerts.length === 0) ge("alert-list").style.display = "none";
+	toast("Alert deleted");
+}
+
 ge("alert-btn").addEventListener("click", () => {
 	const f = getCurrentFilters();
 	ge("alert-filter-preview").textContent = buildFilterPreview(f);
 	ge("alert-chat-id").value = "";
 	ge("alert-label").value = "";
+	renderAlertList();
 	ge("alert-modal").showModal();
 });
 
@@ -1045,6 +1091,13 @@ ge("alert-save").addEventListener("click", async () => {
 			toast(d.error ?? "Failed to create alert", true);
 			return;
 		}
+		savedAlerts.push({
+			token: d.token,
+			label: label || "",
+			preview: buildFilterPreview(filters),
+			created_at: new Date().toISOString(),
+		});
+		saveAlerts();
 		ge("alert-modal").close();
 		toast("Alert saved! You'll get a Telegram message when new deals appear.");
 	} catch (e) {
