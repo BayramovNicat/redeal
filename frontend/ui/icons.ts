@@ -1,8 +1,8 @@
 import { html } from "../util/html";
 
 export const Icons = {
-  bookmark: (filled: boolean) =>
-    html` <svg
+	bookmark: (filled: boolean) =>
+		html` <svg
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -17,8 +17,8 @@ export const Icons = {
       />
     </svg>`,
 
-  hide: () =>
-    html` <svg
+	hide: () =>
+		html` <svg
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -37,8 +37,8 @@ export const Icons = {
       <line x1="1" y1="1" x2="23" y2="23" />
     </svg>`,
 
-  desc: () =>
-    html` <svg
+	desc: () =>
+		html` <svg
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -54,8 +54,8 @@ export const Icons = {
       <line x1="16" y1="17" x2="8" y2="17" />
     </svg>`,
 
-  map: () =>
-    html` <svg
+	map: () =>
+		html` <svg
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -71,8 +71,8 @@ export const Icons = {
       <circle cx="12" cy="10" r="3" />
     </svg>`,
 
-  external: () =>
-    html` <svg
+	external: () =>
+		html` <svg
       width="10"
       height="10"
       viewBox="0 0 24 24"

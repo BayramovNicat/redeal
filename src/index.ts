@@ -31,7 +31,7 @@ async function computeAssetHash(): Promise<string> {
 	return hasher.digest("hex").slice(0, 8);
 }
 
-let ASSET_VERSION = await computeAssetHash();
+const ASSET_VERSION = await computeAssetHash();
 const publicDir = `${import.meta.dir}/../public`;
 
 async function getVersionedHtml(): Promise<string> {

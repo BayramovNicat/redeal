@@ -5,63 +5,63 @@ import { Icons } from "./icons";
 import { ts } from "./tier";
 
 export function buildCard({
-  property,
-  bookmarked,
-  callbacks,
+	property,
+	bookmarked,
+	callbacks,
 }: {
-  property: Property;
-  bookmarked: boolean;
-  callbacks: CardCallbacks;
+	property: Property;
+	bookmarked: boolean;
+	callbacks: CardCallbacks;
 }): HTMLElement {
-  const t = ts(property.tier);
-  const barW = Math.min(100, Math.max(2, property.discount_percent * 2.5));
-  const floorStr = fmtFloor(property.floor, property.total_floors);
-  const ago = timeAgo(property.posted_date);
+	const t = ts(property.tier);
+	const barW = Math.min(100, Math.max(2, property.discount_percent * 2.5));
+	const floorStr = fmtFloor(property.floor, property.total_floors);
+	const ago = timeAgo(property.posted_date);
 
-  const { bmarkBtn, hideBtn, descBtn, mapBtn } = createButtons(bookmarked);
+	const { bmarkBtn, hideBtn, descBtn, mapBtn } = createButtons(bookmarked);
 
-  const tagList = [
-    {
-      if: property.is_urgent,
-      icon: "⚡",
-      label: "Urgent",
-      cls: "text-red-500 border-red-500/25 bg-red-500/10",
-    },
-    {
-      if: property.has_document,
-      label: "Document",
-      cls: "text-blue-500 border-blue-500/25 bg-blue-500/10",
-    },
-    {
-      if: property.has_repair,
-      label: "Repaired",
-      cls: "text-green-500 border-green-500/25 bg-green-500/10",
-    },
-    {
-      if: property.has_mortgage,
-      label: "Mortgage",
-      cls: "text-slate-400 border-slate-700",
-    },
-    {
-      if: property.has_active_mortgage,
-      icon: "⚠",
-      label: "Active mortgage",
-      cls: "text-yellow-500 border-yellow-500/25 bg-yellow-500/10",
-    },
-    { if: ago, label: ago, cls: "text-slate-500 border-slate-700" },
-  ];
+	const tagList = [
+		{
+			if: property.is_urgent,
+			icon: "⚡",
+			label: "Urgent",
+			cls: "text-red-500 border-red-500/25 bg-red-500/10",
+		},
+		{
+			if: property.has_document,
+			label: "Document",
+			cls: "text-blue-500 border-blue-500/25 bg-blue-500/10",
+		},
+		{
+			if: property.has_repair,
+			label: "Repaired",
+			cls: "text-green-500 border-green-500/25 bg-green-500/10",
+		},
+		{
+			if: property.has_mortgage,
+			label: "Mortgage",
+			cls: "text-slate-400 border-slate-700",
+		},
+		{
+			if: property.has_active_mortgage,
+			icon: "⚠",
+			label: "Active mortgage",
+			cls: "text-yellow-500 border-yellow-500/25 bg-yellow-500/10",
+		},
+		{ if: ago, label: ago, cls: "text-slate-500 border-slate-700" },
+	];
 
-  const tags = tagList
-    .filter((t) => t.if)
-    .map(
-      (t) =>
-        html`<span
+	const tags = tagList
+		.filter((t) => t.if)
+		.map(
+			(t) =>
+				html`<span
           class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.75 rounded-full border border-current whitespace-nowrap ${t.cls}"
           >${t.icon ? `${t.icon} ` : ""}${t.label}</span
         >`,
-    );
+		);
 
-  const element = html`<article
+	const element = html`<article
     class="bg-(--surface) 
     border border-(--border) 
     rounded-(--r-lg) 
@@ -129,9 +129,11 @@ export function buildCard({
         <div class="text-xs font-semibold">${floorStr}</div>
       </div>
     </div>
-    ${tags.length
-      ? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
-      : ""}
+    ${
+			tags.length
+				? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
+				: ""
+		}
     <div class="flex items-center justify-between mt-auto">
       <a
         class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
@@ -144,26 +146,26 @@ export function buildCard({
     </div>
   </article>`;
 
-  attachActionListeners({ element, property, callbacks });
+	attachActionListeners({ element, property, callbacks });
 
-  return element;
+	return element;
 }
 
 export function buildRow({
-  property,
-  bookmarked,
-  callbacks,
+	property,
+	bookmarked,
+	callbacks,
 }: {
-  property: Property;
-  bookmarked: boolean;
-  callbacks: CardCallbacks;
+	property: Property;
+	bookmarked: boolean;
+	callbacks: CardCallbacks;
 }): HTMLElement {
-  const t = ts(property.tier);
-  const floorStr = fmtFloor(property.floor, property.total_floors);
+	const t = ts(property.tier);
+	const floorStr = fmtFloor(property.floor, property.total_floors);
 
-  const { bmarkBtn, hideBtn, mapBtn } = createButtons(bookmarked);
+	const { bmarkBtn, hideBtn, mapBtn } = createButtons(bookmarked);
 
-  const element = html`<div
+	const element = html`<div
     class="bg-(--surface) 
     border border-(--border) 
     rounded-(--r) 
@@ -194,9 +196,9 @@ export function buildRow({
       <div class="mt-0.5 text-xs text-(--muted) truncate">
         ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} rooms · floor
         ${floorStr} ·
-        ₼${fmt(property.price_per_sqm, 0)}/m²${property.is_urgent
-          ? " · ⚡"
-          : ""}
+        ₼${fmt(property.price_per_sqm, 0)}/m²${
+					property.is_urgent ? " · ⚡" : ""
+				}
       </div>
     </div>
     <div class="flex items-center gap-2">${bmarkBtn}${hideBtn}${mapBtn}</div>
@@ -210,62 +212,62 @@ export function buildRow({
     >
   </div>`;
 
-  attachActionListeners({ element, property, callbacks });
+	attachActionListeners({ element, property, callbacks });
 
-  return element;
+	return element;
 }
 
 function attachActionListeners({
-  element,
-  property,
-  callbacks,
+	element,
+	property,
+	callbacks,
 }: {
-  element: HTMLElement;
-  property: Property;
-  callbacks: CardCallbacks;
+	element: HTMLElement;
+	property: Property;
+	callbacks: CardCallbacks;
 }) {
-  element.addEventListener("click", (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const btn = target.closest("button[data-action]");
+	element.addEventListener("click", (e: MouseEvent) => {
+		const target = e.target as HTMLElement;
+		const btn = target.closest("button[data-action]");
 
-    if (!btn) return;
+		if (!btn) return;
 
-    const action = btn.getAttribute("data-action");
+		const action = btn.getAttribute("data-action");
 
-    switch (action) {
-      case "bmark":
-        callbacks.onBM(property);
-        break;
-      case "hide":
-        callbacks.onHide(property.source_url);
-        break;
-      case "desc":
-        callbacks.onDesc(property.description || "");
-        break;
-      case "map":
-        callbacks.onMap(
-          property.latitude || 0,
-          property.longitude || 0,
-          property.location_name ?? property.district ?? "",
-        );
-        break;
-    }
-  });
+		switch (action) {
+			case "bmark":
+				callbacks.onBM(property);
+				break;
+			case "hide":
+				callbacks.onHide(property.source_url);
+				break;
+			case "desc":
+				callbacks.onDesc(property.description || "");
+				break;
+			case "map":
+				callbacks.onMap(
+					property.latitude || 0,
+					property.longitude || 0,
+					property.location_name ?? property.district ?? "",
+				);
+				break;
+		}
+	});
 }
 
 function createButtons(bookmarked: boolean) {
-  const bmarkBtn = html`<button
+	const bmarkBtn = html`<button
     data-action="bmark"
-    class="w-7 h-7 flex items-center justify-center bg-transparent border border-(--border) rounded-(--r-sm) text-(--muted) transition-all duration-150 hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) ${bookmarked
-      ? "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)"
-      : ""}"
+    class="w-7 h-7 flex items-center justify-center bg-transparent border border-(--border) rounded-(--r-sm) text-(--muted) transition-all duration-150 hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) ${
+			bookmarked ? "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)" : ""
+		}"
     data-action="bmark"
     title="Save"
   >
     ${Icons.bookmark(bookmarked)}
   </button>`;
 
-  const hideBtn = html`<button
+	const hideBtn = html`<button
     class="w-7 h-7 flex items-center justify-center bg-transparent border border-(--border) rounded-(--r-sm) text-(--muted) transition-all duration-150 hover:text-(--red) hover:border-(--red-b) hover:bg-(--red-dim)"
     data-action="hide"
     title="Hide"
@@ -273,7 +275,7 @@ function createButtons(bookmarked: boolean) {
     ${Icons.hide()}
   </button>`;
 
-  const descBtn = html`<button
+	const descBtn = html`<button
     class="inline-flex items-center gap-1 bg-transparent border-none p-0 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text) desc-btn"
     data-action="desc"
     title="Description"
@@ -281,7 +283,7 @@ function createButtons(bookmarked: boolean) {
     ${Icons.desc()}
   </button>`;
 
-  const mapBtn = html`<button
+	const mapBtn = html`<button
     class="inline-flex items-center gap-1 bg-transparent border-none p-0 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
     data-action="map"
     title="Map"
@@ -289,5 +291,5 @@ function createButtons(bookmarked: boolean) {
     ${Icons.map()}
   </button>`;
 
-  return { bmarkBtn, hideBtn, descBtn, mapBtn };
+	return { bmarkBtn, hideBtn, descBtn, mapBtn };
 }

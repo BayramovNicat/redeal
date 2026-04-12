@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
 	--bg: #09090e;
@@ -54,10 +55,7 @@ body:has(dialog[open]) {
 	background: var(--border-h);
 	border-radius: 999px;
 }
-a {
-	color: inherit;
-	text-decoration: none;
-}
+
 button {
 	cursor: pointer;
 	font-family: inherit;
@@ -667,7 +665,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 		transform: translateY(0);
 	}
 }
-
 
 /* ── Load more ── */
 .load-more {

@@ -36,8 +36,8 @@ function dfmt(s: string): string {
 
 export function renderTrend(data: TrendPoint[], location: string): void {
 	const vals = data.map((p) => Number(p.avg_ppsm));
-	const last = vals[vals.length - 1]!;
-	const first = vals[0]!;
+	const last = vals[vals.length - 1] ?? 0;
+	const first = vals[0] ?? 1; // Default to 1 to avoid division by zero
 	const changePct = ((last - first) / first) * 100;
 	const up = changePct > 2;
 	const dn = changePct < -2;
@@ -63,7 +63,7 @@ export function renderTrend(data: TrendPoint[], location: string): void {
 		`${data.length} week${data.length !== 1 ? "s" : ""} of data`;
 
 	ge("trend-dates").innerHTML =
-		`<span>${dfmt(data[0]!.week)}</span><span>${dfmt(data[data.length - 1]!.week)}</span>`;
+		`<span>${dfmt(data[0]?.week ?? "")}</span><span>${dfmt(data[data.length - 1]?.week ?? "")}</span>`;
 
 	const ct = ge("trend-chart");
 	const tip = ge("trend-tip");
@@ -81,18 +81,27 @@ export function renderTrend(data: TrendPoint[], location: string): void {
 	const pts = vals.map((v, i) => [xv(i), yv(v)] as [number, number]);
 
 	function buildPath(points: [number, number][]): string {
-		let d = `M ${points[0]![0]},${points[0]![1]}`;
+		const first = points[0];
+		if (!first) return "";
+		let d = `M ${first[0]},${first[1]}`;
 		for (let i = 1; i < points.length; i++) {
-			const mx = (points[i - 1]![0] + points[i]![0]) / 2;
-			d += ` C ${mx},${points[i - 1]![1]} ${mx},${points[i]![1]} ${points[i]![0]},${points[i]![1]}`;
+			const prev = points[i - 1];
+			const curr = points[i];
+			if (!prev || !curr) continue;
+			const mx = (prev[0] + curr[0]) / 2;
+			d += ` C ${mx},${prev[1]} ${mx},${curr[1]} ${curr[0]},${curr[1]}`;
 		}
 		return d;
 	}
 
 	const color = up ? "#ef4444" : dn ? "#22c55e" : "#6366f1";
 	const lineD = buildPath(pts);
-	const areaD = `${lineD} L ${pts[pts.length - 1]![0]},${H} L ${pts[0]![0]},${H} Z`;
-	const lp = pts[pts.length - 1]!;
+	const lastPt = pts[pts.length - 1];
+	const firstPt = pts[0];
+	if (!lastPt || !firstPt) return;
+
+	const areaD = `${lineD} L ${lastPt[0]},${H} L ${firstPt[0]},${H} Z`;
+	const lp = lastPt;
 
 	const ns = "http://www.w3.org/2000/svg";
 	const svg = document.createElementNS(ns, "svg");
@@ -119,7 +128,8 @@ export function renderTrend(data: TrendPoint[], location: string): void {
 			0,
 			Math.min(data.length - 1, Math.round(normX * (data.length - 1))),
 		);
-		const p = data[idx]!;
+		const p = data[idx];
+		if (!p) return;
 		tip.innerHTML = `<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} listings</span>`;
 		tip.style.display = "block";
 		const tipW = tip.offsetWidth || 160;

@@ -1,5 +1,5 @@
+import { cpSync, mkdirSync, watch } from "node:fs";
 import tailwindcss from "@tailwindcss/postcss";
-import { mkdirSync, watch } from "node:fs";
 import postcss from "postcss";
 
 const watchMode = process.argv.includes("--watch");
@@ -7,6 +7,11 @@ const watchMode = process.argv.includes("--watch");
 mkdirSync("./public", { recursive: true });
 
 async function build() {
+	// Copy Leaflet assets
+	cpSync("./node_modules/leaflet/dist/images", "./public/images", {
+		recursive: true,
+	});
+
 	// Bundle + minify TS → app.js
 	const jsResult = await Bun.build({
 		entrypoints: ["./frontend/main.ts"],

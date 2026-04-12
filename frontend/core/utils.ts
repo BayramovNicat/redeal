@@ -36,7 +36,10 @@ export function toast(msg: string, err = false): void {
 	setTimeout(() => el.remove(), 3800);
 }
 
-export function fmtFloor(f: number | null | undefined, t: number | null | undefined): string {
+export function fmtFloor(
+	f: number | null | undefined,
+	t: number | null | undefined,
+): string {
 	if (f != null && t != null) return `${f}/${t}`;
 	return f?.toString() ?? "—";
 }
