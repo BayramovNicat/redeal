@@ -1,3 +1,4 @@
+import { brotliCompressSync } from "node:zlib";
 import {
 	createAlert,
 	deleteAlert,
@@ -18,6 +19,43 @@ import { queryRaw } from "./utils/prisma.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
+// --- Brotli helpers ---
+
+type Handler = (req: Request) => Response | Promise<Response>;
+
+/** Wrap a JSON API handler with brotli compression when client supports it. */
+function br(handler: Handler): Handler {
+	return async (req) => {
+		const res = await handler(req);
+		if (!(req.headers.get("Accept-Encoding") ?? "").includes("br")) return res;
+		const body = await res.arrayBuffer();
+		const compressed = brotliCompressSync(Buffer.from(body));
+		const headers = new Headers(res.headers);
+		headers.set("Content-Encoding", "br");
+		headers.set("Vary", "Accept-Encoding");
+		headers.delete("Content-Length");
+		return new Response(compressed, { status: res.status, headers });
+	};
+}
+
+/** Pre-compressed static assets: pathname → { data, contentType } */
+const brAssets = new Map<string, { data: Buffer; contentType: string }>();
+
+async function precompressStatic(dir: string) {
+	const entries: Array<{ file: string; mime: string }> = [
+		{ file: "app.js", mime: "application/javascript; charset=utf-8" },
+		{ file: "styles.css", mime: "text/css; charset=utf-8" },
+	];
+	await Promise.all(
+		entries.map(async ({ file, mime }) => {
+			const f = Bun.file(`${dir}/${file}`);
+			if (!(await f.exists())) return;
+			const compressed = brotliCompressSync(Buffer.from(await f.arrayBuffer()));
+			brAssets.set(`/${file}`, { data: compressed, contentType: mime });
+		}),
+	);
+}
+
 // Compute content hash at startup for cache busting
 async function computeAssetHash(): Promise<string> {
 	const publicDir = `${import.meta.dir}/../public`;
@@ -31,8 +69,10 @@ async function computeAssetHash(): Promise<string> {
 	return hasher.digest("hex").slice(0, 8);
 }
 
-const ASSET_VERSION = await computeAssetHash();
 const publicDir = `${import.meta.dir}/../public`;
+const ASSET_VERSION = await computeAssetHash();
+await precompressStatic(publicDir);
+console.log(`Brotli pre-compressed: ${[...brAssets.keys()].join(", ")}`);
 
 async function getVersionedHtml(): Promise<string> {
 	const raw = await Bun.file(`${publicDir}/index.html`).text();
@@ -47,7 +87,7 @@ Bun.serve({
 	port: PORT,
 	routes: {
 		"/health": {
-			GET: async () => {
+			GET: br(async () => {
 				const result = await queryRaw<[{ count: bigint }]>`
           SELECT COUNT(*)::bigint AS count FROM "Property"
         `;
@@ -57,21 +97,37 @@ Bun.serve({
 					timestamp: new Date().toISOString(),
 					properties: count,
 				});
-			},
+			}),
 		},
-		"/api/deals/locations": { GET: getLocations },
-		"/api/deals/trend": { GET: getTrend },
-		"/api/deals/undervalued": { GET: getUndervaluedDeals },
-		"/api/deals/by-urls": { POST: getDealsByUrls },
-		"/api/heatmap": { GET: getHeatmap },
-		"/api/scrape/stream": { GET: streamScrape },
-		"/api/alerts": { GET: getAlerts, POST: createAlert },
-		"/api/alerts/:token": { DELETE: deleteAlert },
-		"/api/telegram/webhook": { POST: handleWebhook },
+		"/api/deals/locations": { GET: br(getLocations) },
+		"/api/deals/trend": { GET: br(getTrend) },
+		"/api/deals/undervalued": { GET: br(getUndervaluedDeals) },
+		"/api/deals/by-urls": { POST: br(getDealsByUrls) },
+		"/api/heatmap": { GET: br(getHeatmap) },
+		"/api/scrape/stream": { GET: streamScrape }, // SSE — no compression
+		"/api/alerts": { GET: br(getAlerts), POST: br(createAlert) },
+		"/api/alerts/:token": { DELETE: br(deleteAlert) },
+		"/api/telegram/webhook": { POST: br(handleWebhook) },
 	},
 	async fetch(req) {
 		const url = new URL(req.url);
-		const filePath = `${publicDir}${url.pathname}`;
+		const pathname = url.pathname;
+		const acceptsBr = (req.headers.get("Accept-Encoding") ?? "").includes("br");
+
+		// Serve pre-compressed static assets (strip query string for lookup)
+		const asset = brAssets.get(pathname);
+		if (acceptsBr && asset) {
+			return new Response(asset.data, {
+				headers: {
+					"Content-Type": asset.contentType,
+					"Content-Encoding": "br",
+					"Cache-Control": "public, max-age=31536000, immutable",
+					"Vary": "Accept-Encoding",
+				},
+			});
+		}
+
+		const filePath = `${publicDir}${pathname}`;
 		const file = Bun.file(filePath);
 		if (await file.exists()) return new Response(file);
 		// SPA fallback — read fresh so frontend rebuilds are reflected immediately
