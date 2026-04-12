@@ -659,9 +659,10 @@
       <!-- Cards -->
       <div id="cards"></div>
 
-      <!-- Infinite scroll sentinel -->
+      <!-- Infinite scroll sentinel (outside load-more so observer always fires) -->
+      <div id="scroll-sentinel"></div>
+
       <div id="load-more" class="hidden">
-        <div id="scroll-sentinel"></div>
         <p class="text-xs text-(--muted) mt-2" id="load-info"></p>
       </div>
     </div>

@@ -4,7 +4,10 @@ export function ge(id: string): HTMLElement {
 
 export function show(id: string, d?: string): void {
 	const e = ge(id);
-	if (e) e.style.display = d ?? "";
+	if (e) {
+		e.classList.remove("hidden");
+		e.style.display = d ?? "";
+	}
 }
 
 export function hide(id: string): void {

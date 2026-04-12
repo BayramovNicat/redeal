@@ -64,12 +64,13 @@ function setupScrollObserver(): void {
 		(entries) => {
 			if (
 				entries[0]?.isIntersecting &&
-				ge("load-more").style.display !== "none"
+				!state.showingSaved &&
+				state.allResults.length < state.currentTotal
 			) {
 				_loadMoreFn?.();
 			}
 		},
-		{ rootMargin: "200px" },
+		{ rootMargin: "600px" },
 	);
 	state.scrollObserver.observe(sentinel);
 }
