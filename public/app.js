@@ -739,6 +739,7 @@ document.addEventListener("keydown", (e) => {
 	if (e.key === "Escape") {
 		ge("map-modal").close();
 		ge("desc-modal").close();
+		ge("alert-modal").close();
 	}
 });
 
@@ -969,4 +970,86 @@ ge("heatmap-btn").addEventListener("click", () => {
 
 ge("heatmap-modal").addEventListener("click", (e) => {
 	if (e.target === e.currentTarget) e.currentTarget.close();
+});
+
+// ── Alert modal ───────────────────────────────────────────────────────────
+function getCurrentFilters() {
+	function v(id) { return ge(id).value.trim(); }
+	function cb(id) { return ge(id).checked; }
+
+	const filters = {
+		location: ge("loc").value,
+		threshold: Number(ge("thresh").value),
+	};
+
+	const nums = ["minPrice", "maxPrice", "minArea", "maxArea", "minRooms", "maxRooms", "minFloor", "maxFloor", "minTotalFloors", "maxTotalFloors"];
+	for (const id of nums) {
+		const val = v(id);
+		if (val) filters[id] = Number(val);
+	}
+	if (v("category")) filters.category = v("category");
+	if (cb("hasRepair")) filters.hasRepair = true;
+	if (cb("hasDocument")) filters.hasDocument = true;
+	if (cb("hasMortgage")) filters.hasMortgage = true;
+	if (cb("isUrgent")) filters.isUrgent = true;
+	if (cb("notLastFloor")) filters.notLastFloor = true;
+	if (cb("noActiveMortgage")) filters.hasActiveMortgage = false;
+	else if (cb("hasActiveMortgage")) filters.hasActiveMortgage = true;
+
+	return filters;
+}
+
+function buildFilterPreview(f) {
+	const parts = [`📍 ${f.location === "__all__" ? "All locations" : f.location}`, `📉 ≥${f.threshold}% below avg`];
+	if (f.minPrice || f.maxPrice) parts.push(`₼ ${f.minPrice ?? ""}–${f.maxPrice ?? ""}`);
+	if (f.minRooms || f.maxRooms) parts.push(`${f.minRooms ?? ""}–${f.maxRooms ?? ""} rooms`);
+	if (f.minArea || f.maxArea) parts.push(`${f.minArea ?? ""}–${f.maxArea ?? ""}m²`);
+	if (f.hasRepair) parts.push("Repaired");
+	if (f.hasDocument) parts.push("Document");
+	if (f.isUrgent) parts.push("Urgent");
+	if (f.hasActiveMortgage === false) parts.push("No active mortgage");
+	return parts.join(" · ");
+}
+
+ge("alert-btn").addEventListener("click", () => {
+	const f = getCurrentFilters();
+	ge("alert-filter-preview").textContent = buildFilterPreview(f);
+	ge("alert-chat-id").value = "";
+	ge("alert-label").value = "";
+	ge("alert-modal").showModal();
+});
+
+ge("alert-cancel").addEventListener("click", () => ge("alert-modal").close());
+ge("alert-modal").addEventListener("click", (e) => {
+	if (e.target === e.currentTarget) e.currentTarget.close();
+});
+
+ge("alert-save").addEventListener("click", async () => {
+	const chatId = ge("alert-chat-id").value.trim();
+	if (!/^\d+$/.test(chatId)) {
+		toast("Enter a valid Telegram Chat ID (digits only)", true);
+		return;
+	}
+	const filters = getCurrentFilters();
+	const label = ge("alert-label").value.trim() || undefined;
+
+	ge("alert-save").disabled = true;
+	try {
+		const res = await fetch("/api/alerts", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ chat_id: chatId, label, filters }),
+		});
+		const d = await res.json();
+		if (!res.ok || d.error) {
+			toast(d.error ?? "Failed to create alert", true);
+			return;
+		}
+		ge("alert-modal").close();
+		toast("Alert saved! You'll get a Telegram message when new deals appear.");
+	} catch (e) {
+		toast(e.message, true);
+	} finally {
+		ge("alert-save").disabled = false;
+	}
 });

@@ -93,6 +93,7 @@ export class AnalyticsService {
 			notLastFloor?: boolean;
 			hasActiveMortgage?: boolean;
 			category?: string;
+			since?: Date;
 			limit?: number;
 			offset?: number;
 		} = {},
@@ -115,6 +116,7 @@ export class AnalyticsService {
 			notLastFloor,
 			hasActiveMortgage,
 			category,
+			since,
 			limit = 200,
 			offset = 0,
 		} = filters;
@@ -163,6 +165,8 @@ export class AnalyticsService {
 			conditions.push(Prisma.sql`p.has_active_mortgage = ${hasActiveMortgage}`);
 		if (category !== undefined)
 			conditions.push(Prisma.sql`p.category = ${category}`);
+		if (since !== undefined)
+			conditions.push(Prisma.sql`p.created_at > ${since}`);
 
 		type Row = {
 			id: number;
@@ -245,6 +249,7 @@ export class AnalyticsService {
 			notLastFloor?: boolean;
 			hasActiveMortgage?: boolean;
 			category?: string;
+			since?: Date;
 			limit?: number;
 			offset?: number;
 		} = {},
@@ -267,6 +272,7 @@ export class AnalyticsService {
 			notLastFloor,
 			hasActiveMortgage,
 			category,
+			since,
 			limit = 200,
 			offset = 0,
 		} = filters;
@@ -315,6 +321,8 @@ export class AnalyticsService {
 			conditions.push(Prisma.sql`p.has_active_mortgage = ${hasActiveMortgage}`);
 		if (category !== undefined)
 			conditions.push(Prisma.sql`p.category = ${category}`);
+		if (since !== undefined)
+			conditions.push(Prisma.sql`p.created_at > ${since}`);
 
 		type Row = {
 			id: number;

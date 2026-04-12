@@ -41,3 +41,17 @@ model Property {
   @@index([district, price_per_sqm])
   @@index([location_name, district, posted_date])
 }
+
+model Alert {
+  id          String   @id @default(uuid())
+  chat_id     String
+  label       String?
+  filters     Json
+  last_run_at DateTime @default(now())
+  created_at  DateTime @default(now())
+  token       String   @unique @default(uuid())
+  is_active   Boolean  @default(true)
+
+  @@index([is_active])
+  @@index([chat_id])
+}
