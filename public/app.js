@@ -1044,7 +1044,7 @@ function renderAlertList(alerts) {
 	alerts.forEach((a) => {
 		const preview = buildFilterPreview({
 			...(a.filters || {}),
-			threshold: (a.filters || {}).threshold ?? 10,
+			threshold: a.filters?.threshold ?? 10,
 		});
 		const row = document.createElement("div");
 		row.style.cssText =
