@@ -56,6 +56,8 @@ export function updateChips(): void {
 	const nums: [string, string][] = [
 		["minPrice", "Min ₼"],
 		["maxPrice", "Max ₼"],
+		["minPriceSqm", "Min ₼/m²"],
+		["maxPriceSqm", "Max ₼/m²"],
 		["minArea", "Min m²"],
 		["maxArea", "Max m²"],
 		["minRooms", "Min rooms"],
@@ -145,6 +147,8 @@ export async function doSearch(more = false): Promise<void> {
 		};
 		setParam("minPrice", "minPrice");
 		setParam("maxPrice", "maxPrice");
+		setParam("minPriceSqm", "minPriceSqm");
+		setParam("maxPriceSqm", "maxPriceSqm");
 		setParam("minArea", "minArea");
 		setParam("maxArea", "maxArea");
 		setParam("minRooms", "minRooms");

@@ -41,6 +41,8 @@ export interface AlertFilters {
 	threshold: number;
 	minPrice?: number;
 	maxPrice?: number;
+	minPriceSqm?: number;
+	maxPriceSqm?: number;
 	minArea?: number;
 	maxArea?: number;
 	minRooms?: number;

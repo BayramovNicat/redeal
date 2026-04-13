@@ -269,6 +269,8 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
 	const filterArgs = {
 		minPrice: optNum(q.get("minPrice")),
 		maxPrice: optNum(q.get("maxPrice")),
+		minPriceSqm: optNum(q.get("minPriceSqm")),
+		maxPriceSqm: optNum(q.get("maxPriceSqm")),
 		minArea: optNum(q.get("minArea")),
 		maxArea: optNum(q.get("maxArea")),
 		minRooms: optNum(q.get("minRooms")),

@@ -78,6 +78,8 @@ export class AnalyticsService {
 		filters: {
 			minPrice?: number;
 			maxPrice?: number;
+			minPriceSqm?: number;
+			maxPriceSqm?: number;
 			minArea?: number;
 			maxArea?: number;
 			minRooms?: number;
@@ -101,6 +103,8 @@ export class AnalyticsService {
 		const {
 			minPrice,
 			maxPrice,
+			minPriceSqm,
+			maxPriceSqm,
 			minArea,
 			maxArea,
 			minRooms,
@@ -133,6 +137,10 @@ export class AnalyticsService {
 			conditions.push(Prisma.sql`p.price >= ${minPrice}`);
 		if (maxPrice !== undefined)
 			conditions.push(Prisma.sql`p.price <= ${maxPrice}`);
+		if (minPriceSqm !== undefined)
+			conditions.push(Prisma.sql`p.price_per_sqm >= ${minPriceSqm}`);
+		if (maxPriceSqm !== undefined)
+			conditions.push(Prisma.sql`p.price_per_sqm <= ${maxPriceSqm}`);
 		if (minArea !== undefined)
 			conditions.push(Prisma.sql`p.area_sqm >= ${minArea}`);
 		if (maxArea !== undefined)
@@ -234,6 +242,8 @@ export class AnalyticsService {
 		filters: {
 			minPrice?: number;
 			maxPrice?: number;
+			minPriceSqm?: number;
+			maxPriceSqm?: number;
 			minArea?: number;
 			maxArea?: number;
 			minRooms?: number;
@@ -257,6 +267,8 @@ export class AnalyticsService {
 		const {
 			minPrice,
 			maxPrice,
+			minPriceSqm,
+			maxPriceSqm,
 			minArea,
 			maxArea,
 			minRooms,
@@ -289,6 +301,10 @@ export class AnalyticsService {
 			conditions.push(Prisma.sql`p.price >= ${minPrice}`);
 		if (maxPrice !== undefined)
 			conditions.push(Prisma.sql`p.price <= ${maxPrice}`);
+		if (minPriceSqm !== undefined)
+			conditions.push(Prisma.sql`p.price_per_sqm >= ${minPriceSqm}`);
+		if (maxPriceSqm !== undefined)
+			conditions.push(Prisma.sql`p.price_per_sqm <= ${maxPriceSqm}`);
 		if (minArea !== undefined)
 			conditions.push(Prisma.sql`p.area_sqm >= ${minArea}`);
 		if (maxArea !== undefined)

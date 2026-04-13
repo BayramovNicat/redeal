@@ -146,6 +146,8 @@ for (const id of [
 for (const id of [
 	"minPrice",
 	"maxPrice",
+	"minPriceSqm",
+	"maxPriceSqm",
 	"minArea",
 	"maxArea",
 	"minRooms",
@@ -175,6 +177,8 @@ if (threshold) {
 const strFields: [string, string][] = [
 	["minPrice", "minPrice"],
 	["maxPrice", "maxPrice"],
+	["minPriceSqm", "minPriceSqm"],
+	["maxPriceSqm", "maxPriceSqm"],
 	["minArea", "minArea"],
 	["maxArea", "maxArea"],
 	["minRooms", "minRooms"],
