@@ -64,3 +64,39 @@ export function Tag({
     </span>
   `;
 }
+/**
+ * A removable chip with a close button.
+ */
+export function CloseableChip({
+	label,
+	onClose,
+}: {
+	label: string;
+	onClose: () => void;
+}): HTMLElement {
+	const el = html`
+    <span
+      class="inline-flex items-center gap-1 bg-(--surface) border border-(--border) rounded-full pt-0.75 pb-0.75 pr-1.5 pl-2.5 text-[11px] text-(--text-2)"
+    >
+      ${label}
+      <button
+        type="button"
+        class="bg-none border-none text-(--muted) flex items-center transition-[color] duration-100 px-0.5 hover:text-(--text) cursor-pointer"
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </span>
+  `;
+	el.querySelector("button")?.addEventListener("click", onClose);
+	return el;
+}

@@ -72,3 +72,10 @@ export interface CardCallbacks {
 	onDesc: (text: string) => void;
 	onMap: (lat: number, lng: number, label?: string) => void;
 }
+
+declare global {
+	interface Window {
+		__renderDeals?: () => void;
+		__updateChips?: () => void;
+	}
+}

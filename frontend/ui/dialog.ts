@@ -24,9 +24,15 @@ export function Dialog({
 	className?: string;
 	content: unknown;
 }): HTMLDialogElement {
-	return html<HTMLDialogElement>`
+	const el = html<HTMLDialogElement>`
     <dialog id="${id}" class="${BACKDROP}">
       <div class="${INNER} w-[${width}] ${className}">${content}</div>
     </dialog>
   `;
+
+	el.addEventListener("click", (e) => {
+		if (e.target === e.currentTarget) el.close();
+	});
+
+	return el;
 }

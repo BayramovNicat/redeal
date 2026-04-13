@@ -1,221 +1,50 @@
-import { state } from "./core/state";
-import { ge } from "./core/utils";
-import { openDesc } from "./dialogs/description";
-import { openHeatmap } from "./dialogs/heatmap";
-import { openMap } from "./dialogs/map";
-import { CHECK_FILTERS, NUM_FILTERS, renderFilters } from "./features/filters";
-import { renderResultsBar } from "./features/results-bar";
-import { doSearch, updateChips } from "./features/search";
-import { renderTrendPanel } from "./features/trend";
-import { renderLayout } from "./layout/layout";
-import {
-	hideItem,
-	render,
-	setCardCallbacks,
-	setLoadMoreFn,
-	toggleBM,
-} from "./ui/render";
-import { setRangeProgress } from "./ui/range";
+import { ge, html, renderToastsContainer } from "./core/utils";
+import { renderDescModal } from "./dialogs/description";
+import { renderHeatmapModal } from "./dialogs/heatmap";
+import { renderMapModal } from "./dialogs/map";
+import { initAlerts } from "./features/alerts";
+import { initHeader } from "./features/header";
+import { initProducts } from "./features/products";
+import { initSearch } from "./features/search";
+import { initTrend } from "./features/trend";
 
-renderLayout(document.getElementById("app") as HTMLElement);
+/**
+ * Main application entry point.
+ * Initializes the layout and all feature modules.
+ */
 
-// Render advanced filter inputs from config (keeps HTML clean)
-renderFilters(ge("adv-panel"));
-renderTrendPanel(ge("trend-container"));
-renderResultsBar(ge("results-bar-container"));
+// 1. Initial Layout
+const root = document.getElementById("app") as HTMLElement;
+if (!root) throw new Error("Root element #app not found");
 
-// Expose updateChips globally so chip close buttons can call it from inline onclick
-(window as unknown as Record<string, unknown>).__updateChips = updateChips;
+root.appendChild(html`
+  <div class="max-w-290 mx-auto px-5 pt-0 pb-20">
+    <header id="header-area"></header>
+    <section id="search-area"></section>
+    <section id="trend-area"></section>
+    <main id="products-area"></main>
+  </div>
+`);
 
-// Wire render's load-more callback (avoids render <-> search circular dep)
-setLoadMoreFn(() => void doSearch(true));
+// 2. Feature Initialization
+// Each feature returns a cleanup function for its lifecycle management.
+const cleanups: (() => void)[] = [
+	initProducts(ge("products-area")),
+	initTrend(ge("trend-area")),
+	initSearch(ge("search-area")),
+	initHeader(ge("header-area")),
+	initAlerts(root),
+];
 
-// Wire card callbacks (avoids cards depending on render/map directly)
-setCardCallbacks({
-	onBM: toggleBM,
-	onHide: hideItem,
-	onDesc: openDesc,
-	onMap: openMap,
-});
+// 3. Global Static Modals & Utilities
+renderMapModal(root);
+renderHeatmapModal(root);
+renderDescModal(root);
+renderToastsContainer(root);
 
-// ── Events ────────────────────────────────────────────────────────────────────
-ge("search-btn").addEventListener("click", () => void doSearch(false));
-
-ge("thresh").addEventListener("input", (e) => {
-	ge("tval").textContent = `${(e.target as HTMLInputElement).value}%`;
-});
-
-ge("sort-sel").addEventListener("change", () => {
-	state.renderedSet.clear();
-	render();
-});
-
-ge("vgrid").addEventListener("click", () => {
-	state.currentView = "grid";
-	ge("vgrid").classList.add("on");
-	ge("vlist").classList.remove("on");
-	state.renderedSet.clear();
-	render();
-});
-ge("vlist").addEventListener("click", () => {
-	state.currentView = "list";
-	ge("vlist").classList.add("on");
-	ge("vgrid").classList.remove("on");
-	state.renderedSet.clear();
-	render();
-});
-
-ge("saved-btn").addEventListener("click", async () => {
-	state.showingSaved = !state.showingSaved;
-	ge("saved-btn").classList.toggle("on", state.showingSaved);
-	state.renderedSet.clear();
-	if (state.showingSaved && state.bookmarks.size > 0) {
-		try {
-			const res = await fetch("/api/deals/by-urls", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ urls: [...state.bookmarks] }),
-			});
-			const json = (await res.json()) as {
-				data?: typeof state.savedOnlyResults;
-			};
-			if (json.data) state.savedOnlyResults = json.data;
-		} catch (e) {
-			console.error("Failed to fetch saved deals", e);
-		}
-	} else {
-		state.savedOnlyResults = [];
-	}
-	render();
-});
-
-ge("adv-toggle").addEventListener("click", () => {
-	const panel = ge("adv-panel");
-	const open = panel.classList.toggle("open");
-	ge("adv-toggle").setAttribute("aria-expanded", String(open));
-});
-
-ge("map-modal").addEventListener("click", (e) => {
-	if (e.target === e.currentTarget)
-		(e.currentTarget as HTMLDialogElement).close();
-});
-ge("desc-modal").addEventListener("click", (e) => {
-	if (e.target === e.currentTarget)
-		(e.currentTarget as HTMLDialogElement).close();
-});
-ge("heatmap-modal").addEventListener("click", (e) => {
-	if (e.target === e.currentTarget)
-		(e.currentTarget as HTMLDialogElement).close();
-});
-
-ge("heatmap-btn").addEventListener("click", () => {
-	openHeatmap((locName) => {
-		(ge("loc") as HTMLSelectElement).value = locName;
-		void doSearch(false);
+// 4. Handle cleanup on window unload
+window.addEventListener("unload", () => {
+	cleanups.forEach((fn) => {
+		if (typeof fn === "function") fn();
 	});
 });
-
-document.addEventListener("keydown", (e) => {
-	if (
-		e.key === "Enter" &&
-		!["BUTTON", "A", "SELECT"].includes((e.target as Element).tagName)
-	)
-		void doSearch(false);
-	if (e.key === "Escape") {
-		(ge("map-modal") as HTMLDialogElement).close();
-		(ge("desc-modal") as HTMLDialogElement).close();
-		(ge("alert-modal") as HTMLDialogElement).close();
-	}
-});
-
-ge("noActiveMortgage").addEventListener("change", () => {
-	if ((ge("noActiveMortgage") as HTMLInputElement).checked)
-		(ge("hasActiveMortgage") as HTMLInputElement).checked = false;
-	updateChips();
-});
-ge("hasActiveMortgage").addEventListener("change", () => {
-	if ((ge("hasActiveMortgage") as HTMLInputElement).checked)
-		(ge("noActiveMortgage") as HTMLInputElement).checked = false;
-	updateChips();
-});
-
-for (const f of CHECK_FILTERS.filter(
-	(f) => f.id !== "noActiveMortgage" && f.id !== "hasActiveMortgage",
-)) {
-	ge(f.id).addEventListener("change", updateChips);
-}
-for (const f of NUM_FILTERS) {
-	ge(f.id).addEventListener("input", updateChips);
-}
-ge("category").addEventListener("input", updateChips);
-
-// ── Restore filters from URL ──────────────────────────────────────────────────
-const initParams = new URLSearchParams(window.location.search);
-
-const threshold = initParams.get("threshold");
-if (threshold) {
-	(ge("thresh") as HTMLInputElement).value = threshold;
-	ge("tval").textContent = `${threshold}%`;
-	setRangeProgress(ge("thresh") as HTMLInputElement);
-}
-
-for (const f of NUM_FILTERS) {
-	const val = initParams.get(f.id);
-	if (val) (ge(f.id) as HTMLInputElement).value = val;
-}
-const catParam = initParams.get("category");
-if (catParam) (ge("category") as HTMLSelectElement).value = catParam;
-
-for (const f of CHECK_FILTERS.filter(
-	(f) => f.id !== "noActiveMortgage" && f.id !== "hasActiveMortgage",
-)) {
-	if (initParams.get(f.id) === "true")
-		(ge(f.id) as HTMLInputElement).checked = true;
-}
-
-if (initParams.has("hasActiveMortgage")) {
-	if (initParams.get("hasActiveMortgage") === "false")
-		(ge("noActiveMortgage") as HTMLInputElement).checked = true;
-	else if (initParams.get("hasActiveMortgage") === "true")
-		(ge("hasActiveMortgage") as HTMLInputElement).checked = true;
-}
-
-updateChips();
-
-// ── Init: load locations & health ─────────────────────────────────────────────
-(async () => {
-	const sel = ge("loc") as HTMLSelectElement;
-	try {
-		const r = await fetch("/api/deals/locations");
-		const d = (await r.json()) as { data: string[] };
-		sel.innerHTML = "";
-		const allOpt = document.createElement("option");
-		allOpt.value = "__all__";
-		allOpt.textContent = "All locations";
-		sel.appendChild(allOpt);
-		for (const loc of d.data) {
-			const o = document.createElement("option");
-			o.value = o.textContent = loc;
-			sel.appendChild(o);
-		}
-		const loc = initParams.get("location");
-		if (loc) {
-			sel.value = loc;
-			void doSearch(false);
-		}
-	} catch {
-		sel.innerHTML =
-			'<option value="" disabled selected>Failed to load</option>';
-	}
-})();
-
-(async () => {
-	try {
-		const r = await fetch("/health");
-		const d = (await r.json()) as { properties?: number };
-		ge("health-txt").textContent =
-			`${(d.properties ?? 0).toLocaleString()} listings`;
-	} catch {
-		ge("health-txt").textContent = "Down";
-	}
-})();

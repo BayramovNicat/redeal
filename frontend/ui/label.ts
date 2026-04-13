@@ -6,15 +6,15 @@ const SHARED_CLS = `
 `;
 
 export function Label({
-  text,
-  htmlFor,
-  className = "",
+	text,
+	htmlFor,
+	className = "",
 }: {
-  text: string;
-  htmlFor?: string;
-  className?: string;
+	text: string;
+	htmlFor?: string;
+	className?: string;
 }): HTMLLabelElement {
-  return html<HTMLLabelElement>`
+	return html<HTMLLabelElement>`
     <label
       ${htmlFor ? `for="${htmlFor}"` : ""}
       class="${SHARED_CLS} ${className}"

@@ -31,27 +31,27 @@ const INPUT_CLS = `
  * This is used for the custom track background gradient.
  */
 export function setRangeProgress(input: HTMLInputElement): void {
-  const min = Number(input.min) || 0;
-  const max = Number(input.max) || 100;
-  const val = Number(input.value);
-  const p = ((val - min) / (max - min)) * 100;
-  input.style.setProperty("--p", `${p}%`);
+	const min = Number(input.min) || 0;
+	const max = Number(input.max) || 100;
+	const val = Number(input.value);
+	const p = ((val - min) / (max - min)) * 100;
+	input.style.setProperty("--p", `${p}%`);
 }
 
 export function Range({
-  id,
-  min = 0,
-  max = 100,
-  value = 0,
-  className = "",
+	id,
+	min = 0,
+	max = 100,
+	value = 0,
+	className = "",
 }: {
-  id?: string;
-  min?: number | string;
-  max?: number | string;
-  value?: number | string;
-  className?: string;
+	id?: string;
+	min?: number | string;
+	max?: number | string;
+	value?: number | string;
+	className?: string;
 }): HTMLElement {
-  const input = html<HTMLInputElement>`
+	const input = html<HTMLInputElement>`
     <input
       type="range"
       ${id ? `id="${id}"` : ""}
@@ -62,13 +62,13 @@ export function Range({
     />
   `;
 
-  // Initialize progress
-  setRangeProgress(input);
+	// Initialize progress
+	setRangeProgress(input);
 
-  // Automatically update progress on input
-  input.addEventListener("input", () => setRangeProgress(input));
+	// Automatically update progress on input
+	input.addEventListener("input", () => setRangeProgress(input));
 
-  return html`
+	return html`
     <div class="${CONTAINER_CLS} ${className}">
       ${input}
     </div>

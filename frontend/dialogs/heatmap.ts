@@ -4,7 +4,9 @@ import { fmt, ge, toast } from "../core/utils";
 import { initLeaflet, MapDialog } from "../ui/map-base";
 
 export function renderHeatmapModal(root: HTMLElement): void {
-	root.appendChild(MapDialog({ id: "heatmap-modal", containerId: "heatmap-ct" }));
+	root.appendChild(
+		MapDialog({ id: "heatmap-modal", containerId: "heatmap-ct" }),
+	);
 }
 
 // ── Heatmap ───────────────────────────────────────────────────────────────────

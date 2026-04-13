@@ -1,4 +1,4 @@
-import { divIcon, marker, type map } from "leaflet";
+import { divIcon, type map, marker } from "leaflet";
 import { ge } from "../core/utils";
 import { initLeaflet, MapDialog } from "../ui/map-base";
 

@@ -1,9 +1,9 @@
 import type { CardCallbacks, Property } from "../core/types";
 import { fmt, fmtFloor, frag, html, timeAgo } from "../core/utils";
-import { Button } from "../ui/button";
-import { Tag } from "../ui/chip";
-import { Icons } from "../ui/icons";
-import { ts } from "../ui/tier";
+import { Button } from "./button";
+import { Tag } from "./chip";
+import { Icons } from "./icons";
+import { ts } from "./tier";
 
 interface ProductProps {
 	property: Property;

@@ -1,10 +1,12 @@
 import { html } from "../core/utils";
 
-const SHARED = "transition-all duration-150 rounded-(--r) font-medium active:scale-[0.97] disabled:opacity-[0.45] disabled:cursor-not-allowed disabled:transform-none select-none";
+const SHARED =
+	"transition-all duration-150 rounded-(--r) font-medium active:scale-[0.97] disabled:opacity-[0.45] disabled:cursor-not-allowed disabled:transform-none select-none";
 
 const VARIANTS = {
 	base: "inline-flex items-center justify-center gap-1.5 px-4 py-2.25 text-sm h-10 whitespace-nowrap",
-	padded: "inline-flex items-center gap-1.25 px-2.5 py-1.25 text-xs border whitespace-nowrap",
+	padded:
+		"inline-flex items-center gap-1.25 px-2.5 py-1.25 text-xs border whitespace-nowrap",
 	square: "size-7.5 flex items-center justify-center border",
 	ghost: "inline-flex items-center gap-1.25 border-none p-0 text-xs",
 };

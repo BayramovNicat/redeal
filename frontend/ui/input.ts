@@ -11,34 +11,34 @@ const SHARED_CLS = `
 `;
 
 const VARIANTS = {
-  sm: "px-2.5 py-1.75 text-sm",
-  xs: "px-2.5 py-1.5 text-xs hover:border-(--border-h)",
+	sm: "px-2.5 py-1.75 text-sm",
+	xs: "px-2.5 py-1.5 text-xs hover:border-(--border-h)",
 };
 
 interface InputProps {
-  id?: string;
-  type?: string;
-  placeholder?: string;
-  value?: string;
-  variant?: keyof typeof VARIANTS;
-  className?: string;
-  attrs?: Record<string, string>;
+	id?: string;
+	type?: string;
+	placeholder?: string;
+	value?: string;
+	variant?: keyof typeof VARIANTS;
+	className?: string;
+	attrs?: Record<string, string>;
 }
 
 export function Input({
-  id,
-  type = "text",
-  placeholder = "",
-  value = "",
-  variant = "sm",
-  className = "",
-  attrs = {},
+	id,
+	type = "text",
+	placeholder = "",
+	value = "",
+	variant = "sm",
+	className = "",
+	attrs = {},
 }: InputProps): HTMLInputElement {
-  const attrStr = Object.entries(attrs)
-    .map(([k, v]) => `${k}="${v}"`)
-    .join(" ");
+	const attrStr = Object.entries(attrs)
+		.map(([k, v]) => `${k}="${v}"`)
+		.join(" ");
 
-  return html<HTMLInputElement>`
+	return html<HTMLInputElement>`
     <input
       ${id ? `id="${id}"` : ""}
       type="${type}"
