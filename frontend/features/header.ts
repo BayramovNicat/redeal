@@ -1,5 +1,5 @@
 import { bus, EVENTS } from "../core/events";
-import { ge, html } from "../core/utils";
+import { frag, ge, html } from "../core/utils";
 import { openHeatmap } from "../dialogs/heatmap";
 import { Button } from "../ui/button";
 import { HealthStatus } from "../ui/health-status";
@@ -7,9 +7,7 @@ import { Icons } from "../ui/icons";
 
 export function initHeader(container: HTMLElement): () => void {
 	const logo = html`
-    <div
-      class="flex items-center gap-2.5 group cursor-pointer"
-    >
+    <div class="flex items-center gap-2.5 group cursor-pointer">
       <div
         class="w-8.5 h-8.5 rounded-(--r-sm) bg-(--accent-dim) border border-[rgba(99,102,241,0.35)] flex items-center justify-center text-(--accent) shrink-0 transition-transform group-hover:scale-105"
       >
@@ -29,7 +27,7 @@ export function initHeader(container: HTMLElement): () => void {
 	const mapBtn = Button({
 		title: "Price heatmap by district",
 		color: "indigo",
-		content: html`<span>${Icons.globe()} Price Map</span>`,
+		content: frag`${Icons.globe()} Price Map`,
 	});
 
 	const header = html`
