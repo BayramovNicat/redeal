@@ -8,6 +8,8 @@ import { initHeader } from "./features/header";
 import { initProducts } from "./features/products";
 import { initSearch } from "./features/search";
 import { initTrend } from "./features/trend";
+import { initTooltip } from "./ui/tooltip";
+
 
 /**
  * Main application entry point.
@@ -36,7 +38,9 @@ const cleanups: (() => void)[] = [
 	initHeader(ge("header-area")),
 	initAlerts(root),
 	initGallery(root),
+	initTooltip(root),
 ];
+
 
 // 3. Global Static Modals & Utilities
 renderMapModal(root);
