@@ -1,23 +1,84 @@
+import { bus, EVENTS } from "../core/events";
 import type { Alert, AlertFilters } from "../core/types";
-import { ge, toast } from "../core/utils";
-import {
-	buildFilterPreview,
-	renderAlertModal,
-	updateAlertList,
-} from "../dialogs/alert";
+import { ge, html, toast } from "../core/utils";
+import { Button } from "../ui/button";
+import { Dialog } from "../ui/dialog";
+import { Icons } from "../ui/icons";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 export function initAlerts(root: HTMLElement): () => void {
-	// 1. Render UI shell
-	renderAlertModal(root);
+	// 1. Create UI Elements
+	const chatIdInput = Input({
+		id: "alert-chat-id",
+		placeholder: "e.g. 123456789",
+		className: "w-full",
+		attrs: { inputmode: "numeric" },
+	});
 
-	const modal = ge("alert-modal") as HTMLDialogElement;
+	const labelInput = Input({
+		id: "alert-label",
+		placeholder: "e.g. 2BR Nərimanov",
+		className: "w-full",
+		attrs: { maxlength: "80" },
+	});
+
+	const previewEl = html`<div class="text-xs text-(--muted) bg-(--surface-2) border border-(--border) rounded-sm px-2.5 py-2"></div>`;
+	const listEl = html`<div class="mb-4 hidden"></div>`;
+	const itemsEl = html`<div class="flex flex-col gap-6"></div>`;
+
+	listEl.append(
+		html`<div class="text-xs font-semibold text-(--muted) uppercase tracking-[0.05em] mb-2">Active alerts</div>`,
+		itemsEl,
+		html`<div class="h-px bg-(--border) my-4"></div>`,
+	);
+
+	const cancelBtn = Button({
+		content: "Cancel",
+		variant: "base",
+		color: "indigo",
+	});
+
+	const saveBtn = Button({
+		content: "Save alert",
+		variant: "base",
+		color: "solid",
+	});
+
+	const modal = Dialog({
+		id: "alert-modal",
+		width: "min(440px,calc(100vw-2rem))",
+		className: "p-6",
+		content: html`
+      <div>
+        <div class="text-base font-semibold text-(--text) mb-4">Telegram alerts</div>
+        ${listEl}
+        <div class="text-xs text-(--muted) leading-[1.6] mb-3.5">
+          Open <a href="https://t.me/BakuDealsBot" target="_blank" rel="noopener" class="text-(--blue)">@BakuDealsBot</a> 
+          and send <code class="bg-(--surface-3) px-1 py-0.5 rounded-sm">/start</code> to get your Chat ID.
+        </div>
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-1.5">
+            ${Label({ htmlFor: "alert-chat-id", text: "Telegram Chat ID" })}
+            ${chatIdInput}
+          </div>
+          <div class="flex flex-col gap-1.5">
+            ${Label({ htmlFor: "alert-label", text: "Label (optional)" })}
+            ${labelInput}
+          </div>
+          ${previewEl}
+          <div class="flex gap-2 justify-end mt-1">
+            ${cancelBtn}
+            ${saveBtn}
+          </div>
+        </div>
+      </div>
+    `,
+	});
+
+	root.appendChild(modal);
+
 	const trigger = ge("alert-btn");
-	const saveBtn = ge("alert-save") as HTMLButtonElement;
-	const chatIdInput = ge("alert-chat-id") as HTMLInputElement;
-	const labelInput = ge("alert-label") as HTMLInputElement;
-	const previewEl = ge("alert-filter-preview");
-
-	if (!modal) return () => {};
 
 	// 2. Logic Handlers
 	const handleOpen = () => {
@@ -44,15 +105,16 @@ export function initAlerts(root: HTMLElement): () => void {
 			return;
 		}
 
-		const filters = getCurrentFilters();
-		const label = labelInput.value.trim() || undefined;
-
 		saveBtn.disabled = true;
 		try {
 			const res = await fetch("/api/alerts", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ chat_id: chatId, label, filters }),
+				body: JSON.stringify({
+					chat_id: chatId,
+					label: labelInput.value.trim() || undefined,
+					filters: getCurrentFilters(),
+				}),
 			});
 			const d = (await res.json()) as { error?: string };
 			if (!res.ok || d.error) {
@@ -78,16 +140,15 @@ export function initAlerts(root: HTMLElement): () => void {
 			/* best effort */
 		}
 		rowEl.remove();
-		const itemsEl = ge("alert-list-items");
-		if (itemsEl && itemsEl.children.length === 0) {
-			ge("alert-list").style.display = "none";
+		if (itemsEl.children.length === 0) {
+			listEl.style.display = "none";
 		}
 		toast("Alert deleted");
 	};
 
 	const fetchAlerts = async (chatId: string) => {
 		if (!chatId || !/^\d+$/.test(chatId)) {
-			updateAlertList([]);
+			updateAlertList([], itemsEl, listEl, handleDelete);
 			return;
 		}
 		try {
@@ -95,41 +156,90 @@ export function initAlerts(root: HTMLElement): () => void {
 				`/api/alerts?chat_id=${encodeURIComponent(chatId)}`,
 			);
 			const d = (await res.json()) as { alerts?: Alert[] };
-			updateAlertList(d.alerts ?? [], handleDelete);
+			updateAlertList(d.alerts ?? [], itemsEl, listEl, handleDelete);
 		} catch {
-			updateAlertList([]);
+			updateAlertList([], itemsEl, listEl, handleDelete);
 		}
 	};
 
-	// 3. Event Listeners
-	const listeners: [HTMLElement | null, string, EventListener][] = [
-		[trigger, "click", handleOpen],
-		[chatIdInput, "change", handleChatIdChange],
-		[ge("alert-cancel"), "click", () => modal.close()],
-		[saveBtn, "click", handleSave],
-	];
-
-	listeners.forEach(([el, ev, fn]) => {
-		el?.addEventListener(ev, fn);
+	// 3. Listeners
+	const offDeals = bus.on(EVENTS.DEALS_UPDATED, () => {
+		if (modal.open) {
+			previewEl.textContent = buildFilterPreview(getCurrentFilters());
+		}
 	});
 
+	trigger?.addEventListener("click", handleOpen);
+	chatIdInput.addEventListener("change", handleChatIdChange);
+	saveBtn.addEventListener("click", handleSave);
+	cancelBtn.addEventListener("click", () => modal.close());
+
 	return () => {
-		listeners.forEach(([el, ev, fn]) => {
-			el?.removeEventListener(ev, fn);
-		});
+		trigger?.removeEventListener("click", handleOpen);
+		chatIdInput.removeEventListener("change", handleChatIdChange);
+		saveBtn.removeEventListener("click", handleSave);
+		cancelBtn.removeEventListener("click", () => modal.close());
+		offDeals();
 	};
+}
+
+/**
+ * Updates the alerts list in the modal using direct element references
+ */
+function updateAlertList(
+	alerts: Alert[],
+	itemsEl: HTMLElement,
+	listEl: HTMLElement,
+	onDelete: (token: string, row: HTMLElement) => void,
+): void {
+	if (!alerts || alerts.length === 0) {
+		listEl.style.display = "none";
+		return;
+	}
+
+	listEl.style.display = "block";
+	itemsEl.innerHTML = "";
+
+	for (const a of alerts) {
+		const preview = buildFilterPreview({
+			...(a.filters ?? {}),
+			location: a.filters?.location ?? "",
+			threshold: a.filters?.threshold ?? 10,
+		});
+
+		const row = html`
+      <div class="flex items-center gap-2 bg-(--surface-2) border border-(--border) rounded-md px-2.5 py-2 transition-all">
+        <div class="flex-1 min-w-0">
+          <div class="text-[12px] font-semibold text-(--text) whitespace-nowrap overflow-hidden text-ellipsis">
+            ${a.label ?? "Unnamed"}
+          </div>
+          <div class="text-[11px] text-(--muted) mt-px whitespace-nowrap overflow-hidden text-ellipsis">
+            ${preview}
+          </div>
+        </div>
+      </div>
+    `;
+
+		const delBtn = Button({
+			content: Icons.trash(),
+			variant: "ghost",
+			color: "red",
+			title: "Delete alert",
+			className: "shrink-0",
+		});
+		delBtn.addEventListener("click", () => onDelete(a.token, row));
+		row.appendChild(delBtn);
+
+		itemsEl.appendChild(row);
+	}
 }
 
 /**
  * Extracts current search filters from the DOM
  */
 function getCurrentFilters(): AlertFilters {
-	function v(id: string): string {
-		return (ge(id) as HTMLInputElement)?.value.trim() ?? "";
-	}
-	function cb(id: string): boolean {
-		return (ge(id) as HTMLInputElement)?.checked ?? false;
-	}
+	const v = (id: string) => (ge(id) as HTMLInputElement)?.value.trim() ?? "";
+	const cb = (id: string) => (ge(id) as HTMLInputElement)?.checked ?? false;
 
 	const filters: AlertFilters = {
 		location: (ge("loc") as HTMLSelectElement)?.value ?? "__all__",
@@ -148,9 +258,10 @@ function getCurrentFilters(): AlertFilters {
 		"minTotalFloors",
 		"maxTotalFloors",
 	] as const;
+
 	for (const id of numIds) {
 		const val = v(id);
-		if (val) (filters as unknown as Record<string, unknown>)[id] = Number(val);
+		if (val) filters[id] = Number(val);
 	}
 
 	if (v("category")) filters.category = v("category");
@@ -164,4 +275,25 @@ function getCurrentFilters(): AlertFilters {
 	else if (cb("hasActiveMortgage")) filters.hasActiveMortgage = true;
 
 	return filters;
+}
+
+/**
+ * Formats filters into a short preview string
+ */
+function buildFilterPreview(f: AlertFilters): string {
+	const parts = [
+		`📍 ${f.location === "__all__" ? "All locations" : f.location}`,
+		`📉 ≥${f.threshold}% below avg`,
+	];
+	if (f.minPrice || f.maxPrice)
+		parts.push(`₼ ${f.minPrice ?? ""}-${f.maxPrice ?? ""}`);
+	if (f.minRooms || f.maxRooms)
+		parts.push(`${f.minRooms ?? ""}-${f.maxRooms ?? ""} rooms`);
+	if (f.minArea || f.maxArea)
+		parts.push(`${f.minArea ?? ""}-${f.maxArea ?? ""}m²`);
+	if (f.hasRepair) parts.push("Repaired");
+	if (f.hasDocument) parts.push("Document");
+	if (f.isUrgent) parts.push("Urgent");
+	if (f.hasActiveMortgage === false) parts.push("No active mortgage");
+	return parts.join(" · ");
 }
