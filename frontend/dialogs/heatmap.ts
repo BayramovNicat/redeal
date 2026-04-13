@@ -5,6 +5,7 @@ import {
 	type LeafletMouseEvent,
 	type map,
 } from "leaflet";
+import { t } from "../core/i18n";
 import type { HeatmapPoint } from "../core/types";
 import { fmt, ge, toast } from "../core/utils";
 import { initLeaflet, MapDialog } from "../ui/map-base";
@@ -67,7 +68,7 @@ export function renderHeatmap(
 			/*html*/ `<div class="min-w-32.5 px-3.25 py-2.5">
 			<div class="mb-1 text-xs font-semibold text-(--text)">${d.location_name}</div>
 			<div class="text-[17px] font-bold leading-none text-(--text)">₼ ${fmt(d.avg_price_per_sqm, 0)}<span class="text-[11px] font-normal text-(--muted)">/m²</span></div>
-			<div class="mt-0.75 text-[11px] text-(--muted)">${d.count.toLocaleString()} listings</div>
+			<div class="mt-0.75 text-[11px] text-(--muted)">${d.count.toLocaleString()} ${t(d.count !== 1 ? "listings" : "listing")}</div>
 		</div>`,
 			{
 				sticky: true,

@@ -1,4 +1,5 @@
 import { bus, EVENTS } from "../core/events";
+import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { Property } from "../core/types";
 import { frag, ge, hide, show, toast } from "../core/utils";
@@ -11,87 +12,87 @@ import { MultiSelect, type MultiSelectElement } from "../ui/multi-select";
 import { Range, setRangeProgress } from "../ui/range";
 import { Select } from "../ui/select";
 
-const NUM_FILTERS = [
+const NUM_FILTERS = () => [
 	{
 		id: "minPrice",
-		label: "Min price (₼)",
+		label: t("minPrice"),
 		placeholder: "30 000",
-		chipLabel: "Min ₼",
+		chipLabel: t("chipMinPrice"),
 	},
 	{
 		id: "maxPrice",
-		label: "Max price (₼)",
+		label: t("maxPrice"),
 		placeholder: "150 000",
-		chipLabel: "Max ₼",
+		chipLabel: t("chipMaxPrice"),
 	},
 	{
 		id: "minPriceSqm",
-		label: "Min ₼/m²",
+		label: t("minPriceSqm"),
 		placeholder: "500",
-		chipLabel: "Min ₼/m²",
+		chipLabel: t("chipMinPriceSqm"),
 	},
 	{
 		id: "maxPriceSqm",
-		label: "Max ₼/m²",
+		label: t("maxPriceSqm"),
 		placeholder: "2000",
-		chipLabel: "Max ₼/m²",
+		chipLabel: t("chipMaxPriceSqm"),
 	},
 	{
 		id: "minArea",
-		label: "Min area (m²)",
+		label: t("minArea"),
 		placeholder: "40",
-		chipLabel: "Min m²",
+		chipLabel: t("chipMinArea"),
 	},
 	{
 		id: "maxArea",
-		label: "Max area (m²)",
+		label: t("maxArea"),
 		placeholder: "120",
-		chipLabel: "Max m²",
+		chipLabel: t("chipMaxArea"),
 	},
 	{
 		id: "minRooms",
-		label: "Min rooms",
+		label: t("minRooms"),
 		placeholder: "2",
-		chipLabel: "Min rooms",
+		chipLabel: t("chipMinRooms"),
 	},
 	{
 		id: "maxRooms",
-		label: "Max rooms",
+		label: t("maxRooms"),
 		placeholder: "4",
-		chipLabel: "Max rooms",
+		chipLabel: t("chipMaxRooms"),
 	},
 	{
 		id: "minFloor",
-		label: "Min floor",
+		label: t("minFloor"),
 		placeholder: "2",
-		chipLabel: "Min flr",
+		chipLabel: t("chipMinFloor"),
 	},
 	{
 		id: "maxFloor",
-		label: "Max floor",
+		label: t("maxFloor"),
 		placeholder: "15",
-		chipLabel: "Max flr",
+		chipLabel: t("chipMaxFloor"),
 	},
 	{
 		id: "minTotalFloors",
-		label: "Min building floors",
+		label: t("minTotalFloors"),
 		placeholder: "2",
-		chipLabel: "Min bldg flr",
+		chipLabel: t("chipMinTotalFloors"),
 	},
 	{
 		id: "maxTotalFloors",
-		label: "Max building floors",
+		label: t("maxTotalFloors"),
 		placeholder: "5",
-		chipLabel: "Max bldg flr",
+		chipLabel: t("chipMaxTotalFloors"),
 	},
 ];
 
-const CHECK_FILTERS = [
-	{ id: "hasRepair", label: "Repaired" },
-	{ id: "hasDocument", label: "Has document" },
-	{ id: "hasMortgage", label: "Mortgage eligible" },
-	{ id: "isUrgent", label: "Urgent only" },
-	{ id: "notLastFloor", label: "Not last floor" },
+const CHECK_FILTERS = () => [
+	{ id: "hasRepair", label: t("hasRepair") },
+	{ id: "hasDocument", label: t("hasDocument") },
+	{ id: "hasMortgage", label: t("hasMortgage") },
+	{ id: "isUrgent", label: t("isUrgent") },
+	{ id: "notLastFloor", label: t("notLastFloor") },
 ];
 
 export function initSearch(container: HTMLElement): () => void {
@@ -102,7 +103,7 @@ export function initSearch(container: HTMLElement): () => void {
 		const row = ge("chips-row");
 		const chips: HTMLElement[] = [];
 
-		for (const f of CHECK_FILTERS) {
+		for (const f of CHECK_FILTERS()) {
 			if (cb(f.id)) {
 				chips.push(
 					CloseableChip({
@@ -116,7 +117,7 @@ export function initSearch(container: HTMLElement): () => void {
 			}
 		}
 
-		for (const f of NUM_FILTERS) {
+		for (const f of NUM_FILTERS()) {
 			const val = v(f.id);
 			if (val) {
 				chips.push(
@@ -135,7 +136,7 @@ export function initSearch(container: HTMLElement): () => void {
 		if (cat) {
 			chips.push(
 				CloseableChip({
-					label: `Category: ${cat}`,
+					label: `${t("chipCategory")}: ${cat}`,
 					onClose: () => {
 						(ge("category") as HTMLSelectElement).value = "";
 						updateChips();
@@ -148,7 +149,7 @@ export function initSearch(container: HTMLElement): () => void {
 		if (am) {
 			chips.push(
 				CloseableChip({
-					label: `Active mortgage: ${am === "true" ? "Yes" : "No"}`,
+					label: `${t("chipActiveMortgage")}: ${am === "true" ? t("yes") : t("no")}`,
 					onClose: () => {
 						(ge("hasActiveMortgage") as HTMLSelectElement).value = "";
 						updateChips();
@@ -221,7 +222,7 @@ export function initSearch(container: HTMLElement): () => void {
 				offset: String(state.currentOffset),
 			});
 
-			for (const f of NUM_FILTERS) {
+			for (const f of NUM_FILTERS()) {
 				const val = v(f.id);
 				if (val) p.set(f.id, val);
 			}
@@ -288,11 +289,11 @@ export function initSearch(container: HTMLElement): () => void {
 			<div class="grid grid-cols-[1fr_260px_120px] gap-3 items-end max-[680px]:grid-cols-1">
 				${Field({
 					htmlFor: "loc",
-					label: "Location",
+					label: t("location"),
 					input: MultiSelect({
 						id: "loc",
 						options: [],
-						placeholder: "Choose locations...",
+						placeholder: t("chooseLocs"),
 						className: "w-full",
 						onChange: () => {
 							updateChips();
@@ -302,7 +303,7 @@ export function initSearch(container: HTMLElement): () => void {
 				})}
 				<div class="flex flex-col gap-1.5">
 					<div class="flex items-center justify-between">
-						${Label({ htmlFor: "thresh", text: "Discount threshold" })}
+						${Label({ htmlFor: "thresh", text: t("discountThreshold") })}
 						<span id="tval" class="text-xs font-bold text-(--accent) bg-(--accent-dim) px-2 py-0.5 rounded-full tracking-[0.02em]">10%</span>
 					</div>
 					${Range({ id: "thresh", min: 1, max: 50, value: 10 })}
@@ -310,20 +311,20 @@ export function initSearch(container: HTMLElement): () => void {
 				<div class="flex flex-col gap-1.5">
 					<span class="text-xs font-medium text-(--muted) tracking-[0.06em] uppercase invisible" aria-hidden="true">Go</span>
 					<button type="button" id="search-btn" class="inline-flex items-center justify-center gap-1.5 bg-(--text) text-(--bg) border-none rounded-(--r) px-4 py-2.25 font-semibold text-sm h-10 transition-all hover:bg-[#d0d0e0] active:scale-[0.97] disabled:opacity-45 disabled:cursor-not-allowed">
-						${Icons.search()} Search
+						${Icons.search()} ${t("search")}
 					</button>
 				</div>
 			</div>
 
 			<button type="button" id="adv-toggle" aria-expanded="false" class="group inline-flex items-center gap-1.25 bg-transparent border border-(--border) rounded-(--r-sm) px-3 py-1.5 text-(--text-2) text-xs font-medium mt-3.5 transition-all hover:border-(--border-h) hover:text-(--text) hover:bg-(--surface-2) aria-expanded:text-(--accent) aria-expanded:border-[rgba(99,102,241,0.4)] aria-expanded:bg-(--accent-dim)">
 				${Icons.chevron(12, "transition-transform duration-200 group-aria-expanded:rotate-180")}
-				Advanced filters
+				${t("advancedFilters")}
 				<span id="adv-cnt" class="bg-(--accent) text-white rounded-full px-1.5 py-px text-xs font-semibold" style="display:none"></span>
 			</button>
 
 			<div id="adv-panel" class="overflow-hidden max-h-0 opacity-0 transition-all ease-in-out duration-300 [&.open]:max-h-150 [&.open]:opacity-100">
 				<div class="grid grid-cols-4 gap-2.5 pt-4 border-t border-(--border) mt-3.5 max-[680px]:grid-cols-2">
-					${NUM_FILTERS.map((f) =>
+					${NUM_FILTERS().map((f) =>
 						Field({
 							htmlFor: f.id,
 							label: f.label,
@@ -337,33 +338,33 @@ export function initSearch(container: HTMLElement): () => void {
 					)}
 					${Field({
 						htmlFor: "category",
-						label: "Category",
+						label: t("category"),
 						input: Select({
 							id: "category",
 							className: "w-full",
 							options: [
-								{ value: "", label: "Any" },
-								{ value: "Yeni tikili", label: "New build" },
-								{ value: "Köhnə tikili", label: "Secondary" },
+								{ value: "", label: t("any") },
+								{ value: "Yeni tikili", label: t("newBuild") },
+								{ value: "Köhnə tikili", label: t("secondary") },
 							],
 						}),
 					})}
 					${Field({
 						htmlFor: "hasActiveMortgage",
-						label: "Active mortgage",
+						label: t("activeMortgage"),
 						input: Select({
 							id: "hasActiveMortgage",
 							className: "w-full",
 							options: [
-								{ value: "", label: "Any" },
-								{ value: "false", label: "No" },
-								{ value: "true", label: "Yes" },
+								{ value: "", label: t("any") },
+								{ value: "false", label: t("no") },
+								{ value: "true", label: t("yes") },
 							],
 						}),
 					})}
 				</div>
 				<div class="flex flex-wrap gap-1.75 pt-3.5">
-					${CHECK_FILTERS.map((f) => Chip({ id: f.id, label: f.label }))}
+					${CHECK_FILTERS().map((f) => Chip({ id: f.id, label: f.label }))}
 				</div>
 			</div>
 		</div>
@@ -379,7 +380,7 @@ export function initSearch(container: HTMLElement): () => void {
 		ge("tval").textContent = `${threshVal}%`;
 		setRangeProgress(ge("thresh") as HTMLInputElement);
 	}
-	for (const f of NUM_FILTERS) {
+	for (const f of NUM_FILTERS()) {
 		const val = params.get(f.id);
 		if (val) (ge(f.id) as HTMLInputElement).value = val;
 	}
@@ -387,7 +388,7 @@ export function initSearch(container: HTMLElement): () => void {
 	if (catVal) (ge("category") as HTMLSelectElement).value = catVal;
 	const amVal = params.get("hasActiveMortgage");
 	if (amVal) (ge("hasActiveMortgage") as HTMLSelectElement).value = amVal;
-	for (const f of CHECK_FILTERS) {
+	for (const f of CHECK_FILTERS()) {
 		if (params.get(f.id) === "true") {
 			(ge(f.id) as HTMLInputElement).checked = true;
 		}
@@ -422,10 +423,10 @@ export function initSearch(container: HTMLElement): () => void {
 
 	// Filter change listeners
 	add(ge("hasActiveMortgage"), "change", updateChips);
-	for (const f of CHECK_FILTERS) {
+	for (const f of CHECK_FILTERS()) {
 		add(ge(f.id), "change", updateChips);
 	}
-	for (const f of NUM_FILTERS) add(ge(f.id), "input", updateChips);
+	for (const f of NUM_FILTERS()) add(ge(f.id), "input", updateChips);
 	add(ge("category"), "input", updateChips);
 
 	add(document, "keydown", (e: KeyboardEvent) => {
@@ -446,7 +447,7 @@ export function initSearch(container: HTMLElement): () => void {
 			const r = await fetch("/api/deals/locations");
 			const d = (await r.json()) as { data: string[] };
 			const options = [
-				{ value: "__all__", label: "All locations" },
+				{ value: "__all__", label: t("allLocations") },
 				...d.data.map((l) => ({ value: l, label: l })),
 			];
 			el.setOptions(options);
@@ -458,7 +459,7 @@ export function initSearch(container: HTMLElement): () => void {
 				void doSearch(false);
 			}
 		} catch {
-			el.setOptions([{ value: "", label: "Failed to load locations" }]);
+			el.setOptions([{ value: "", label: t("failedLocs") }]);
 		}
 	})();
 

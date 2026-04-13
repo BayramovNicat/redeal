@@ -1,3 +1,4 @@
+import { t } from "../core/i18n";
 import type { CardCallbacks, Property } from "../core/types";
 import { fmt, fmtFloor, frag, html, timeAgo } from "../core/utils";
 import { Button } from "./button";
@@ -23,7 +24,7 @@ export function Product({
 	view,
 	callbacks,
 }: ProductProps): HTMLElement {
-	const t = ts(property.tier);
+	const tier = ts(property.tier);
 	const floorStr = fmtFloor(property.floor, property.total_floors);
 
 	const { bmarkBtn, hideBtn, descBtn, mapBtn, galleryBtn } = createButtons(
@@ -41,28 +42,28 @@ export function Product({
 			{
 				if: property.is_urgent,
 				icon: "⚡",
-				label: "Urgent",
+				label: t("tagUrgent"),
 				cls: "text-red-500 border-red-500/25 bg-red-500/10",
 			},
 			{
 				if: property.has_document,
-				label: "Document",
+				label: t("tagDocument"),
 				cls: "text-blue-500 border-blue-500/25 bg-blue-500/10",
 			},
 			{
 				if: property.has_repair,
-				label: "Repaired",
+				label: t("tagRepaired"),
 				cls: "text-green-500 border-green-500/25 bg-green-500/10",
 			},
 			{
 				if: property.has_mortgage,
-				label: "Mortgage",
+				label: t("tagMortgage"),
 				cls: "text-slate-400 border-slate-700",
 			},
 			{
 				if: property.has_active_mortgage,
 				icon: "⚠",
-				label: "Active mortgage",
+				label: t("tagActiveMortgage"),
 				cls: "text-yellow-500 border-yellow-500/25 bg-yellow-500/10",
 			},
 			{ if: ago, label: ago, cls: "text-slate-500 border-slate-700" },
@@ -102,7 +103,7 @@ export function Product({
         <div class="flex flex-col items-end gap-1.5 shrink-0">
           <span
             class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
-            style="color:${t.c};background:${t.bg};border-color:${t.b}"
+            style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
             >${property.tier}</span
           >
           <div class="flex items-center gap-1">${bmarkBtn}${hideBtn}</div>
@@ -111,24 +112,24 @@ export function Product({
       <div>
         <div class="flex items-center justify-between mb-1.75">
           <span class="text-xs text-(--muted)"
-            >Market avg ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
+            >${t("marketAvg")} ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
           >
-          <span class="text-base font-bold" style="color:${t.c}"
+          <span class="text-base font-bold" style="color:${tier.c}"
             >-${property.discount_percent}%</span
           >
         </div>
         <div class="h-1 bg-(--surface-3) rounded-full overflow-hidden">
           <div
             class="h-full rounded-full transition-[width] duration-500 ease-in-out"
-            style="width:${barW}%;background:${t.hex}"
+            style="width:${barW}%;background:${tier.hex}"
           ></div>
         </div>
       </div>
       <div class="grid grid-cols-4 gap-1.5">
-        ${StatBox({ label: "Area", value: `${fmt(property.area_sqm, 1)} m²` })}
-        ${StatBox({ label: "₼/m²", value: fmt(property.price_per_sqm, 0) })}
-        ${StatBox({ label: "Rooms", value: property.rooms ?? "—" })}
-        ${StatBox({ label: "Floor", value: floorStr })}
+        ${StatBox({ label: t("area"), value: `${fmt(property.area_sqm, 1)} m²` })}
+        ${StatBox({ label: t("ppsm"), value: fmt(property.price_per_sqm, 0) })}
+        ${StatBox({ label: t("rooms"), value: property.rooms ?? "—" })}
+        ${StatBox({ label: t("floor"), value: floorStr })}
       </div>
       ${
 				tags.length
@@ -141,7 +142,7 @@ export function Product({
           href="${property.source_url}"
           target="_blank"
           rel="noopener"
-          >View listing ${Icons.external()}</a
+          >${t("viewListing")} ${Icons.external()}</a
         >
         <div class="flex items-center gap-1">${galleryBtn}${descBtn}${mapBtn}</div>
       </div>
@@ -160,7 +161,7 @@ export function Product({
       hover:bg-(--surface-2)"
     >
       <div class="text-center">
-        <div class="text-lg font-bold" style="color: ${t.c}">
+        <div class="text-lg font-bold" style="color: ${tier.c}">
           -${property.discount_percent}%
         </div>
         <div class="text-xs text-(--muted) mt-0.5">
@@ -175,8 +176,8 @@ export function Product({
           </span>
         </div>
         <div class="mt-0.5 text-xs text-(--muted) truncate">
-          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} rooms ·
-          floor ${floorStr} ·
+          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} ${t("rooms_")} ·
+          ${t("floor_")} ${floorStr} ·
           ₼${fmt(property.price_per_sqm, 0)}/m²${
 						property.is_urgent ? " · ⚡" : ""
 					}
@@ -189,7 +190,7 @@ export function Product({
         target="_blank"
         rel="noopener"
         style="white-space:nowrap"
-        >View ↗</a
+        >${t("viewShort")}</a
       >
     </div>`;
 	}
@@ -245,7 +246,7 @@ function createButtons(property: Property, bookmarked: boolean) {
 		variant: "square",
 		color: "yellow",
 		active: bookmarked,
-		title: "Save",
+		title: t("btnSave"),
 		attrs: { "data-action": "bmark" },
 		content: Icons.bookmark(bookmarked),
 	});
@@ -253,7 +254,7 @@ function createButtons(property: Property, bookmarked: boolean) {
 	const hideBtn = Button({
 		variant: "square",
 		color: "red",
-		title: "Hide",
+		title: t("btnHide"),
 		attrs: { "data-action": "hide" },
 		content: Icons.hide(),
 	});
@@ -262,7 +263,7 @@ function createButtons(property: Property, bookmarked: boolean) {
 		? Button({
 				variant: "square",
 				color: "green",
-				title: "Description",
+				title: t("btnDescription"),
 				attrs: { "data-action": "desc" },
 				content: frag`${Icons.desc()}`,
 			})
@@ -273,7 +274,7 @@ function createButtons(property: Property, bookmarked: boolean) {
 			? Button({
 					variant: "square",
 					color: "indigo",
-					title: "Map",
+					title: t("btnMap"),
 					attrs: { "data-action": "map" },
 					content: frag`${Icons.map()}`,
 				})
@@ -284,7 +285,7 @@ function createButtons(property: Property, bookmarked: boolean) {
 			? Button({
 					variant: "square",
 					color: "blue",
-					title: "Photos",
+					title: t("btnPhotos"),
 					attrs: { "data-action": "gallery" },
 					content: frag`${Icons.gallery()}`,
 				})

@@ -1,6 +1,7 @@
 import { bus, EVENTS } from "../core/events";
+import { t } from "../core/i18n";
 import type { TrendPoint } from "../core/types";
-import { fmt, ge, hide, html, show } from "../core/utils";
+import { fmt, ge, getLocale, hide, html, show } from "../core/utils";
 
 /**
  * Trend feature manages the property price trend chart above search results.
@@ -14,7 +15,7 @@ export function initTrend(container: HTMLElement): () => void {
         <div class="flex items-start justify-between mb-3.5 gap-3">
           <div>
             <div class="text-xs text-(--muted) mb-1.25 tracking-[0.02em]">
-              Avg ₼/m² trend · <span id="trend-loc"></span>
+              ${t("avgTrend")} · <span id="trend-loc"></span>
             </div>
             <div class="flex items-baseline gap-2 flex-wrap">
               <span class="text-[20px] font-bold tracking-[-0.5px]" id="trend-cur"></span>
@@ -73,7 +74,7 @@ export function initTrend(container: HTMLElement): () => void {
 
 		const chgEl = ge("trend-chg");
 		const sign = changePct >= 0 ? "+" : "";
-		chgEl.textContent = `${sign}${changePct.toFixed(1)}% vs ${data.length}w ago`;
+		chgEl.textContent = `${sign}${changePct.toFixed(1)}% vs ${data.length}${t("unitWeek")} ${t("ago")}`;
 		chgEl.style.color = up
 			? "var(--red)"
 			: dn
@@ -89,8 +90,10 @@ export function initTrend(container: HTMLElement): () => void {
 			: dn
 				? "var(--green-b)"
 				: "var(--border)";
-		ge("trend-weeks").textContent =
-			`${data.length} week${data.length !== 1 ? "s" : ""} of data`;
+		ge("trend-weeks").textContent = t(
+			data.length !== 1 ? "weeksOfData" : "weekOfData",
+			{ n: data.length },
+		);
 
 		ge("trend-dates").innerHTML =
 			`<span>${dfmt(data[0]?.week ?? "")}</span><span>${dfmt(data[data.length - 1]?.week ?? "")}</span>`;
@@ -159,7 +162,7 @@ export function initTrend(container: HTMLElement): () => void {
 			);
 			const p = data[idx];
 			if (!p) return;
-			tip.innerHTML = `<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} listings</span>`;
+			tip.innerHTML = `<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} ${t(p.listing_count !== 1 ? "listings" : "listing")}</span>`;
 			tip.style.display = "block";
 			const tipW = tip.offsetWidth || 160;
 			const left = Math.min(e.offsetX + 12, svgW - tipW - 4);
@@ -172,7 +175,7 @@ export function initTrend(container: HTMLElement): () => void {
 	}
 
 	function dfmt(s: string): string {
-		return new Date(s).toLocaleDateString("en-GB", {
+		return new Date(s).toLocaleDateString(getLocale(), {
 			day: "numeric",
 			month: "short",
 		});

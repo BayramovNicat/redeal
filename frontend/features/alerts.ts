@@ -1,4 +1,5 @@
 import { bus, EVENTS } from "../core/events";
+import { t } from "../core/i18n";
 import type { Alert, AlertFilters } from "../core/types";
 import { ge, html, toast } from "../core/utils";
 import { Button } from "../ui/button";
@@ -12,14 +13,14 @@ export function initAlerts(root: HTMLElement): () => void {
 	// 1. Create UI Elements
 	const chatIdInput = Input({
 		id: "alert-chat-id",
-		placeholder: "e.g. 123456789",
+		placeholder: t("chatIdPlaceholder"),
 		className: "w-full",
 		attrs: { inputmode: "numeric" },
 	});
 
 	const labelInput = Input({
 		id: "alert-label",
-		placeholder: "e.g. 2BR Nərimanov",
+		placeholder: t("alertLabelPlaceholder"),
 		className: "w-full",
 		attrs: { maxlength: "80" },
 	});
@@ -29,19 +30,19 @@ export function initAlerts(root: HTMLElement): () => void {
 	const itemsEl = html`<div class="flex flex-col gap-6"></div>`;
 
 	listEl.append(
-		html`<div class="text-xs font-semibold text-(--muted) uppercase tracking-[0.05em] mb-2">Active alerts</div>`,
+		html`<div class="text-xs font-semibold text-(--muted) uppercase tracking-[0.05em] mb-2">${t("activeAlerts")}</div>`,
 		itemsEl,
 		html`<div class="h-px bg-(--border) my-4"></div>`,
 	);
 
 	const cancelBtn = Button({
-		content: "Cancel",
+		content: t("cancel"),
 		variant: "base",
 		color: "indigo",
 	});
 
 	const saveBtn = Button({
-		content: "Save alert",
+		content: t("saveAlert"),
 		variant: "base",
 		color: "solid",
 	});
@@ -52,15 +53,18 @@ export function initAlerts(root: HTMLElement): () => void {
 		className: "p-6",
 		content: html`
       <div>
-        <div class="text-base font-semibold text-(--text) mb-4">Telegram alerts</div>
+        <div class="text-base font-semibold text-(--text) mb-4">${t("telegramAlerts")}</div>
         ${listEl}
         <div class="text-xs text-(--muted) leading-[1.6] mb-3.5">
-          Open <a href="https://t.me/BakuDealsBot" target="_blank" rel="noopener" class="text-(--blue)">@BakuDealsBot</a> 
-          and send <code class="bg-(--surface-3) px-1 py-0.5 rounded-sm">/start</code> to get your Chat ID.
+          ${t("botInstruction", {
+						bot: '<a href="https://t.me/BakuDealsBot" target="_blank" rel="noopener" class="text-(--blue)">@BakuDealsBot</a>',
+						start:
+							'<code class="bg-(--surface-3) px-1 py-0.5 rounded-sm">/start</code>',
+					})}
         </div>
         <div class="flex flex-col gap-3">
-          ${Field({ htmlFor: "alert-chat-id", label: "Telegram Chat ID", input: chatIdInput })}
-          ${Field({ htmlFor: "alert-label", label: "Label (optional)", input: labelInput })}
+          ${Field({ htmlFor: "alert-chat-id", label: t("chatIdLabel"), input: chatIdInput })}
+          ${Field({ htmlFor: "alert-label", label: t("alertLabel"), input: labelInput })}
           ${previewEl}
           <div class="flex gap-2 justify-end mt-1">
             ${cancelBtn}
@@ -96,7 +100,7 @@ export function initAlerts(root: HTMLElement): () => void {
 	const handleSave = async () => {
 		const chatId = chatIdInput.value.trim();
 		if (!/^\d+$/.test(chatId)) {
-			toast("Enter a valid Telegram Chat ID (digits only)", true);
+			toast(t("invalidChatId"), true);
 			return;
 		}
 
@@ -113,14 +117,12 @@ export function initAlerts(root: HTMLElement): () => void {
 			});
 			const d = (await res.json()) as { error?: string };
 			if (!res.ok || d.error) {
-				toast(d.error ?? "Failed to create alert", true);
+				toast(d.error ?? t("failedAlert"), true);
 				return;
 			}
 			localStorage.setItem("re-chatid", chatId);
 			modal.close();
-			toast(
-				"Alert saved! You'll get a Telegram message when new deals appear.",
-			);
+			toast(t("alertSaved"));
 		} catch (e) {
 			toast((e as Error).message, true);
 		} finally {
@@ -138,7 +140,7 @@ export function initAlerts(root: HTMLElement): () => void {
 		if (itemsEl.children.length === 0) {
 			listEl.style.display = "none";
 		}
-		toast("Alert deleted");
+		toast(t("alertDeleted"));
 	};
 
 	const fetchAlerts = async (chatId: string) => {
@@ -206,7 +208,7 @@ function updateAlertList(
       <div class="flex items-center gap-2 bg-(--surface-2) border border-(--border) rounded-md px-2.5 py-2 transition-all">
         <div class="flex-1 min-w-0">
           <div class="text-[12px] font-semibold text-(--text) whitespace-nowrap overflow-hidden text-ellipsis">
-            ${a.label ?? "Unnamed"}
+            ${a.label ?? t("unnamed")}
           </div>
           <div class="text-[11px] text-(--muted) mt-px whitespace-nowrap overflow-hidden text-ellipsis">
             ${preview}
@@ -219,7 +221,7 @@ function updateAlertList(
 			content: Icons.trash(),
 			variant: "ghost",
 			color: "red",
-			title: "Delete alert",
+			title: t("deleteAlert"),
 			className: "shrink-0",
 		});
 		delBtn.addEventListener("click", () => onDelete(a.token, row));
@@ -279,18 +281,18 @@ function getCurrentFilters(): AlertFilters {
  */
 function buildFilterPreview(f: AlertFilters): string {
 	const parts = [
-		`📍 ${f.location === "__all__" ? "All locations" : f.location}`,
-		`📉 ≥${f.threshold}% below avg`,
+		`📍 ${f.location === "__all__" ? t("allLocsPrev") : f.location}`,
+		`📉 ≥${f.threshold}% ${t("belowAvg")}`,
 	];
 	if (f.minPrice || f.maxPrice)
 		parts.push(`₼ ${f.minPrice ?? ""}-${f.maxPrice ?? ""}`);
 	if (f.minRooms || f.maxRooms)
-		parts.push(`${f.minRooms ?? ""}-${f.maxRooms ?? ""} rooms`);
+		parts.push(`${f.minRooms ?? ""}-${f.maxRooms ?? ""} ${t("previewRooms")}`);
 	if (f.minArea || f.maxArea)
-		parts.push(`${f.minArea ?? ""}-${f.maxArea ?? ""}m²`);
-	if (f.hasRepair) parts.push("Repaired");
-	if (f.hasDocument) parts.push("Document");
-	if (f.isUrgent) parts.push("Urgent");
-	if (f.hasActiveMortgage === false) parts.push("No active mortgage");
+		parts.push(`${f.minArea ?? ""}-${f.maxArea ?? ""}${t("previewArea")}`);
+	if (f.hasRepair) parts.push(t("previewRepaired"));
+	if (f.hasDocument) parts.push(t("previewDocument"));
+	if (f.isUrgent) parts.push(t("previewUrgent"));
+	if (f.hasActiveMortgage === false) parts.push(t("previewNoActiveMortgage"));
 	return parts.join(" · ");
 }

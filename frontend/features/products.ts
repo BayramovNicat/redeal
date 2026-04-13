@@ -1,4 +1,5 @@
 import { bus, EVENTS } from "../core/events";
+import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { CardCallbacks, Property } from "../core/types";
 import { fmt, frag, ge, hide, html, show, toast } from "../core/utils";
@@ -31,23 +32,23 @@ export function initProducts(container: HTMLElement): () => void {
         <div class="flex items-center gap-1.75">
           ${Button({
 						id: "alert-btn",
-						title: "Get Telegram alerts for new matches",
-						content: frag`${Icons.bell()} Alert me`,
+						title: t("telegramAlerts"),
+						content: frag`${Icons.bell()} ${t("alertMe")}`,
 					})}
           ${Button({
 						id: "saved-btn",
 						className: "hidden",
-						content: frag`${Icons.bookmark(false)} Saved <span id="saved-badge"></span>`,
+						content: frag`${Icons.bookmark(false)} ${t("saved")} <span id="saved-badge"></span>`,
 					})}
           ${Select({
 						id: "sort-sel",
 						variant: "xs",
 						options: [
-							{ value: "disc", label: "Most discounted" },
-							{ value: "price-asc", label: "Price: low → high" },
-							{ value: "price-desc", label: "Price: high → low" },
-							{ value: "area", label: "Largest first" },
-							{ value: "ppsm", label: "Cheapest ₼/m²" },
+							{ value: "disc", label: t("sortDisc") },
+							{ value: "price-asc", label: t("sortPriceAsc") },
+							{ value: "price-desc", label: t("sortPriceDesc") },
+							{ value: "area", label: t("sortArea") },
+							{ value: "ppsm", label: t("sortPpsm") },
 						],
 					})}
           ${Button({
@@ -55,7 +56,7 @@ export function initProducts(container: HTMLElement): () => void {
 						variant: "square",
 						color: "indigo",
 						active: state.currentView === "grid",
-						title: "Grid view",
+						title: t("gridView"),
 						content: Icons.grid(),
 					})}
           ${Button({
@@ -63,7 +64,7 @@ export function initProducts(container: HTMLElement): () => void {
 						variant: "square",
 						color: "indigo",
 						active: state.currentView === "list",
-						title: "List view",
+						title: t("listView"),
 						content: Icons.list(),
 					})}
         </div>
@@ -73,20 +74,19 @@ export function initProducts(container: HTMLElement): () => void {
 	const loading = EmptyState({
 		id: "s-loading",
 		icon: Icons.spinnerLg(),
-		title: "Searching for deals…",
+		title: t("searching"),
 	});
 	const empty = EmptyState({
 		id: "s-empty",
 		icon: Icons.noResults(),
-		title: "No results found",
-		subtitle: "Try lowering the discount threshold or removing some filters.",
+		title: t("noResults"),
+		subtitle: t("noResultsSub"),
 	});
 	const welcome = EmptyState({
 		id: "s-welcome",
 		icon: Icons.homeLg(),
-		title: "Discover undervalued properties",
-		subtitle:
-			"Pick a location and discount threshold to find listings priced below the local market average.",
+		title: t("welcome"),
+		subtitle: t("welcomeSub"),
 		hidden: false,
 		padTop: true,
 	});
@@ -172,13 +172,13 @@ export function initProducts(container: HTMLElement): () => void {
 
 		const showing = list.length;
 		ge("results-meta").innerHTML = state.showingSaved
-			? `<strong>${showing}</strong> saved deal${showing !== 1 ? "s" : ""}`
-			: `<strong>${showing}</strong> result${showing !== 1 ? "s" : ""}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} total</span>` : ""}`;
+			? `<strong>${showing}</strong> ${showing !== 1 ? t("savedDeals") : t("savedDeal")}`
+			: `<strong>${showing}</strong> ${showing !== 1 ? t("results") : t("result")}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>` : ""}`;
 
 		if (!state.showingSaved && state.allResults.length < state.currentTotal) {
 			show("load-more");
 			ge("load-info").textContent =
-				`Showing ${state.allResults.length} of ${fmt(state.currentTotal)}`;
+				`${t("showing")} ${state.allResults.length} ${t("of")} ${fmt(state.currentTotal)}`;
 			setupScrollObserver(() =>
 				bus.emit(EVENTS.SEARCH_STARTED, { more: true }),
 			);
@@ -220,10 +220,10 @@ export function initProducts(container: HTMLElement): () => void {
 	function toggleBM(p: Property): void {
 		if (state.bookmarks.has(p.source_url)) {
 			state.bookmarks.delete(p.source_url);
-			toast("Removed from saved");
+			toast(t("toastRemoved"));
 		} else {
 			state.bookmarks.add(p.source_url);
-			toast("★ Deal saved");
+			toast(t("toastSaved"));
 		}
 		localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
 		render();
@@ -234,7 +234,7 @@ export function initProducts(container: HTMLElement): () => void {
 		state.bookmarks.delete(url);
 		localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
 		localStorage.setItem("re-hidden", JSON.stringify([...state.hidden]));
-		toast("Item hidden");
+		toast(t("toastHidden"));
 		render();
 	}
 

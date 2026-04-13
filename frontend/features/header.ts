@@ -1,10 +1,31 @@
 import { bus, EVENTS } from "../core/events";
+import { getLang, setLang, t } from "../core/i18n";
 import { frag, ge, html } from "../core/utils";
 import { openHeatmap } from "../dialogs/heatmap";
 import { Button } from "../ui/button";
 import { HealthStatus } from "../ui/health-status";
 import { Icons } from "../ui/icons";
 import type { MultiSelectElement } from "../ui/multi-select";
+
+const LANGS = [
+	{ code: "en" as const, label: "EN" },
+	{ code: "az" as const, label: "AZ" },
+	{ code: "ru" as const, label: "RU" },
+];
+
+function LangSwitcher(): HTMLElement {
+	const cur = getLang();
+	const el = html`<div class="flex items-center gap-0.5 border border-(--border) rounded-(--r-sm) p-0.5"></div>`;
+	for (const lang of LANGS) {
+		const btn = html`<button
+      type="button"
+      class="px-2 py-0.5 text-xs font-semibold rounded-[3px] transition-colors duration-150 ${cur === lang.code ? "bg-(--accent) text-white" : "text-(--muted) hover:text-(--text)"}"
+    >${lang.label}</button>`;
+		btn.addEventListener("click", () => setLang(lang.code));
+		el.appendChild(btn);
+	}
+	return el;
+}
 
 export function initHeader(container: HTMLElement): () => void {
 	const logo = html`
@@ -15,9 +36,9 @@ export function initHeader(container: HTMLElement): () => void {
         ${Icons.home()}
       </div>
       <div>
-        <div class="text-base font-bold tracking-[-0.3px]">RE Finder</div>
+        <div class="text-base font-bold tracking-[-0.3px]">${t("appName")}</div>
         <div class="text-xs text-(--muted) mt-px">
-          Baku undervalued property scanner
+          ${t("appTagline")}
         </div>
       </div>
     </div>
@@ -26,9 +47,9 @@ export function initHeader(container: HTMLElement): () => void {
 	logo.addEventListener("click", () => window.location.reload());
 
 	const mapBtn = Button({
-		title: "Price heatmap by district",
+		title: t("priceMapTitle"),
 		color: "indigo",
-		content: frag`${Icons.globe()} Price Map`,
+		content: frag`${Icons.globe()} ${t("priceMap")}`,
 	});
 
 	const header = html`
@@ -36,7 +57,7 @@ export function initHeader(container: HTMLElement): () => void {
       class="flex items-center justify-between pt-6 pb-5 border-b border-(--border) mb-6"
     >
       ${logo}
-      <div class="flex items-center gap-2">${mapBtn} ${HealthStatus()}</div>
+      <div class="flex items-center gap-2">${LangSwitcher()} ${mapBtn} ${HealthStatus()}</div>
     </header>
   `;
 
