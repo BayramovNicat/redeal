@@ -1,7 +1,7 @@
 import { bus, EVENTS } from "../core/events";
 import { state } from "../core/state";
 import type { Property } from "../core/types";
-import { ge, hide, html, show, toast } from "../core/utils";
+import { frag, ge, hide, show, toast } from "../core/utils";
 import { Chip, CloseableChip } from "../ui/chip";
 import { Field } from "../ui/field";
 import { Icons } from "../ui/icons";
@@ -252,7 +252,7 @@ export function initSearch(container: HTMLElement): () => void {
 	}
 
 	// 1. Render Structure
-	const root = html`
+	const root = frag`
 		<div class="bg-(--surface) border border-(--border) rounded-(--r-lg) p-5 mb-3.5">
 			<div class="grid grid-cols-[1fr_260px_120px] gap-3 items-end max-[680px]:grid-cols-1">
 				${Field({
