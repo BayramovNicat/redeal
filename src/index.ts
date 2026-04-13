@@ -18,6 +18,7 @@ import { handleWebhook } from "./services/telegram.service.js";
 import { queryRaw } from "./utils/prisma.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
+const IS_DEV = process.env.NODE_ENV === "development";
 
 // --- Brotli helpers ---
 
@@ -58,27 +59,35 @@ async function precompressStatic(dir: string) {
 
 // Compute content hash at startup for cache busting
 async function computeAssetHash(): Promise<string> {
-	const publicDir = `${import.meta.dir}/../public`;
-	const [js, css] = await Promise.all([
-		Bun.file(`${publicDir}/app.js`).arrayBuffer(),
-		Bun.file(`${publicDir}/styles.css`).arrayBuffer(),
-	]);
-	const hasher = new Bun.CryptoHasher("md5");
-	hasher.update(js);
-	hasher.update(css);
-	return hasher.digest("hex").slice(0, 8);
+	try {
+		const publicDir = `${import.meta.dir}/../public`;
+		const [js, css] = await Promise.all([
+			Bun.file(`${publicDir}/app.js`).arrayBuffer(),
+			Bun.file(`${publicDir}/styles.css`).arrayBuffer(),
+		]);
+		const hasher = new Bun.CryptoHasher("md5");
+		hasher.update(js);
+		hasher.update(css);
+		return hasher.digest("hex").slice(0, 8);
+	} catch {
+		return "dev";
+	}
 }
 
 const publicDir = `${import.meta.dir}/../public`;
 const ASSET_VERSION = await computeAssetHash();
-await precompressStatic(publicDir);
-console.log(`Brotli pre-compressed: ${[...brAssets.keys()].join(", ")}`);
+
+if (!IS_DEV) {
+	await precompressStatic(publicDir);
+	console.log(`Brotli pre-compressed: ${[...brAssets.keys()].join(", ")}`);
+}
 
 async function getVersionedHtml(): Promise<string> {
 	const raw = await Bun.file(`${publicDir}/index.html`).text();
+	const version = IS_DEV ? Date.now().toString() : ASSET_VERSION;
 	return raw
-		.replace('href="/styles.css"', `href="/styles.css?v=${ASSET_VERSION}"`)
-		.replace('src="/app.js"', `src="/app.js?v=${ASSET_VERSION}"`);
+		.replace('href="/styles.css"', `href="/styles.css?v=${version}"`)
+		.replace('src="/app.js"', `src="/app.js?v=${version}"`);
 }
 
 console.log(`Asset version: ${ASSET_VERSION}`);
@@ -116,7 +125,7 @@ Bun.serve({
 
 		// Serve pre-compressed static assets (strip query string for lookup)
 		const asset = brAssets.get(pathname);
-		if (acceptsBr && asset) {
+		if (!IS_DEV && acceptsBr && asset) {
 			return new Response(asset.data, {
 				headers: {
 					"Content-Type": asset.contentType,
@@ -129,7 +138,11 @@ Bun.serve({
 
 		const filePath = `${publicDir}${pathname}`;
 		const file = Bun.file(filePath);
-		if (await file.exists()) return new Response(file);
+		if (await file.exists()) {
+			return new Response(file, {
+				headers: IS_DEV ? { "Cache-Control": "no-store" } : {},
+			});
+		}
 		// SPA fallback — read fresh so frontend rebuilds are reflected immediately
 		return new Response(await getVersionedHtml(), {
 			headers: {

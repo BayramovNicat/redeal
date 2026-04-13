@@ -15,18 +15,22 @@ const INNER = `
 
 export function Dialog({
 	id,
-	width,
+	maxWidth,
 	className = "",
 	content,
 }: {
 	id: string;
-	width: string;
+	/** Maximum width of the dialog panel (e.g. "860px"). Responsive width is handled automatically. */
+	maxWidth: string;
 	className?: string;
 	content: unknown;
 }): HTMLDialogElement {
 	const el = html<HTMLDialogElement>`
     <dialog id="${id}" class="${BACKDROP}">
-      <div class="${INNER} w-[${width}] ${className}">${content}</div>
+      <div
+        class="${INNER} ${className}"
+        style="width:calc(100vw - 2rem);max-width:${maxWidth}"
+      >${content}</div>
     </dialog>
   `;
 

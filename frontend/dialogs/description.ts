@@ -5,7 +5,7 @@ export function renderDescModal(root: HTMLElement): void {
 	root.appendChild(
 		Dialog({
 			id: "desc-modal",
-			width: "min(560px,calc(100vw-2rem))",
+			maxWidth: "560px",
 			content: html`<div class="p-5 overflow-y-auto max-h-[60vh]">
         <p
           id="desc-body"

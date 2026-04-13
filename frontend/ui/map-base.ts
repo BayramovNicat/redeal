@@ -2,7 +2,7 @@ import { map, tileLayer } from "leaflet";
 import { html } from "../core/utils";
 import { Dialog } from "./dialog";
 
-export const MAP_MODAL_WIDTH = "min(860px,calc(100vw-2rem))";
+export const MAP_MODAL_MAXWIDTH = "860px";
 
 /**
  * Initializes a Leaflet map with standard dark-mode settings.
@@ -35,7 +35,7 @@ export function MapDialog({
 }): HTMLDialogElement {
 	return Dialog({
 		id,
-		width: MAP_MODAL_WIDTH,
+		maxWidth: MAP_MODAL_MAXWIDTH,
 		className: `max-h-[calc(100vh-2rem)] ${className}`,
 		content: html`<div id="${containerId}" class="w-full h-120 relative"></div>`,
 	});

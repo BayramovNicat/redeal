@@ -100,7 +100,7 @@ export function Product({
         </div>
         <div class="flex flex-col items-end gap-1.5 shrink-0">
           <span
-            class="inline-flex items-center text-xs font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
+            class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
             style="color:${t.c};background:${t.bg};border-color:${t.b}"
             >${property.tier}</span
           >
@@ -175,8 +175,8 @@ export function Product({
           </span>
         </div>
         <div class="mt-0.5 text-xs text-(--muted) truncate">
-          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} rooms · floor
-          ${floorStr} ·
+          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} rooms ·
+          floor ${floorStr} ·
           ₼${fmt(property.price_per_sqm, 0)}/m²${
 						property.is_urgent ? " · ⚡" : ""
 					}
@@ -260,7 +260,7 @@ function createButtons(bookmarked: boolean) {
 		color: "muted",
 		title: "Description",
 		attrs: { "data-action": "desc" },
-		content: frag`${Icons.desc()} Description`,
+		content: frag`${Icons.desc()}`,
 	});
 
 	const mapBtn = Button({
@@ -268,7 +268,7 @@ function createButtons(bookmarked: boolean) {
 		color: "muted",
 		title: "Map",
 		attrs: { "data-action": "map" },
-		content: frag`${Icons.map()} Map`,
+		content: frag`${Icons.map()}`,
 	});
 
 	return { bmarkBtn, hideBtn, descBtn, mapBtn };

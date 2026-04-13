@@ -16,7 +16,7 @@ const CHIP_BASE_CLS = `
 
 const TAG_BASE_CLS = `
   inline-flex items-center gap-1
-  text-xs font-medium px-2 py-0.75
+  text-[11px] font-medium px-2 py-0.75
   rounded-full border border-current
   whitespace-nowrap
 `;

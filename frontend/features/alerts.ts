@@ -47,7 +47,7 @@ export function initAlerts(root: HTMLElement): () => void {
 
 	const modal = Dialog({
 		id: "alert-modal",
-		width: "min(440px,calc(100vw-2rem))",
+		maxWidth: "440px",
 		className: "p-6",
 		content: html`
       <div>
