@@ -1,5 +1,7 @@
 import type { CardCallbacks, Property } from "../core/types";
-import { fmt, fmtFloor, html, timeAgo } from "../core/utils";
+import { fmt, fmtFloor, frag, html, timeAgo } from "../core/utils";
+import { Button } from "./button";
+import { Tag } from "./chip";
 import { Icons } from "./icons";
 import { ts } from "./tier";
 
@@ -52,12 +54,12 @@ export function buildCard({
 
 	const tags = tagList
 		.filter((t) => t.if)
-		.map(
-			(t) =>
-				html`<span
-          class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.75 rounded-full border border-current whitespace-nowrap ${t.cls}"
-          >${t.icon ? `${t.icon} ` : ""}${t.label}</span
-        >`,
+		.map((t) =>
+			Tag({
+				label: t.label || "",
+				icon: t.icon,
+				className: t.cls,
+			}),
 		);
 
 	const element = html`<article
@@ -255,40 +257,38 @@ function attachActionListeners({
 }
 
 function createButtons(bookmarked: boolean) {
-	const bmarkBtn = html`<button
-    data-action="bmark"
-    class="w-7 h-7 flex items-center justify-center bg-transparent border border-(--border) rounded-(--r-sm) text-(--muted) transition-all duration-150 hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) ${
-			bookmarked ? "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)" : ""
-		}"
-    data-action="bmark"
-    title="Save"
-  >
-    ${Icons.bookmark(bookmarked)}
-  </button>`;
+	const bmarkBtn = Button({
+		variant: "square",
+		color: "yellow",
+		active: bookmarked,
+		title: "Save",
+		attrs: { "data-action": "bmark" },
+		content: Icons.bookmark(bookmarked),
+	});
 
-	const hideBtn = html`<button
-    class="w-7 h-7 flex items-center justify-center bg-transparent border border-(--border) rounded-(--r-sm) text-(--muted) transition-all duration-150 hover:text-(--red) hover:border-(--red-b) hover:bg-(--red-dim)"
-    data-action="hide"
-    title="Hide"
-  >
-    ${Icons.hide()}
-  </button>`;
+	const hideBtn = Button({
+		variant: "square",
+		color: "red",
+		title: "Hide",
+		attrs: { "data-action": "hide" },
+		content: Icons.hide(),
+	});
 
-	const descBtn = html`<button
-    class="inline-flex items-center gap-1 bg-transparent border-none p-0 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
-    data-action="desc"
-    title="Description"
-  >
-    ${Icons.desc()}
-  </button>`;
+	const descBtn = Button({
+		variant: "ghost",
+		color: "muted",
+		title: "Description",
+		attrs: { "data-action": "desc" },
+		content: frag`${Icons.desc()} Description`,
+	});
 
-	const mapBtn = html`<button
-    class="inline-flex items-center gap-1 bg-transparent border-none p-0 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
-    data-action="map"
-    title="Map"
-  >
-    ${Icons.map()}
-  </button>`;
+	const mapBtn = Button({
+		variant: "ghost",
+		color: "muted",
+		title: "Map",
+		attrs: { "data-action": "map" },
+		content: frag`${Icons.map()} Map`,
+	});
 
 	return { bmarkBtn, hideBtn, descBtn, mapBtn };
 }

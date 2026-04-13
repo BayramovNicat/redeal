@@ -1,4 +1,6 @@
 import { html } from "../core/utils";
+import { Chip } from "../ui/chip";
+import { Select } from "../ui/select";
 
 const INPUT_CLS = `
   w-full px-2.5 py-1.75
@@ -13,20 +15,6 @@ const INPUT_CLS = `
 const LABEL_CLS = `
   text-xs font-medium text-(--muted)
   tracking-[0.06em] uppercase
-`;
-
-const CHIP_SPAN_CLS = `
-  inline-flex items-center gap-1.5
-  px-3 py-1.25 rounded-full
-  border border-(--border)
-  text-(--text-2) text-xs font-medium
-  transition-all duration-150
-  group-hover:border-(--border-h) group-hover:text-(--text)
-  peer-checked:border-[rgba(99,102,241,0.5)] 
-  peer-checked:text-(--accent) peer-checked:bg-(--accent-dim)
-  before:content-[''] before:w-1.25 before:h-1.25 before:rounded-full before:bg-(--muted)
-  before:transition-[background] before:duration-150
-  peer-checked:before:bg-(--accent)
 `;
 
 export const NUM_FILTERS: {
@@ -141,14 +129,15 @@ export function renderFilters(panel: HTMLElement): void {
 	grid.appendChild(
 		html`<div class="flex flex-col gap-1.5">
       <label for="category" class="${LABEL_CLS}">Category</label>
-      <select
-        id="category"
-        class="w-full px-2.5 py-1.75 bg-(--surface-2) border border-(--border) rounded-(--r-sm) text-(--text) font-inherit text-sm appearance-none cursor-pointer transition-[border-color] duration-150 focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]"
-      >
-        <option value="">Any</option>
-        <option value="Yeni tikili">New build</option>
-        <option value="Köhnə tikili">Secondary</option>
-      </select>
+      ${Select({
+				id: "category",
+				className: "w-full",
+				options: [
+					{ value: "", label: "Any" },
+					{ value: "Yeni tikili", label: "New build" },
+					{ value: "Köhnə tikili", label: "Secondary" },
+				],
+			})}
     </div>`,
 	);
 
@@ -156,14 +145,10 @@ export function renderFilters(panel: HTMLElement): void {
 
 	for (const f of CHECK_FILTERS) {
 		pills.appendChild(
-			html`<label class="group inline-flex cursor-pointer select-none">
-        <input
-          type="checkbox"
-          id="${f.id}"
-          class="peer absolute opacity-0 w-0 h-0"
-        />
-        <span class="${CHIP_SPAN_CLS}">${f.label}</span>
-      </label>`,
+			Chip({
+				id: f.id,
+				label: f.label,
+			}),
 		);
 	}
 
