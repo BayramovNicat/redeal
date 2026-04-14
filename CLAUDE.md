@@ -122,10 +122,36 @@ Real estate deal aggregator for the Baku market (bina.az). Bun + TypeScript + Po
 - All deal-scoring logic lives in `src/services/analytics.service.ts`. Thresholds and tier labels are defined in `classifyDeal()`.
 - Location names come from bina.az and are normalised in `src/utils/district-normalizer.ts` before being stored as `location_name`.
 - Static frontend files go in `public/`. The server serves them with a SPA fallback in the `fetch()` handler.
+- Frontend source in `frontend/` — vanilla TypeScript, no framework. `main.ts` is the entry point.
+- Frontend split into: `core/` (state, types, i18n, events, utils), `features/` (products, search, header, map-view, district-stats, alerts, trend), `ui/` (components), `dialogs/` (property-detail, gallery, map, heatmap, description).
 - Run dev server: `bun run dev` (hot reload). Type-check: `bun run typecheck`.
+- All API responses use brotli compression when client supports it (`Accept-Encoding: br`).
+- Hourly cron scrape runs automatically on server start (40 pages, 800ms delay).
+- Telegram alert system: `src/services/telegram.service.ts` + `src/services/alert.service.ts`.
+
+### Frontend views
+
+Three property views: **Grid** (card grid), **List** (compact rows), **Map** (interactive pins on SVG Baku map). Map view uses `/api/deals/map-pins` — fetches all visible properties with lat/lng. Hover shows tooltip, click opens property-detail dialog.
 
 ### Data model (Property)
 
-Core fields: `source_url` (unique), `price`, `area_sqm`, `price_per_sqm`, `district`, `location_name`, `rooms`, `floor`, `total_floors`, `category`, `has_document`, `has_mortgage`, `has_repair`, `is_urgent`, `posted_date`.
+Core fields: `source_url` (unique), `price`, `area_sqm`, `price_per_sqm`, `district`, `location_name`, `rooms`, `floor`, `total_floors`, `category`, `has_document`, `has_mortgage`, `has_repair`, `is_urgent`, `posted_date`, `images` (string[]), `lat`, `lng`.
 
 Indexes on: `district`, `location_name`, `is_urgent`, `price_per_sqm`, `(location_name, price_per_sqm)`.
+
+### API surface
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Status + property count |
+| GET | `/api/deals/locations` | Distinct location names |
+| GET | `/api/deals/undervalued` | Scored deals with filters |
+| GET | `/api/deals/trend?location=X` | Weekly ₼/m² sparkline |
+| GET | `/api/deals/map-pins` | Lat/lng pins for map view |
+| POST | `/api/deals/by-urls` | Fetch properties by URL list |
+| GET | `/api/heatmap` | District-level heatmap data |
+| GET | `/api/scrape/stream` | SSE live scrape progress |
+| GET | `/api/alerts?chat_id=X` | List Telegram alerts |
+| POST | `/api/alerts` | Create Telegram alert |
+| DELETE | `/api/alerts/:token` | Deactivate alert |
+| POST | `/api/telegram/webhook` | Telegram bot webhook |
