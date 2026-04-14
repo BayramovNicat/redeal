@@ -12,6 +12,7 @@ import { EmptyState } from "../ui/empty-state";
 import { Icons } from "../ui/icons";
 import { Product } from "../ui/product";
 import { Select } from "../ui/select";
+import { hideMapView, initMapView, showMapView } from "./map-view";
 
 /**
  * Products feature manages the results area, including sorting,
@@ -68,6 +69,14 @@ export function initProducts(container: HTMLElement): () => void {
 						title: t("listView"),
 						content: Icons.list(),
 					})}
+          ${Button({
+						id: "vmapview",
+						variant: "square",
+						color: "indigo",
+						active: state.currentView === "map",
+						title: t("mapView"),
+						content: Icons.mapPins(),
+					})}
         </div>
       </div>
     </div>
@@ -98,10 +107,17 @@ export function initProducts(container: HTMLElement): () => void {
     <div id="load-more" class="hidden">
       <p class="text-xs text-(--muted) mt-2" id="load-info"></p>
     </div>
+    <div
+      id="map-view-ct"
+      style="display:none;height:calc(100vh - 280px);min-height:420px"
+      class="rounded-(--r-lg) overflow-hidden border border-(--border)"
+    ></div>
   `;
 
 	const nodes = frag`${resultsBar}${loading}${empty}${welcome}${cards}`;
 	container.appendChild(nodes);
+
+	const cleanupMapView = initMapView(ge("map-view-ct"));
 
 	// 3. Setup Callbacks
 	const cardCallbacks: CardCallbacks = {
@@ -119,6 +135,13 @@ export function initProducts(container: HTMLElement): () => void {
 	function render(): void {
 		const ct = ge("cards");
 		if (!ct) return;
+
+		// Map view handles its own rendering; just keep results-bar visible
+		if (state.currentView === "map") {
+			show("results-bar");
+			return;
+		}
+
 		ct.innerHTML = "";
 
 		let list = state.showingSaved
@@ -270,16 +293,32 @@ export function initProducts(container: HTMLElement): () => void {
 		render();
 	});
 
-	const setView = (view: "grid" | "list") => {
+	const setView = (view: "grid" | "list" | "map") => {
+		const wasMap = state.currentView === "map";
 		state.currentView = view;
 		ge("vgrid").classList.toggle("on", view === "grid");
 		ge("vlist").classList.toggle("on", view === "list");
-		state.renderedSet.clear();
-		render();
+		ge("vmapview").classList.toggle("on", view === "map");
+
+		if (view === "map") {
+			ge("cards").style.display = "none";
+			ge("scroll-sentinel").style.display = "none";
+			hide("load-more");
+			showMapView();
+		} else {
+			if (wasMap) {
+				hideMapView();
+				ge("cards").style.display = "";
+				ge("scroll-sentinel").style.display = "";
+			}
+			state.renderedSet.clear();
+			render();
+		}
 	};
 
 	add(ge("vgrid"), "click", () => setView("grid"));
 	add(ge("vlist"), "click", () => setView("list"));
+	add(ge("vmapview"), "click", () => setView("map"));
 
 	add(ge("saved-btn"), "click", async () => {
 		state.showingSaved = !state.showingSaved;
@@ -347,5 +386,6 @@ export function initProducts(container: HTMLElement): () => void {
 		offDeals();
 		document.removeEventListener("pd:bmark", onPdBmark);
 		document.removeEventListener("pd:hide", onPdHide);
+		cleanupMapView();
 	};
 }

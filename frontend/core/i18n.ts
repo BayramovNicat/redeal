@@ -77,6 +77,7 @@ const translations = {
 		sortPpsm: "Cheapest ₼/m²",
 		gridView: "Grid view",
 		listView: "List view",
+		mapView: "Map view",
 
 		// States
 		searching: "Searching for deals…",
@@ -259,6 +260,7 @@ const translations = {
 		sortPpsm: "Ən ucuz ₼/m²",
 		gridView: "Şəbəkə görünüşü",
 		listView: "Siyahı görünüşü",
+		mapView: "Xəritə görünüşü",
 
 		searching: "Elanlar axtarılır…",
 		noResults: "Nəticə tapılmadı",
@@ -432,6 +434,7 @@ const translations = {
 		sortPpsm: "Дешевле ₼/м²",
 		gridView: "Сетка",
 		listView: "Список",
+		mapView: "Карта",
 
 		searching: "Поиск объявлений…",
 		noResults: "Ничего не найдено",

@@ -110,6 +110,13 @@ export const Icons = {
       <line x1="3" y1="18" x2="3.01" y2="18" />
     </svg>`,
 
+	mapPins: () =>
+		html`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polygon points="3 6 3 20 15 14 21 18 21 4 15 0 3 6" />
+      <line x1="15" y1="0" x2="15" y2="14" />
+      <line x1="3" y1="6" x2="15" y2="0" />
+    </svg>`,
+
 	home: () =>
 		html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

@@ -23,6 +23,19 @@ export interface Property {
 	longitude?: number;
 }
 
+export interface MapPin {
+	source_url: string;
+	lat: number;
+	lng: number;
+	price: number;
+	price_per_sqm: number;
+	rooms: number | null;
+	location_name: string | null;
+	image_url: string | null;
+	discount_percent: number;
+	tier: string;
+}
+
 export interface TrendPoint {
 	week: string;
 	avg_ppsm: string | number;

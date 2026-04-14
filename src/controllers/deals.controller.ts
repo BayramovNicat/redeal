@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import {
 	AnalyticsService,
 	classifyDeal,
@@ -229,6 +230,193 @@ export async function getDealsByUrls(req: Request): Promise<Response> {
 		console.error("[DealsController] getDealsByUrls:", err);
 		return Response.json(
 			{ error: "Failed to fetch properties" },
+			{ status: 500 },
+		);
+	}
+}
+
+/** GET /api/deals/map-pins — lightweight pins for map view, same filters as undervalued */
+export async function getMapPins(req: Request): Promise<Response> {
+	const url = new URL(req.url);
+	const q = url.searchParams;
+
+	const locationParam = q.get("location");
+	if (!locationParam) {
+		return Response.json(
+			{ error: 'Query parameter "location" is required' },
+			{ status: 400 },
+		);
+	}
+
+	const isAll = locationParam === "__all__";
+	const locations = isAll ? [] : locationParam.split(",").filter(Boolean);
+	if (!isAll && locations.length === 0) {
+		return Response.json(
+			{ error: 'Query parameter "location" cannot be empty' },
+			{ status: 400 },
+		);
+	}
+
+	const thresholdRaw = q.get("threshold");
+	const thresholdPct = thresholdRaw !== null ? Number(thresholdRaw) : 10;
+	if (Number.isNaN(thresholdPct) || thresholdPct < 0 || thresholdPct > 100) {
+		return Response.json(
+			{ error: '"threshold" must be a number between 0 and 100' },
+			{ status: 400 },
+		);
+	}
+
+	function optNum(val: string | null): number | undefined {
+		if (val === null || val === "") return undefined;
+		const n = Number(val);
+		return Number.isNaN(n) ? undefined : n;
+	}
+	function optBool(val: string | null): boolean | undefined {
+		if (val === null || val === "") return undefined;
+		return val === "true";
+	}
+
+	const factor = (100 - thresholdPct) / 100.0;
+
+	const locCondition = isAll
+		? Prisma.sql`p.location_name IS NOT NULL`
+		: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
+
+	const avgLocCondition = isAll
+		? Prisma.sql`location_name IS NOT NULL`
+		: Prisma.sql`location_name IN (${Prisma.join(locations)})`;
+
+	const conditions: Prisma.Sql[] = [
+		locCondition,
+		Prisma.sql`p.latitude IS NOT NULL`,
+		Prisma.sql`p.longitude IS NOT NULL`,
+		Prisma.sql`p.price_per_sqm > 0`,
+		Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`,
+	];
+
+	const minPrice = optNum(q.get("minPrice"));
+	const maxPrice = optNum(q.get("maxPrice"));
+	const minPriceSqm = optNum(q.get("minPriceSqm"));
+	const maxPriceSqm = optNum(q.get("maxPriceSqm"));
+	const minArea = optNum(q.get("minArea"));
+	const maxArea = optNum(q.get("maxArea"));
+	const minRooms = optNum(q.get("minRooms"));
+	const maxRooms = optNum(q.get("maxRooms"));
+	const minFloor = optNum(q.get("minFloor"));
+	const maxFloor = optNum(q.get("maxFloor"));
+	const minTotalFloors = optNum(q.get("minTotalFloors"));
+	const maxTotalFloors = optNum(q.get("maxTotalFloors"));
+	const hasDocument = optBool(q.get("hasDocument"));
+	const hasMortgage = optBool(q.get("hasMortgage"));
+	const hasRepair = optBool(q.get("hasRepair"));
+	const isUrgent = optBool(q.get("isUrgent"));
+	const notLastFloor = optBool(q.get("notLastFloor"));
+	const hasActiveMortgage = optBool(q.get("hasActiveMortgage"));
+	const category = q.get("category") ?? undefined;
+
+	if (minPrice !== undefined)
+		conditions.push(Prisma.sql`p.price >= ${minPrice}`);
+	if (maxPrice !== undefined)
+		conditions.push(Prisma.sql`p.price <= ${maxPrice}`);
+	if (minPriceSqm !== undefined)
+		conditions.push(Prisma.sql`p.price_per_sqm >= ${minPriceSqm}`);
+	if (maxPriceSqm !== undefined)
+		conditions.push(Prisma.sql`p.price_per_sqm <= ${maxPriceSqm}`);
+	if (minArea !== undefined)
+		conditions.push(Prisma.sql`p.area_sqm >= ${minArea}`);
+	if (maxArea !== undefined)
+		conditions.push(Prisma.sql`p.area_sqm <= ${maxArea}`);
+	if (minRooms !== undefined)
+		conditions.push(Prisma.sql`p.rooms >= ${minRooms}`);
+	if (maxRooms !== undefined)
+		conditions.push(Prisma.sql`p.rooms <= ${maxRooms}`);
+	if (minFloor !== undefined)
+		conditions.push(Prisma.sql`p.floor >= ${minFloor}`);
+	if (maxFloor !== undefined)
+		conditions.push(Prisma.sql`p.floor <= ${maxFloor}`);
+	if (minTotalFloors !== undefined)
+		conditions.push(Prisma.sql`p.total_floors >= ${minTotalFloors}`);
+	if (maxTotalFloors !== undefined)
+		conditions.push(Prisma.sql`p.total_floors <= ${maxTotalFloors}`);
+	if (hasDocument !== undefined)
+		conditions.push(Prisma.sql`p.has_document = ${hasDocument}`);
+	if (hasMortgage !== undefined)
+		conditions.push(Prisma.sql`p.has_mortgage = ${hasMortgage}`);
+	if (hasRepair !== undefined)
+		conditions.push(Prisma.sql`p.has_repair = ${hasRepair}`);
+	if (isUrgent !== undefined)
+		conditions.push(Prisma.sql`p.is_urgent = ${isUrgent}`);
+	if (notLastFloor)
+		conditions.push(
+			Prisma.sql`(p.floor IS NULL OR p.total_floors IS NULL OR p.floor < p.total_floors)`,
+		);
+	if (hasActiveMortgage !== undefined)
+		conditions.push(Prisma.sql`p.has_active_mortgage = ${hasActiveMortgage}`);
+	if (category !== undefined)
+		conditions.push(Prisma.sql`p.category = ${category}`);
+
+	try {
+		const rows = await queryRaw<
+			{
+				source_url: string;
+				latitude: number;
+				longitude: number;
+				price: number;
+				price_per_sqm: number;
+				rooms: number | null;
+				location_name: string | null;
+				image_urls: string[];
+				discount_percent: number;
+			}[]
+		>`
+      WITH loc_avg AS (
+        SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
+        FROM "Property"
+        WHERE ${avgLocCondition} AND price_per_sqm > 0
+        GROUP BY location_name
+      )
+      SELECT
+        p.source_url,
+        p.latitude,
+        p.longitude,
+        p.price,
+        p.price_per_sqm,
+        p.rooms,
+        p.location_name,
+        p.image_urls,
+        ROUND(((loc_avg.avg_ppsm - p.price_per_sqm) / loc_avg.avg_ppsm * 100)::numeric, 2) AS discount_percent
+      FROM "Property" p
+      JOIN loc_avg ON p.location_name = loc_avg.location_name
+      WHERE ${Prisma.join(conditions, " AND ")}
+      ORDER BY discount_percent DESC
+      LIMIT 2000
+    `;
+
+		return Response.json(
+			{
+				count: rows.length,
+				data: rows.map((r) => ({
+					source_url: r.source_url,
+					lat: Number(r.latitude),
+					lng: Number(r.longitude),
+					price: Number(r.price),
+					price_per_sqm: Number(r.price_per_sqm),
+					rooms: r.rooms !== null ? Number(r.rooms) : null,
+					location_name: r.location_name,
+					image_url:
+						Array.isArray(r.image_urls) && r.image_urls.length > 0
+							? r.image_urls[0]
+							: null,
+					discount_percent: Number(r.discount_percent),
+					tier: classifyDeal(Number(r.discount_percent)),
+				})),
+			},
+			{ headers: { "Cache-Control": "no-store" } },
+		);
+	} catch (err) {
+		console.error("[DealsController] getMapPins:", err);
+		return Response.json(
+			{ error: "Failed to fetch map pins" },
 			{ status: 500 },
 		);
 	}
