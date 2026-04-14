@@ -217,23 +217,36 @@ export function initProducts(container: HTMLElement): () => void {
 		state.scrollObserver.observe(sentinel);
 	}
 
+	function persistBookmarkData(): void {
+		const obj: Record<string, Property> = {};
+		for (const [url, prop] of state.bookmarkData) {
+			obj[url] = prop;
+		}
+		localStorage.setItem("re-bm-data", JSON.stringify(obj));
+	}
+
 	function toggleBM(p: Property): void {
 		if (state.bookmarks.has(p.source_url)) {
 			state.bookmarks.delete(p.source_url);
+			state.bookmarkData.delete(p.source_url);
 			toast(t("toastRemoved"));
 		} else {
 			state.bookmarks.add(p.source_url);
+			state.bookmarkData.set(p.source_url, p);
 			toast(t("toastSaved"));
 		}
 		localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
+		persistBookmarkData();
 		render();
 	}
 
 	function hideItem(url: string): void {
 		state.hidden.add(url);
 		state.bookmarks.delete(url);
+		state.bookmarkData.delete(url);
 		localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
 		localStorage.setItem("re-hidden", JSON.stringify([...state.hidden]));
+		persistBookmarkData();
 		toast(t("toastHidden"));
 		render();
 	}
@@ -270,24 +283,40 @@ export function initProducts(container: HTMLElement): () => void {
 		state.showingSaved = !state.showingSaved;
 		ge("saved-btn").classList.toggle("on", state.showingSaved);
 		state.renderedSet.clear();
-		if (state.showingSaved && state.bookmarks.size > 0) {
-			try {
-				const res = await fetch("/api/deals/by-urls", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ urls: [...state.bookmarks] }),
-				});
-				const json = (await res.json()) as {
-					data?: typeof state.savedOnlyResults;
-				};
-				if (json.data) state.savedOnlyResults = json.data;
-			} catch (e) {
-				console.error("Failed to fetch saved deals", e);
-			}
-		} else {
+
+		if (!state.showingSaved || state.bookmarks.size === 0) {
 			state.savedOnlyResults = [];
+			render();
+			return;
 		}
+
+		// Show cached data immediately — no network needed
+		const cached = [...state.bookmarkData.values()].filter((p) =>
+			state.bookmarks.has(p.source_url),
+		);
+		state.savedOnlyResults = cached;
 		render();
+
+		// Refresh from backend for up-to-date prices
+		try {
+			const res = await fetch("/api/deals/by-urls", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ urls: [...state.bookmarks] }),
+			});
+			const json = (await res.json()) as { data?: Property[] };
+			if (json.data && json.data.length > 0) {
+				state.savedOnlyResults = json.data;
+				for (const p of json.data) {
+					state.bookmarkData.set(p.source_url, p);
+				}
+				persistBookmarkData();
+				state.renderedSet.clear();
+				render();
+			}
+		} catch {
+			// Cached data already shown — silent fail is fine
+		}
 	});
 
 	const offDeals = bus.on(EVENTS.DEALS_UPDATED, () => render());
