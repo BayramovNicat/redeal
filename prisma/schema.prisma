@@ -28,19 +28,36 @@ model Property {
   image_urls      String[]
   is_urgent             Boolean   @default(false)
   has_active_mortgage   Boolean   @default(false)
+  price_drop_count      Int       @default(0)
   posted_date           DateTime?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
+
+  price_history   PriceHistory[]
 
   @@index([district])
   @@index([location_name])
   @@index([is_urgent])
   @@index([has_active_mortgage])
+  @@index([price_drop_count])
   @@index([price_per_sqm])
   @@index([location_name, price_per_sqm])
   @@index([location_name, is_urgent, posted_date])
   @@index([district, price_per_sqm])
   @@index([location_name, district, posted_date])
+}
+
+model PriceHistory {
+  id            Int      @id @default(autoincrement())
+  property_id   Int
+  price         Decimal  @db.Decimal(12, 2)
+  price_per_sqm Decimal  @db.Decimal(10, 2)
+  recorded_at   DateTime @default(now())
+
+  property      Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+
+  @@index([property_id])
+  @@index([property_id, recorded_at])
 }
 
 model Alert {

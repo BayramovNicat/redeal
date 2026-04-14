@@ -17,7 +17,7 @@ const TREND_TTL_MS = 30 * 60_000; // 30 min — data changes only on scrape cycl
 /** GET /api/deals/locations — distinct location names that have at least one listing */
 export async function getLocations(_req: Request): Promise<Response> {
 	try {
-		const rows = await queryRaw<{ location_name: string }[]>`
+		const rows = await queryRaw<{ location_name: string }[]> /*sql*/`
       SELECT DISTINCT location_name
       FROM "Property"
       WHERE location_name IS NOT NULL
@@ -94,7 +94,7 @@ export async function getHeatmap(_req: Request): Promise<Response> {
 				recent_avg: number | null;
 				prior_avg: number | null;
 			}[]
-		>`
+		> /*sql*/`
       SELECT
         location_name,
         ROUND(AVG(price_per_sqm))::int AS avg_ppsm,
@@ -203,7 +203,7 @@ export async function getDealsByUrls(req: Request): Promise<Response> {
 				location_avg_price_per_sqm: number;
 				discount_percent: number;
 			}[]
-		>`
+		> /*sql*/`
       WITH avgs AS (
         SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
         FROM "Property"
@@ -372,7 +372,7 @@ export async function getMapPins(req: Request): Promise<Response> {
 				image_urls: string[];
 				discount_percent: number;
 			}[]
-		>`
+		> /*sql*/`
       WITH loc_avg AS (
         SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
         FROM "Property"
@@ -423,6 +423,83 @@ export async function getMapPins(req: Request): Promise<Response> {
 		console.error("[DealsController] getMapPins:", err);
 		return Response.json(
 			{ error: "Failed to fetch map pins" },
+			{ status: 500 },
+		);
+	}
+}
+
+/** GET /api/deals/price-drops?location=X&minDrops=1&limit=200&offset=0 */
+export async function getPriceDrops(req: Request): Promise<Response> {
+	const url = new URL(req.url);
+	const q = url.searchParams;
+
+	const locationParam = q.get("location");
+	if (!locationParam) {
+		return Response.json(
+			{ error: 'Query parameter "location" is required' },
+			{ status: 400 },
+		);
+	}
+
+	const isAll = locationParam === "__all__";
+	const location = isAll ? "__all__" : locationParam.split(",").filter(Boolean);
+
+	if (!isAll && (location as string[]).length === 0) {
+		return Response.json(
+			{ error: 'Query parameter "location" cannot be empty' },
+			{ status: 400 },
+		);
+	}
+
+	const minDropsRaw = q.get("minDrops");
+	const minDropCount = minDropsRaw !== null ? Number(minDropsRaw) : 1;
+	if (!Number.isInteger(minDropCount) || minDropCount < 1) {
+		return Response.json(
+			{ error: '"minDrops" must be a positive integer' },
+			{ status: 400 },
+		);
+	}
+
+	const limitRaw = q.get("limit");
+	const limit = limitRaw !== null ? Number(limitRaw) : 200;
+	if (!Number.isInteger(limit) || limit < 1 || limit > 1000) {
+		return Response.json(
+			{ error: '"limit" must be an integer between 1 and 1000' },
+			{ status: 400 },
+		);
+	}
+
+	const offsetRaw = q.get("offset");
+	const offset = offsetRaw !== null ? Number(offsetRaw) : 0;
+	if (!Number.isInteger(offset) || offset < 0) {
+		return Response.json(
+			{ error: '"offset" must be a non-negative integer' },
+			{ status: 400 },
+		);
+	}
+
+	try {
+		const { total, data } = await analytics.getPriceDropDeals(location, {
+			minDropCount,
+			limit,
+			offset,
+		});
+		return Response.json(
+			{
+				location: locationParam,
+				minDropCount,
+				limit,
+				offset,
+				count: data.length,
+				total,
+				data,
+			},
+			{ headers: { "Cache-Control": "no-store" } },
+		);
+	} catch (err) {
+		console.error("[DealsController] getPriceDrops:", err);
+		return Response.json(
+			{ error: "Failed to fetch price drop listings" },
 			{ status: 500 },
 		);
 	}

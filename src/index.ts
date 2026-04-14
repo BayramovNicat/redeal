@@ -9,6 +9,7 @@ import {
 	getHeatmap,
 	getLocations,
 	getMapPins,
+	getPriceDrops,
 	getTrend,
 	getUndervaluedDeals,
 } from "./controllers/deals.controller.js";
@@ -112,6 +113,7 @@ Bun.serve({
 		"/api/deals/locations": { GET: br(getLocations) },
 		"/api/deals/trend": { GET: br(getTrend) },
 		"/api/deals/undervalued": { GET: br(getUndervaluedDeals) },
+		"/api/deals/price-drops": { GET: br(getPriceDrops) },
 		"/api/deals/map-pins": { GET: br(getMapPins) },
 		"/api/deals/by-urls": { POST: br(getDealsByUrls) },
 		"/api/heatmap": { GET: br(getHeatmap) },

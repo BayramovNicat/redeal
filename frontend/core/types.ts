@@ -1,3 +1,8 @@
+export interface PriceHistoryEntry {
+	price: string;
+	recorded_at: string;
+}
+
 export interface Property {
 	source_url: string;
 	price: number;
@@ -16,6 +21,8 @@ export interface Property {
 	has_repair?: boolean;
 	has_mortgage?: boolean;
 	has_active_mortgage?: boolean;
+	price_drop_count?: number;
+	price_history?: PriceHistoryEntry[];
 	posted_date?: string;
 	description?: string;
 	image_urls?: string[];

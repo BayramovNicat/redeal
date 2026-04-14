@@ -75,6 +75,7 @@ const translations = {
 		sortPriceDesc: "Price: high → low",
 		sortArea: "Largest first",
 		sortPpsm: "Cheapest ₼/m²",
+		sortDrops: "Price drops first",
 		gridView: "Grid view",
 		listView: "List view",
 		mapView: "Map view",
@@ -114,6 +115,7 @@ const translations = {
 		tagRepaired: "Repaired",
 		tagMortgage: "Mortgage",
 		tagActiveMortgage: "Active mortgage",
+		tagPriceDrop: "dropped {n}×",
 
 		// Buttons
 		btnSave: "Save",
@@ -258,6 +260,7 @@ const translations = {
 		sortPriceDesc: "Qiymət: yuxarıdan aşağı",
 		sortArea: "Ən böyük əvvəl",
 		sortPpsm: "Ən ucuz ₼/m²",
+		sortDrops: "Qiymət düşümü əvvəl",
 		gridView: "Şəbəkə görünüşü",
 		listView: "Siyahı görünüşü",
 		mapView: "Xəritə görünüşü",
@@ -292,6 +295,7 @@ const translations = {
 		tagRepaired: "Təmirli",
 		tagMortgage: "İpoteka",
 		tagActiveMortgage: "Aktiv ipoteka",
+		tagPriceDrop: "{n}× endirim oldu",
 
 		btnSave: "Saxla",
 		btnHide: "Gizlət",
@@ -432,6 +436,7 @@ const translations = {
 		sortPriceDesc: "Цена: дороже",
 		sortArea: "Большая площадь",
 		sortPpsm: "Дешевле ₼/м²",
+		sortDrops: "Снижения цены",
 		gridView: "Сетка",
 		listView: "Список",
 		mapView: "Карта",
@@ -466,6 +471,7 @@ const translations = {
 		tagRepaired: "Ремонт",
 		tagMortgage: "Ипотека",
 		tagActiveMortgage: "Акт. ипотека",
+		tagPriceDrop: "снижена {n}×",
 
 		btnSave: "Сохранить",
 		btnHide: "Скрыть",

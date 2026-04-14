@@ -47,6 +47,7 @@ export function initProducts(container: HTMLElement): () => void {
 						variant: "xs",
 						options: [
 							{ value: "disc", label: t("sortDisc") },
+							{ value: "drops", label: t("sortDrops") },
 							{ value: "price-asc", label: t("sortPriceAsc") },
 							{ value: "price-desc", label: t("sortPriceDesc") },
 							{ value: "area", label: t("sortArea") },
@@ -151,6 +152,8 @@ export function initProducts(container: HTMLElement): () => void {
 		const sortBy = (ge("sort-sel") as HTMLSelectElement)?.value || "disc";
 		list = [...list].sort((a, b) => {
 			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
+			if (sortBy === "drops")
+				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
 			if (sortBy === "price-asc") return a.price - b.price;
 			if (sortBy === "price-desc") return b.price - a.price;
 			if (sortBy === "area") return b.area_sqm - a.area_sqm;

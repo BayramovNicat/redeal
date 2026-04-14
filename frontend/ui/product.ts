@@ -38,7 +38,26 @@ export function Product({
 		const barW = Math.min(100, Math.max(2, property.discount_percent * 2.5));
 		const ago = timeAgo(property.posted_date);
 
+		const dropCount = property.price_drop_count ?? 0;
+		const history = property.price_history;
+		// Oldest entry = original price (history is DESC sorted, so last = oldest)
+		const originalPrice =
+			history && history.length > 0
+				? Number(history[history.length - 1]?.price)
+				: null;
+		const dropLabel =
+			dropCount > 0
+				? originalPrice !== null
+					? `▼ ₼${fmt(originalPrice, 0)} → ₼${fmt(property.price, 0)} · ${t("tagPriceDrop", { n: dropCount })}`
+					: `▼ ${t("tagPriceDrop", { n: dropCount })}`
+				: null;
+
 		const tagList = [
+			{
+				if: dropCount > 0,
+				label: dropLabel || "",
+				cls: "text-orange-400 border-orange-500/25 bg-orange-500/10 font-medium",
+			},
 			{
 				if: property.is_urgent,
 				icon: "⚡",
@@ -113,7 +132,8 @@ export function Product({
       <div>
         <div class="flex items-center justify-between mb-1.75">
           <span class="text-xs text-(--muted)"
-            >${t("marketAvg")} ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
+            >${t("marketAvg")}
+            ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
           >
           <span class="text-base font-bold" style="color:${tier.c}"
             >-${property.discount_percent}%</span
@@ -127,7 +147,10 @@ export function Product({
         </div>
       </div>
       <div class="grid grid-cols-4 gap-1.5">
-        ${StatBox({ label: t("area"), value: `${fmt(property.area_sqm, 1)} m²` })}
+        ${StatBox({
+					label: t("area"),
+					value: `${fmt(property.area_sqm, 1)} m²`,
+				})}
         ${StatBox({ label: t("ppsm"), value: fmt(property.price_per_sqm, 0) })}
         ${StatBox({ label: t("rooms"), value: property.rooms ?? "—" })}
         ${StatBox({ label: t("floor"), value: floorStr })}
@@ -145,7 +168,9 @@ export function Product({
           rel="noopener"
           >${t("viewListing")} ${Icons.external()}</a
         >
-        <div class="flex items-center gap-1">${galleryBtn}${descBtn}${mapBtn}</div>
+        <div class="flex items-center gap-1">
+          ${galleryBtn}${descBtn}${mapBtn}
+        </div>
       </div>
     </article>`;
 	} else {
@@ -178,14 +203,16 @@ export function Product({
           </span>
         </div>
         <div class="mt-0.5 text-xs text-(--muted) truncate">
-          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"} ${t("rooms_")} ·
-          ${t("floor_")} ${floorStr} ·
+          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"}
+          ${t("rooms_")} · ${t("floor_")} ${floorStr} ·
           ₼${fmt(property.price_per_sqm, 0)}/m²${
 						property.is_urgent ? " · ⚡" : ""
 					}
         </div>
       </div>
-      <div class="flex items-center gap-1">${bmarkBtn}${hideBtn}${galleryBtn}${mapBtn}${descBtn}</div>
+      <div class="flex items-center gap-1">
+        ${bmarkBtn}${hideBtn}${galleryBtn}${mapBtn}${descBtn}
+      </div>
       <a
         class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
         href="${property.source_url}"
