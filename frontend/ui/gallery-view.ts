@@ -36,10 +36,9 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
         class="relative w-full h-full ${fullscreen ? "pointer-events-none" : ""}"
       ></div>
 
-      <!-- No-image placeholder -->
       <div
         id="gv-no-img"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-(--muted) text-sm hidden"
+        class="absolute inset-0 flex-col items-center justify-center gap-2 text-(--muted) text-sm hidden"
       >
         ${Icons.gallery()}
         <span>${t("propNoImages")}</span>
@@ -50,7 +49,7 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
         id="gv-prev"
         class="absolute ${
 					fullscreen ? "left-6 w-12 h-12" : "left-3 w-9 h-9"
-				} top-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 hidden"
+				} top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 hidden"
       >
         ${Icons.chevronLeft(fullscreen ? 24 : 18)}
       </button>
@@ -58,7 +57,7 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
         id="gv-next"
         class="absolute ${
 					fullscreen ? "right-6 w-12 h-12" : "right-3 w-9 h-9"
-				} top-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 hidden"
+				} top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 hidden"
       >
         ${Icons.chevronRight(fullscreen ? 24 : 18)}
       </button>
@@ -112,7 +111,9 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 
 		const showNav = total > 1;
 		$prev.classList.toggle("hidden", !showNav);
+		$prev.classList.toggle("flex", showNav);
 		$next.classList.toggle("hidden", !showNav);
+		$next.classList.toggle("flex", showNav);
 		$counter.classList.toggle("hidden", !showNav);
 
 		if (showNav) {
@@ -120,6 +121,7 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 		}
 
 		$noImg.classList.toggle("hidden", total > 0);
+		$noImg.classList.toggle("flex", total === 0);
 		if ($expand) $expand.classList.toggle("hidden", total === 0);
 
 		// Lazy load current + preload neighbors
