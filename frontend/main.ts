@@ -50,9 +50,11 @@ renderDistrictStatsModal(root);
 renderDescModal(root);
 renderToastsContainer(root);
 
-// 4. Handle cleanup on window unload
-window.addEventListener("unload", () => {
-	cleanups.forEach((fn) => {
-		if (typeof fn === "function") fn();
-	});
+// 4. Handle cleanup on window pagehide
+window.addEventListener("pagehide", (e) => {
+	if (!e.persisted) {
+		cleanups.forEach((fn) => {
+			if (typeof fn === "function") fn();
+		});
+	}
 });
