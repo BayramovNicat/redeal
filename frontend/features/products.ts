@@ -45,6 +45,8 @@ export function initProducts(container: HTMLElement): () => void {
           ${Select({
 						id: "sort-sel",
 						variant: "xs",
+						ariaLabel: t("sortBy"),
+						title: t("sortBy"),
 						options: [
 							{ value: "disc", label: t("sortDisc") },
 							{ value: "drops", label: t("sortDrops") },

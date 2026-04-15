@@ -30,16 +30,22 @@ export function Select({
 	options,
 	variant = "sm",
 	className = "",
+	ariaLabel,
+	title,
 }: {
 	id: string;
 	options: SelectOption[];
 	variant?: "sm" | "xs";
 	className?: string;
+	ariaLabel?: string;
+	title?: string;
 }): HTMLSelectElement {
 	return html<HTMLSelectElement>`
 		<select
 			id="${id}"
 			class="${SHARED_CLS} ${VARIANTS[variant]} ${className}"
+			${ariaLabel ? `aria-label="${ariaLabel}"` : ""}
+			${title ? `title="${title}"` : ""}
 		>
 			${options.map((o) => html`<option value="${o.value}">${o.label}</option>`)}
 		</select>
