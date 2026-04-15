@@ -194,6 +194,7 @@ const translations = {
 		propDiscount: "Discount",
 		propMarketAvg: "Market avg",
 		propPosted: "Posted",
+		propPhotoAlt: "Property photo {n} of {total}",
 	},
 
 	az: {
@@ -371,6 +372,7 @@ const translations = {
 		propDiscount: "Endirim",
 		propMarketAvg: "Bazar ortalama",
 		propPosted: "Tarix",
+		propPhotoAlt: "Əmlak fotosu {n} / {total}",
 	},
 
 	ru: {
@@ -549,6 +551,7 @@ const translations = {
 		propDiscount: "Скидка",
 		propMarketAvg: "Ср. по рынку",
 		propPosted: "Дата",
+		propPhotoAlt: "Фото недвижимости {n} из {total}",
 	},
 } as const;
 

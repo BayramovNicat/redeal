@@ -167,7 +167,7 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 
 				const img = document.createElement("img");
 				img.referrerPolicy = "no-referrer";
-				img.alt = "";
+				img.alt = t("propPhotoAlt", { n: i + 1, total });
 				img.className = "max-h-full max-w-full object-contain";
 				if (fullscreen) {
 					img.classList.add("shadow-2xl", "rounded-sm");
