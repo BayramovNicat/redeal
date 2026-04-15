@@ -290,7 +290,7 @@ export function initSearch(container: HTMLElement): () => void {
 		<div class="bg-(--surface) border border-(--border) rounded-(--r-lg) p-5 mb-3.5">
 			<div class="grid grid-cols-[1fr_260px_120px] gap-3 items-end max-[680px]:grid-cols-1">
 				${Field({
-					htmlFor: "loc",
+					htmlFor: "loc-trigger",
 					label: t("location"),
 					input: MultiSelect({
 						id: "loc",
