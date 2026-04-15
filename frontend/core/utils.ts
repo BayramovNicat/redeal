@@ -110,6 +110,16 @@ export function fmtFloor(
 	return f?.toString() ?? "—";
 }
 
+export function tTier(tier: string, short = false): string {
+	const map: Record<string, string> = {
+		"High Value Deal": short ? "tierHighShort" : "tierHigh",
+		"Good Deal": short ? "tierGoodShort" : "tierGood",
+		"Fair Price": short ? "tierFairShort" : "tierFair",
+	};
+	const key = map[tier] || (short ? "tierNormalShort" : "tierNormal");
+	return t(key as any);
+}
+
 const _template = document.createElement("template");
 
 const _parse = (

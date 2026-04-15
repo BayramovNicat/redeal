@@ -2,7 +2,7 @@ import { divIcon, type map, marker } from "leaflet";
 import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
 import type { Property } from "../core/types";
-import { fmt, fmtFloor, html, timeAgo } from "../core/utils";
+import { fmt, fmtFloor, html, tTier, timeAgo } from "../core/utils";
 import { Tag } from "../ui/chip";
 import { GalleryView } from "../ui/gallery-view";
 import { Icons } from "../ui/icons";
@@ -194,7 +194,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		// Header
 		$location.textContent = p.location_name ?? p.district ?? "—";
 		$price.textContent = `₼ ${fmt(p.price)}`;
-		$tier.textContent = p.tier;
+		$tier.textContent = tTier(p.tier);
 		$tier.style.cssText = `color:${tier.c};background:${tier.bg};border-color:${tier.b}`;
 
 		const ago = p.posted_date ? timeAgo(p.posted_date) : "";

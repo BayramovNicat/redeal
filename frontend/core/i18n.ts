@@ -198,6 +198,16 @@ const translations = {
 		galleryPrev: "Previous photo",
 		galleryNext: "Next photo",
 		galleryExpand: "Expand photo",
+ 
+		// Tiers
+		tierHigh: "High Value Deal",
+		tierGood: "Good Deal",
+		tierFair: "Fair Price",
+		tierNormal: "Market Price",
+		tierHighShort: "High Value",
+		tierGoodShort: "Good",
+		tierFairShort: "Fair",
+		tierNormalShort: "Market",
 	},
 
 	az: {
@@ -379,6 +389,16 @@ const translations = {
 		galleryPrev: "Əvvəlki foto",
 		galleryNext: "Növbəti foto",
 		galleryExpand: "Fotoya tam bax",
+ 
+		// Tiers
+		tierHigh: "Yüksək dəyərli",
+		tierGood: "Yaxşı təklif",
+		tierFair: "Normal qiymət",
+		tierNormal: "Bazar qiyməti",
+		tierHighShort: "Əla",
+		tierGoodShort: "Yaxşı",
+		tierFairShort: "Normal",
+		tierNormalShort: "Bazar",
 	},
 
 	ru: {
@@ -561,6 +581,16 @@ const translations = {
 		galleryPrev: "Предыдущее фото",
 		galleryNext: "Следующее фото",
 		galleryExpand: "Развернуть фото",
+ 
+		// Tiers
+		tierHigh: "Выгодная сделка",
+		tierGood: "Хорошая цена",
+		tierFair: "Средняя цена",
+		tierNormal: "Рыночная цена",
+		tierHighShort: "Выгодно",
+		tierGoodShort: "Хорошо",
+		tierFairShort: "Средне",
+		tierNormalShort: "Рынок",
 	},
 } as const;
 

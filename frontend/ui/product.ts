@@ -1,6 +1,6 @@
 import { t } from "../core/i18n";
 import type { CardCallbacks, Property } from "../core/types";
-import { fmt, fmtFloor, frag, html, timeAgo } from "../core/utils";
+import { fmt, fmtFloor, frag, html, tTier, timeAgo } from "../core/utils";
 import { Button } from "./button";
 import { Tag } from "./chip";
 import { Icons } from "./icons";
@@ -123,7 +123,7 @@ export function Product({
           <span
             class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
             style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
-            >${property.tier}</span
+            >${tTier(property.tier)}</span
           >
       </div>
       <div>
@@ -189,7 +189,7 @@ export function Product({
           -${property.discount_percent}%
         </div>
         <div class="text-xs text-(--muted) mt-0.5">
-          ${property.tier.replace(" Deal", "").replace(" Price", "")}
+          ${tTier(property.tier, true)}
         </div>
       </div>
       <div class="min-w-0">
