@@ -176,7 +176,8 @@ export function initSearch(container: HTMLElement): () => void {
 			}
 		}
 
-		row.innerHTML = "";
+		row.replaceChildren();
+
 		row.append(...chips);
 		row.style.display = chips.length ? "flex" : "none";
 		const cnt = ge("adv-cnt");
@@ -209,7 +210,8 @@ export function initSearch(container: HTMLElement): () => void {
 			hide("results-bar");
 			hide("load-more");
 			hide("trend-panel");
-			ge("cards").innerHTML = "";
+			ge("cards").replaceChildren();
+
 			show("s-loading");
 		}
 		(ge("search-btn") as HTMLButtonElement).disabled = true;

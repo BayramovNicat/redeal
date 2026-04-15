@@ -1,5 +1,48 @@
 import { getLang, t } from "./i18n";
 
+// --- Trusted Types ---
+interface TrustedHTML {
+	__brand: "TrustedHTML";
+}
+interface TrustedTypePolicy {
+	createHTML(html: string): TrustedHTML;
+}
+interface TrustedTypePolicyFactory {
+	createPolicy(
+		name: string,
+		options: { createHTML: (html: string) => string },
+	): TrustedTypePolicy;
+	readonly defaultPolicy?: TrustedTypePolicy;
+}
+
+
+declare global {
+	interface Window {
+		trustedTypes?: TrustedTypePolicyFactory;
+	}
+}
+
+const policy = window.trustedTypes?.createPolicy("re-agregator", {
+	createHTML: (s: string) => s,
+});
+
+// A default policy is used by the browser when a string is passed to a sink
+// directly (e.g. by 3rd party libs like Leaflet).
+if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
+	window.trustedTypes.createPolicy("default", {
+		createHTML: (s: string) => s,
+	});
+}
+
+
+/**
+ * Wraps a string in a TrustedHTML object if the browser supports it.
+ */
+export const trust = (html: string): string | TrustedHTML => {
+	return policy ? policy.createHTML(html) : html;
+};
+
+
 export function renderToastsContainer(root: HTMLElement): void {
 	const el = document.createElement("div");
 	el.id = "toasts";
@@ -97,8 +140,15 @@ const _parse = (
 		return result + str + (i < values.length ? processValue(values[i]) : "");
 	}, "");
 
-	_template.innerHTML = rawHtml.trim();
+	const trimmed = rawHtml.trim();
+	if (policy) {
+		(_template as unknown as { innerHTML: TrustedHTML }).innerHTML =
+			policy.createHTML(trimmed);
+	} else {
+		_template.innerHTML = trimmed;
+	}
 	const content = document.importNode(_template.content, true);
+
 
 	content.querySelectorAll("template[data-ref]").forEach((placeholder) => {
 		const id = placeholder.getAttribute("data-ref");

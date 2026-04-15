@@ -195,7 +195,8 @@ function updateAlertList(
 	}
 
 	listEl.style.display = "block";
-	itemsEl.innerHTML = "";
+	itemsEl.replaceChildren();
+
 
 	for (const a of alerts) {
 		const preview = buildFilterPreview({

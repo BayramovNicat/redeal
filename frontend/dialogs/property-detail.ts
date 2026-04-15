@@ -201,7 +201,8 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		$posted.textContent = ago ? `${t("propPosted")} ${ago}` : "";
 
 		// Stats
-		$stats.innerHTML = "";
+		$stats.replaceChildren();
+
 		const floorStr = fmtFloor(p.floor, p.total_floors);
 		for (const box of [
 			StatBox({ label: t("area"), value: `${fmt(p.area_sqm, 1)} m²` }),
@@ -221,7 +222,8 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		$discBar.style.background = tier.hex;
 
 		// Tags
-		$tags.innerHTML = "";
+		$tags.replaceChildren();
+
 		const tagList = [
 			{
 				if: p.is_urgent,

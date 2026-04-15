@@ -1,4 +1,5 @@
-import { html } from "../core/utils";
+import { html, trust } from "../core/utils";
+
 import { Icons } from "./icons";
 
 export interface MultiSelectOption {
@@ -105,10 +106,13 @@ export function MultiSelect({
 			o.label.toLowerCase().includes(searchQuery.toLowerCase()),
 		);
 
-		optionsList.innerHTML = "";
+		optionsList.replaceChildren();
 		if (filtered.length === 0) {
-			optionsList.innerHTML = `<div class="p-4 text-center text-xs text-(--muted)">No results found</div>`;
+			optionsList.innerHTML = trust(
+				`<div class="p-4 text-center text-xs text-(--muted)">No results found</div>`,
+			) as string;
 		} else {
+
 			for (const opt of filtered) {
 				const isSelected = selectedValues.includes(opt.value);
 				const item = html`

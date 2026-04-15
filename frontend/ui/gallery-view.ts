@@ -155,7 +155,8 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 			urls = newUrls;
 			total = urls.length;
 			index = initialIndex;
-			$slider.innerHTML = "";
+			$slider.replaceChildren();
+
 
 			for (let i = 0; i < total; i++) {
 				const slide = document.createElement("div");

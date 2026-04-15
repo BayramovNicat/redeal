@@ -1,7 +1,8 @@
 import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
 import type { TrendPoint } from "../core/types";
-import { fmt, ge, getLocale, hide, html, show } from "../core/utils";
+import { fmt, ge, getLocale, hide, html, show, trust } from "../core/utils";
+
 
 /**
  * Trend feature manages the property price trend chart above search results.
@@ -95,8 +96,10 @@ export function initTrend(container: HTMLElement): () => void {
 			{ n: data.length },
 		);
 
-		ge("trend-dates").innerHTML =
-			`<span>${dfmt(data[0]?.week ?? "")}</span><span>${dfmt(data[data.length - 1]?.week ?? "")}</span>`;
+		ge("trend-dates").innerHTML = trust(
+			`<span>${dfmt(data[0]?.week ?? "")}</span><span>${dfmt(data[data.length - 1]?.week ?? "")}</span>`,
+		) as string;
+
 
 		const ct = ge("trend-chart");
 		const tip = ge("trend-tip");
@@ -140,7 +143,7 @@ export function initTrend(container: HTMLElement): () => void {
 		const svg = document.createElementNS(ns, "svg");
 		svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 		svg.style.cssText = `width:100%;height:${H}px;display:block;cursor:crosshair`;
-		svg.innerHTML = `
+		svg.innerHTML = trust(`
 			<defs>
 				<linearGradient id="spark-g" x1="0" y1="0" x2="0" y2="1">
 					<stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
@@ -150,7 +153,8 @@ export function initTrend(container: HTMLElement): () => void {
 			<path d="${areaD}" fill="url(#spark-g)" vector-effect="non-scaling-stroke"/>
 			<path d="${lineD}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
 			<circle cx="${lp[0]}" cy="${lp[1]}" r="6" fill="${color}" opacity="0.2"/>
-			<circle cx="${lp[0]}" cy="${lp[1]}" r="3.5" fill="${color}"/>`;
+			<circle cx="${lp[0]}" cy="${lp[1]}" r="3.5" fill="${color}"/>`) as string;
+
 		ct.insertBefore(svg, tip);
 
 		svg.addEventListener("mousemove", (e: MouseEvent) => {
@@ -162,7 +166,10 @@ export function initTrend(container: HTMLElement): () => void {
 			);
 			const p = data[idx];
 			if (!p) return;
-			tip.innerHTML = `<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} ${t(p.listing_count !== 1 ? "listings" : "listing")}</span>`;
+			tip.innerHTML = trust(
+				`<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} ${t(p.listing_count !== 1 ? "listings" : "listing")}</span>`,
+			) as string;
+
 			tip.style.display = "block";
 			const tipW = tip.offsetWidth || 160;
 			const left = Math.min(e.offsetX + 12, svgW - tipW - 4);

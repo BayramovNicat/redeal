@@ -2,7 +2,8 @@ import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { CardCallbacks, Property } from "../core/types";
-import { fmt, frag, ge, hide, html, show, toast } from "../core/utils";
+import { fmt, frag, ge, hide, html, show, toast, trust } from "../core/utils";
+
 import { openDesc } from "../dialogs/description";
 import { openGallery } from "../dialogs/gallery";
 import { openMap } from "../dialogs/map";
@@ -145,7 +146,8 @@ export function initProducts(container: HTMLElement): () => void {
 			return;
 		}
 
-		ct.innerHTML = "";
+		ct.replaceChildren();
+
 
 		let list = state.showingSaved
 			? state.savedOnlyResults.filter((p) => state.bookmarks.has(p.source_url))
@@ -201,9 +203,12 @@ export function initProducts(container: HTMLElement): () => void {
 		ct.appendChild(wrap);
 
 		const showing = list.length;
-		ge("results-meta").innerHTML = state.showingSaved
-			? `<strong>${showing}</strong> ${showing !== 1 ? t("savedDeals") : t("savedDeal")}`
-			: `<strong>${showing}</strong> ${showing !== 1 ? t("results") : t("result")}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>` : ""}`;
+		ge("results-meta").innerHTML = trust(
+			state.showingSaved
+				? `<strong>${showing}</strong> ${showing !== 1 ? t("savedDeals") : t("savedDeal")}`
+				: `<strong>${showing}</strong> ${showing !== 1 ? t("results") : t("result")}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>` : ""}`,
+		) as string;
+
 
 		if (!state.showingSaved && state.allResults.length < state.currentTotal) {
 			show("load-more");

@@ -22,7 +22,11 @@ import { queryRaw } from "./utils/prisma.js";
 const PORT = Number(process.env.PORT ?? 3000);
 const IS_DEV = process.env.NODE_ENV === "development";
 
+const CSP =
+	"require-trusted-types-for 'script'; trusted-types re-agregator default;";
+
 // --- Brotli helpers ---
+
 
 type Handler = (req: Request) => Response | Promise<Response>;
 
@@ -136,7 +140,9 @@ Bun.serve({
 					"Content-Encoding": "br",
 					"Cache-Control": "public, max-age=31536000, immutable",
 					Vary: "Accept-Encoding",
+					"Content-Security-Policy": CSP,
 				},
+
 			});
 		}
 
@@ -144,16 +150,22 @@ Bun.serve({
 		const file = Bun.file(filePath);
 		if (await file.exists()) {
 			return new Response(file, {
-				headers: IS_DEV ? { "Cache-Control": "no-store" } : {},
+				headers: {
+					"Content-Security-Policy": CSP,
+					...(IS_DEV ? { "Cache-Control": "no-store" } : {}),
+				},
 			});
 		}
+
 		// SPA fallback — read fresh so frontend rebuilds are reflected immediately
 		return new Response(await getVersionedHtml(), {
 			headers: {
 				"Content-Type": "text/html; charset=utf-8",
 				"Cache-Control": "no-store",
+				"Content-Security-Policy": CSP,
 			},
 		});
+
 	},
 });
 

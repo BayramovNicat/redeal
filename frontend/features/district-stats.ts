@@ -1,5 +1,6 @@
 import { t } from "../core/i18n";
-import { fmt, frag, ge } from "../core/utils";
+import { fmt, frag, ge, trust } from "../core/utils";
+
 import { Dialog } from "../ui/dialog";
 
 type LocationRow = {
@@ -125,9 +126,10 @@ function renderTable(data: LocationRow[]): void {
 		"padding:10px 16px;color:var(--text);font-size:13px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums";
 	const TD_CENTER = "padding:10px 20px 10px 16px;text-align:center";
 
-	tbody.innerHTML = sorted
-		.map(
-			(row, i) => `
+	tbody.innerHTML = trust(
+		sorted
+			.map(
+				(row, i) => `
     <tr style="${TR_BASE};background:${i % 2 === 0 ? "transparent" : "color-mix(in srgb, var(--surface-2) 40%, transparent)"}">
       <td style="${TD_BASE};padding-left:20px;font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.location_name}">${row.location_name}</td>
       <td style="${TD_MONO}">₼ ${fmt(row.avg_price_per_sqm, 0)}</td>
@@ -135,8 +137,10 @@ function renderTable(data: LocationRow[]): void {
       <td style="${TD_CENTER}">${trendBadge(row)}</td>
     </tr>
   `,
-		)
-		.join("");
+			)
+			.join(""),
+	) as string;
+
 
 	// Update sort indicators
 	const cols: SortKey[] = ["district", "avg_ppsm", "listing_count", "trend"];
