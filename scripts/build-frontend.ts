@@ -63,6 +63,8 @@ async function build() {
 	// Copy HTML & Static Assets
 	await Bun.write("./public/index.html", Bun.file("./frontend/index.html"));
 	await Bun.write("./public/robots.txt", Bun.file("./frontend/robots.txt"));
+	await Bun.write("./public/favicon.png", Bun.file("./frontend/favicon.png"));
+	await Bun.write("./public/favicon.ico", Bun.file("./frontend/favicon.ico"));
 	await Bun.write(
 		"./public/manifest.json",
 		Bun.file("./frontend/manifest.json"),
