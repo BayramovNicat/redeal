@@ -227,28 +227,28 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 				if: p.is_urgent,
 				icon: "⚡",
 				label: t("tagUrgent"),
-				cls: "text-red-500 border-red-500/25 bg-red-500/10",
+				cls: "text-(--red) border-(--red-b) bg-(--red-dim)",
 			},
 			{
 				if: p.has_document,
 				label: t("tagDocument"),
-				cls: "text-blue-500 border-blue-500/25 bg-blue-500/10",
+				cls: "text-(--blue) border-(--blue-b) bg-(--blue-dim)",
 			},
 			{
 				if: p.has_repair,
 				label: t("tagRepaired"),
-				cls: "text-green-500 border-green-500/25 bg-green-500/10",
+				cls: "text-(--green) border-(--green-b) bg-(--green-dim)",
 			},
 			{
 				if: p.has_mortgage,
 				label: t("tagMortgage"),
-				cls: "text-slate-400 border-slate-700",
+				cls: "text-(--muted) border-(--border)",
 			},
 			{
 				if: p.has_active_mortgage,
 				icon: "⚠",
 				label: t("tagActiveMortgage"),
-				cls: "text-yellow-500 border-yellow-500/25 bg-yellow-500/10",
+				cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)",
 			},
 		];
 		for (const tag of tagList.filter((tag) => tag.if)) {

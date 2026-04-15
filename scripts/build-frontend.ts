@@ -47,8 +47,9 @@ async function build() {
 
 	await Bun.file(tmpPath).delete?.();
 
-	// Copy HTML
+	// Copy HTML & Static Assets
 	await Bun.write("./public/index.html", Bun.file("./frontend/index.html"));
+	await Bun.write("./public/robots.txt", Bun.file("./frontend/robots.txt"));
 
 	const jsSizeKB = (Bun.file("./public/app.js").size / 1024).toFixed(1);
 	const cssSizeKB = (Bun.file("./public/styles.css").size / 1024).toFixed(1);
