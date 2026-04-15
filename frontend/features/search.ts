@@ -319,7 +319,7 @@ export function initSearch(container: HTMLElement): () => void {
 			<button type="button" id="adv-toggle" aria-expanded="false" class="group inline-flex items-center gap-1.25 bg-transparent border border-(--border) rounded-(--r-sm) px-3 py-1.5 text-(--text-2) text-xs font-medium mt-3.5 transition-all hover:border-(--border-h) hover:text-(--text) hover:bg-(--surface-2) aria-expanded:text-(--accent) aria-expanded:border-[rgba(99,102,241,0.4)] aria-expanded:bg-(--accent-dim)">
 				${Icons.chevron(12, "transition-transform duration-200 group-aria-expanded:rotate-180")}
 				${t("advancedFilters")}
-				<span id="adv-cnt" class="bg-(--accent) text-white rounded-full px-1.5 py-px text-xs font-semibold" style="display:none"></span>
+				<span id="adv-cnt" class="bg-(--accent-solid) text-white rounded-full px-1.5 py-px text-xs font-semibold" style="display:none"></span>
 			</button>
 
 			<div id="adv-panel" class="overflow-hidden max-h-0 opacity-0 transition-all ease-in-out duration-300 [&.open]:max-h-150 [&.open]:opacity-100">

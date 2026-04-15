@@ -11,21 +11,33 @@
 	--text: #e8e8f0;
 	--text-2: #9898b0;
 	--muted: #8b8bac;
-	--accent: #6366f1;
-	--accent-h: #818cf8;
-	--accent-dim: rgba(99, 102, 241, 0.12);
-	--green: #22c55e;
-	--green-dim: rgba(34, 197, 94, 0.1);
-	--green-b: rgba(34, 197, 94, 0.25);
-	--blue: #3b82f6;
-	--blue-dim: rgba(59, 130, 246, 0.1);
-	--blue-b: rgba(59, 130, 246, 0.25);
-	--yellow: #f59e0b;
-	--yellow-dim: rgba(245, 158, 11, 0.1);
-	--yellow-b: rgba(245, 158, 11, 0.25);
-	--red: #ef4444;
-	--red-dim: rgba(239, 68, 68, 0.1);
-	--red-b: rgba(239, 68, 68, 0.25);
+
+	/* Accessible weights for dark mode (Level 400 for text) */
+	--accent: #818cf8;
+	--accent-h: #a5b4fc;
+	--accent-solid: #4f46e5;
+	--accent-dim: rgba(129, 140, 248, 0.12);
+
+	--green: #4ade80;
+	--green-solid: #16a34a;
+	--green-dim: rgba(74, 222, 128, 0.1);
+	--green-b: rgba(74, 222, 128, 0.25);
+
+	--blue: #60a5fa;
+	--blue-solid: #2563eb;
+	--blue-dim: rgba(96, 165, 250, 0.1);
+	--blue-b: rgba(96, 165, 250, 0.25);
+
+	--yellow: #fbbf24;
+	--yellow-solid: #d97706;
+	--yellow-dim: rgba(251, 191, 36, 0.1);
+	--yellow-b: rgba(251, 191, 36, 0.25);
+
+	--red: #f87171;
+	--red-solid: #dc2626;
+	--red-dim: rgba(248, 113, 113, 0.1);
+	--red-b: rgba(248, 113, 113, 0.25);
+
 	--r: 10px;
 	--r-lg: 14px;
 	--r-sm: 6px;

@@ -29,7 +29,7 @@ const COLORS = {
 	indigo: `
     text-(--muted) border-(--border) bg-(--surface-2)
     hover:text-(--text) hover:border-(--border-h)
-    [&.on]:text-(--accent) [&.on]:border-[rgba(99,102,241,0.4)] [&.on]:bg-(--accent-dim)
+    [&.on]:text-(--accent) [&.on]:border-(--accent-b) [&.on]:bg-(--accent-dim)
   `,
 	green: `
     text-(--muted) border-(--border) bg-transparent

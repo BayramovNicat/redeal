@@ -20,7 +20,7 @@ function LangSwitcher(): HTMLElement {
 	for (const lang of LANGS) {
 		const btn = html`<button
       type="button"
-      class="px-2 py-0.5 text-xs font-semibold rounded-[3px] transition-colors duration-150 ${cur === lang.code ? "bg-(--accent) text-white" : "text-(--muted) hover:text-(--text)"}"
+      class="px-2 py-0.5 text-xs font-semibold rounded-[3px] transition-colors duration-150 ${cur === lang.code ? "bg-(--accent-solid) text-white" : "text-(--muted) hover:text-(--text)"}"
     >${lang.label}</button>`;
 		btn.addEventListener("click", () => setLang(lang.code));
 		el.appendChild(btn);
