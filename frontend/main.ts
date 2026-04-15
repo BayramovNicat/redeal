@@ -1,8 +1,6 @@
 import { ge, html, renderToastsContainer } from "./core/utils";
-import { renderDescModal } from "./dialogs/description";
 import { initGallery } from "./dialogs/gallery";
 import { renderHeatmapModal } from "./dialogs/heatmap";
-import { renderMapModal } from "./dialogs/map";
 import { initPropertyDetail } from "./dialogs/property-detail";
 import { initAlerts } from "./features/alerts";
 import { renderDistrictStatsModal } from "./features/district-stats";
@@ -44,10 +42,8 @@ const cleanups: (() => void)[] = [
 ];
 
 // 3. Global Static Modals & Utilities
-renderMapModal(root);
 renderHeatmapModal(root);
 renderDistrictStatsModal(root);
-renderDescModal(root);
 renderToastsContainer(root);
 
 // 4. Handle cleanup on window pagehide

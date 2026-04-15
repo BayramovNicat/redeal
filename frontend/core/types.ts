@@ -93,8 +93,6 @@ export interface Alert {
 export interface CardCallbacks {
 	onBM: (p: Property) => void;
 	onHide: (url: string) => void;
-	onDesc: (text: string) => void;
-	onMap: (lat: number, lng: number, label?: string) => void;
 	onGallery: (urls: string[], index?: number) => void;
 	onDetail: (p: Property) => void;
 }

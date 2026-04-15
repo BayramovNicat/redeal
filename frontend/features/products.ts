@@ -4,9 +4,7 @@ import { state } from "../core/state";
 import type { CardCallbacks, Property } from "../core/types";
 import { fmt, frag, ge, hide, html, show, toast, trust } from "../core/utils";
 
-import { openDesc } from "../dialogs/description";
 import { openGallery } from "../dialogs/gallery";
-import { openMap } from "../dialogs/map";
 import { openPropertyDetail } from "../dialogs/property-detail";
 import { Button } from "../ui/button";
 import { EmptyState } from "../ui/empty-state";
@@ -127,9 +125,7 @@ export function initProducts(container: HTMLElement): () => void {
 	const cardCallbacks: CardCallbacks = {
 		onBM: toggleBM,
 		onHide: hideItem,
-		onDesc: openDesc,
 		onGallery: openGallery,
-		onMap: openMap,
 		onDetail: openPropertyDetail,
 	};
 

@@ -27,7 +27,7 @@ export function Product({
 	const tier = ts(property.tier);
 	const floorStr = fmtFloor(property.floor, property.total_floors);
 
-	const { bmarkBtn, hideBtn, descBtn, mapBtn, galleryBtn } = createButtons(
+	const { bmarkBtn, hideBtn, galleryBtn } = createButtons(
 		property,
 		bookmarked,
 	);
@@ -111,7 +111,7 @@ export function Product({
       hover:border-(--border-h)
       hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]"
     >
-      <div class="flex justify-between gap-2">
+      <div class="flex justify-between items-start gap-2">
         <div class="min-w-0">
           <div class="text-xs text-(--muted) mb-0.75 tracking-tight">
             ${property.location_name ?? property.district ?? "—"}
@@ -120,14 +120,11 @@ export function Product({
             ₼ ${fmt(property.price)}
           </div>
         </div>
-        <div class="flex flex-col items-end gap-1.5 shrink-0">
           <span
             class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
             style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
             >${property.tier}</span
           >
-          <div class="flex items-center gap-1">${bmarkBtn}${hideBtn}</div>
-        </div>
       </div>
       <div>
         <div class="flex items-center justify-between mb-1.75">
@@ -169,7 +166,7 @@ export function Product({
           >${t("viewListing")} ${Icons.external()}</a
         >
         <div class="flex items-center gap-1">
-          ${galleryBtn}${descBtn}${mapBtn}
+          ${galleryBtn}${bmarkBtn}${hideBtn}
         </div>
       </div>
     </article>`;
@@ -211,7 +208,7 @@ export function Product({
         </div>
       </div>
       <div class="flex items-center gap-1">
-        ${bmarkBtn}${hideBtn}${galleryBtn}${mapBtn}${descBtn}
+        ${bmarkBtn}${hideBtn}${galleryBtn}
       </div>
       <a
         class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
@@ -251,18 +248,8 @@ function attachActionListeners({
 				case "hide":
 					callbacks.onHide(property.source_url);
 					break;
-				case "desc":
-					callbacks.onDesc(property.description || "");
-					break;
 				case "gallery":
 					callbacks.onGallery(property.image_urls ?? [], 0);
-					break;
-				case "map":
-					callbacks.onMap(
-						property.latitude || 0,
-						property.longitude || 0,
-						property.location_name ?? property.district ?? "",
-					);
 					break;
 			}
 			return;
@@ -295,29 +282,6 @@ function createButtons(property: Property, bookmarked: boolean) {
 		content: Icons.hide(),
 	});
 
-	const descBtn = property.description
-		? Button({
-				variant: "square",
-				color: "green",
-				title: t("btnDescription"),
-				ariaLabel: t("btnDescription"),
-				attrs: { "data-action": "desc" },
-				content: frag`${Icons.desc()}`,
-			})
-		: "";
-
-	const mapBtn =
-		property.latitude && property.longitude
-			? Button({
-					variant: "square",
-					color: "indigo",
-					title: t("btnMap"),
-					ariaLabel: t("btnMap"),
-					attrs: { "data-action": "map" },
-					content: frag`${Icons.map()}`,
-				})
-			: "";
-
 	const galleryBtn =
 		(property.image_urls?.length ?? 0) > 0
 			? Button({
@@ -330,5 +294,5 @@ function createButtons(property: Property, bookmarked: boolean) {
 				})
 			: "";
 
-	return { bmarkBtn, hideBtn, descBtn, mapBtn, galleryBtn };
+	return { bmarkBtn, hideBtn, galleryBtn };
 }
