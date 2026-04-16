@@ -17,5 +17,20 @@
 			"sizes": "512x512",
 			"type": "image/png"
 		}
+	],
+	"screenshots": [
+		{
+			"src": "/screenshots/screenshot-desktop.png",
+			"sizes": "1280x720",
+			"type": "image/png",
+			"form_factor": "wide",
+			"label": "Redeal Desktop Experience"
+		},
+		{
+			"src": "/screenshots/screenshot-mobile.png",
+			"sizes": "720x1280",
+			"type": "image/png",
+			"label": "Redeal Mobile Experience"
+		}
 	]
 }

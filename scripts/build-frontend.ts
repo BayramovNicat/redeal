@@ -73,8 +73,11 @@ async function build() {
 		Bun.file("./frontend/manifest.json"),
 	);
 
-	// Copy PWA Icons
+	// Copy PWA Icons and Screenshots
 	cpSync("./frontend/icons", "./public/icons", {
+		recursive: true,
+	});
+	cpSync("./frontend/screenshots", "./public/screenshots", {
 		recursive: true,
 	});
 
