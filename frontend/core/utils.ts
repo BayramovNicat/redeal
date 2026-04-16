@@ -4,13 +4,20 @@ import { getLang, type TranslationKey, t } from "./i18n";
 interface TrustedHTML {
 	__brand: "TrustedHTML";
 }
+interface TrustedScriptURL {
+	__brand: "TrustedScriptURL";
+}
 interface TrustedTypePolicy {
 	createHTML(html: string): TrustedHTML;
+	createScriptURL(url: string): TrustedScriptURL;
 }
 interface TrustedTypePolicyFactory {
 	createPolicy(
 		name: string,
-		options: { createHTML: (html: string) => string },
+		options: {
+			createHTML?: (html: string) => string;
+			createScriptURL?: (url: string) => string;
+		},
 	): TrustedTypePolicy;
 	readonly defaultPolicy?: TrustedTypePolicy;
 }
@@ -23,13 +30,15 @@ declare global {
 
 const policy = window.trustedTypes?.createPolicy("redeal", {
 	createHTML: (s: string) => s,
+	createScriptURL: (s: string) => s,
 });
 
 // A default policy is used by the browser when a string is passed to a sink
-// directly (e.g. by 3rd party libs like Leaflet).
+// directly (e.g. by 3rd party libs like Leaflet, or Service Worker registration).
 if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
 	window.trustedTypes.createPolicy("default", {
 		createHTML: (s: string) => s,
+		createScriptURL: (s: string) => s,
 	});
 }
 
@@ -38,6 +47,13 @@ if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
  */
 export const trust = (html: string): string | TrustedHTML => {
 	return policy ? policy.createHTML(html) : html;
+};
+
+/**
+ * Wraps a string in a TrustedScriptURL object if the browser supports it.
+ */
+export const trustScriptURL = (url: string): string | TrustedScriptURL => {
+	return policy ? policy.createScriptURL(url) : url;
 };
 
 export function renderToastsContainer(root: HTMLElement): void {

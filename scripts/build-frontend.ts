@@ -64,7 +64,10 @@ async function build() {
 	await Bun.write("./public/index.html", Bun.file("./frontend/index.html"));
 	await Bun.write("./public/robots.txt", Bun.file("./frontend/robots.txt"));
 	await Bun.write("./public/favicon.png", Bun.file("./frontend/favicon.png"));
-	await Bun.write("./public/favicon.ico", Bun.file("./frontend/favicon.ico"));
+	const faviconIco = Bun.file("./frontend/favicon.ico");
+	if (await faviconIco.exists()) {
+		await Bun.write("./public/favicon.ico", faviconIco);
+	}
 	await Bun.write(
 		"./public/manifest.json",
 		Bun.file("./frontend/manifest.json"),
