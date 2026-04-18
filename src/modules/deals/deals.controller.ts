@@ -233,6 +233,7 @@ function parsePropertyFilters(q: URLSearchParams): PropertyFilters {
 		notLastFloor: parseQueryBool(q.get("notLastFloor")),
 		hasActiveMortgage: parseQueryBool(q.get("hasActiveMortgage")),
 		category: q.get("category") ?? undefined,
+		descriptionSearch: q.get("descriptionSearch") ?? undefined,
 	};
 }
 

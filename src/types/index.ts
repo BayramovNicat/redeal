@@ -21,6 +21,7 @@ export type PropertyFilters = {
 	hasActiveMortgage?: boolean;
 	category?: string;
 	since?: Date;
+	descriptionSearch?: string;
 };
 
 export type PaginationOptions = {

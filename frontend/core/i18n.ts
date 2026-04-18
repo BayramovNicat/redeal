@@ -63,6 +63,11 @@ const translations = {
 		no: "No",
 		yes: "Yes",
 
+		// Description search
+		descriptionSearch: "Description keyword",
+		descriptionSearchPlaceholder: "e.g. corner, sea view...",
+		chipDescSearch: "Description",
+
 		// Chip display
 		chipCategory: "Category",
 		chipActiveMortgage: "Active mortgage",
@@ -267,6 +272,10 @@ const translations = {
 		no: "Xeyr",
 		yes: "Bəli",
 
+		descriptionSearch: "Açar söz",
+		descriptionSearchPlaceholder: "məs. küncə, dəniz mənzərəsi...",
+		chipDescSearch: "Açar söz",
+
 		chipCategory: "Kateqoriya",
 		chipActiveMortgage: "Aktiv ipoteka",
 
@@ -459,6 +468,10 @@ const translations = {
 		secondary: "Вторичный рынок",
 		no: "Нет",
 		yes: "Да",
+
+		descriptionSearch: "Ключевое слово",
+		descriptionSearchPlaceholder: "напр. угловая, вид на море...",
+		chipDescSearch: "Описание",
 
 		chipCategory: "Категория",
 		chipActiveMortgage: "Акт. ипотека",

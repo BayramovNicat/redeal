@@ -158,6 +158,19 @@ export function initSearch(container: HTMLElement): () => void {
 			);
 		}
 
+		const desc = (ge("descriptionSearch") as HTMLInputElement).value.trim();
+		if (desc) {
+			chips.push(
+				CloseableChip({
+					label: `${t("chipDescSearch")}: ${desc}`,
+					onClose: () => {
+						(ge("descriptionSearch") as HTMLInputElement).value = "";
+						updateChips();
+					},
+				}),
+			);
+		}
+
 		const locs = (ge("loc") as MultiSelectElement).getValue() as string[];
 		if (locs.length > 0 && !locs.includes("__all__")) {
 			for (const l of locs) {
@@ -238,6 +251,9 @@ export function initSearch(container: HTMLElement): () => void {
 
 			const am = (ge("hasActiveMortgage") as HTMLSelectElement).value;
 			if (am) p.set("hasActiveMortgage", am);
+
+			const desc = v("descriptionSearch");
+			if (desc) p.set("descriptionSearch", desc);
 
 			const res = await fetch(`/api/deals/undervalued?${p}`);
 			const d = (await res.json()) as {
@@ -364,6 +380,16 @@ export function initSearch(container: HTMLElement): () => void {
 							],
 						}),
 					})}
+					${Field({
+						htmlFor: "descriptionSearch",
+						label: t("descriptionSearch"),
+						input: Input({
+							id: "descriptionSearch",
+							type: "text",
+							placeholder: t("descriptionSearchPlaceholder"),
+							className: "w-full",
+						}),
+					})}
 				</div>
 				<div class="flex flex-wrap gap-1.75 pt-3.5">
 					${CHECK_FILTERS().map((f) => Chip({ id: f.id, label: f.label }))}
@@ -390,6 +416,8 @@ export function initSearch(container: HTMLElement): () => void {
 	if (catVal) (ge("category") as HTMLSelectElement).value = catVal;
 	const amVal = params.get("hasActiveMortgage");
 	if (amVal) (ge("hasActiveMortgage") as HTMLSelectElement).value = amVal;
+	const descVal = params.get("descriptionSearch");
+	if (descVal) (ge("descriptionSearch") as HTMLInputElement).value = descVal;
 	for (const f of CHECK_FILTERS()) {
 		if (params.get(f.id) === "true") {
 			(ge(f.id) as HTMLInputElement).checked = true;
@@ -425,6 +453,7 @@ export function initSearch(container: HTMLElement): () => void {
 
 	// Filter change listeners
 	add(ge("hasActiveMortgage"), "change", updateChips);
+	add(ge("descriptionSearch"), "input", updateChips);
 	for (const f of CHECK_FILTERS()) {
 		add(ge(f.id), "change", updateChips);
 	}

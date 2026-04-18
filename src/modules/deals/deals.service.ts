@@ -367,6 +367,7 @@ function applyFilters(filters: PropertyFilters): Prisma.Sql[] {
 		hasActiveMortgage,
 		category,
 		since,
+		descriptionSearch,
 	} = filters;
 
 	if (minPrice !== undefined)
@@ -410,6 +411,10 @@ function applyFilters(filters: PropertyFilters): Prisma.Sql[] {
 	if (category !== undefined)
 		conditions.push(Prisma.sql`p.category = ${category}`);
 	if (since !== undefined) conditions.push(Prisma.sql`p.created_at > ${since}`);
+	if (descriptionSearch !== undefined && descriptionSearch.trim() !== "")
+		conditions.push(
+			Prisma.sql`p.description ILIKE ${"%" + descriptionSearch.trim() + "%"}`,
+		);
 
 	return conditions;
 }
