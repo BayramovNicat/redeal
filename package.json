@@ -4,7 +4,7 @@
 	"description": "Real estate deal-finding aggregator for the Azerbaijani (Baku) market",
 	"type": "module",
 	"scripts": {
-		"dev": "bun run scripts/build-frontend.ts --watch & bun --hot src/index.ts",
+		"dev": "bun run scripts/build-frontend.ts --watch & NODE_ENV=development bun --hot src/index.ts",
 		"start": "bun run scripts/build-frontend.ts && bun src/index.ts",
 		"build:frontend": "bun run scripts/build-frontend.ts",
 		"typecheck": "tsc --noEmit",
