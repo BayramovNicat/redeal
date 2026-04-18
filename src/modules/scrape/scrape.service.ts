@@ -234,7 +234,9 @@ export class ScrapingService {
 		return { persisted, skipped, errors };
 	}
 
-	private async persistSingleListing(r: PreparedRow): Promise<{ ok: true } | { ok: false; error: string }> {
+	private async persistSingleListing(
+		r: PreparedRow,
+	): Promise<{ ok: true } | { ok: false; error: string }> {
 		try {
 			const existing = await prisma.property.findUnique({
 				where: { source_url: r.source_url },
@@ -300,7 +302,10 @@ export class ScrapingService {
 			}
 			return { ok: true };
 		} catch (e) {
-			return { ok: false, error: `${r.source_url}: ${e instanceof Error ? e.message : String(e)}` };
+			return {
+				ok: false,
+				error: `${r.source_url}: ${e instanceof Error ? e.message : String(e)}`,
+			};
 		}
 	}
 }

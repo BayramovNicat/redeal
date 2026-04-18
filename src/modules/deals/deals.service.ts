@@ -176,7 +176,9 @@ export async function getMapPins(options: {
 		Prisma.sql`p.latitude IS NOT NULL`,
 		Prisma.sql`p.longitude IS NOT NULL`,
 		Prisma.sql`p.price_per_sqm > 0`,
-		...(thresholdPercent > 0 ? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`] : []),
+		...(thresholdPercent > 0
+			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
+			: []),
 		...applyFilters(filters),
 	];
 
@@ -240,7 +242,9 @@ export async function getUndervalued(
 	const conditions = [
 		pLocCondition,
 		Prisma.sql`p.price_per_sqm > 0`,
-		...(thresholdPercent > 0 ? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`] : []),
+		...(thresholdPercent > 0
+			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
+			: []),
 		...applyFilters(filters),
 	];
 
@@ -413,7 +417,7 @@ function applyFilters(filters: PropertyFilters): Prisma.Sql[] {
 	if (since !== undefined) conditions.push(Prisma.sql`p.created_at > ${since}`);
 	if (descriptionSearch !== undefined && descriptionSearch.trim() !== "")
 		conditions.push(
-			Prisma.sql`p.description ILIKE ${"%" + descriptionSearch.trim() + "%"}`,
+			Prisma.sql`p.description ILIKE ${`%${descriptionSearch.trim()}%`}`,
 		);
 
 	return conditions;

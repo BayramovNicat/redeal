@@ -27,10 +27,18 @@ export function ts(tier: string): TierStyle {
 			b: "var(--yellow-b)",
 			hex: "#fbbf24",
 		};
+	if (tier === "Overpriced")
+		return {
+			c: "var(--red)",
+			bg: "var(--red-dim)",
+			b: "var(--red-b)",
+			hex: "#f87171",
+		};
+	// Market Price / unknown → muted
 	return {
-		c: "var(--red)",
-		bg: "var(--red-dim)",
-		b: "var(--red-b)",
-		hex: "#f87171",
+		c: "var(--muted)",
+		bg: "var(--surface-2)",
+		b: "var(--border)",
+		hex: "#6b7280",
 	};
 }

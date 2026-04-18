@@ -3,7 +3,6 @@ import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { Property } from "../core/types";
 import { frag, ge, hide, show, toast } from "../core/utils";
-import { SkeletonList } from "../ui/skeleton";
 import { Chip, CloseableChip } from "../ui/chip";
 import { Field } from "../ui/field";
 import { Icons } from "../ui/icons";
@@ -12,6 +11,7 @@ import { Label } from "../ui/label";
 import { MultiSelect, type MultiSelectElement } from "../ui/multi-select";
 import { Range, setRangeProgress } from "../ui/range";
 import { Select } from "../ui/select";
+import { SkeletonList } from "../ui/skeleton";
 
 const NUM_FILTERS = () => [
 	{
@@ -400,6 +400,21 @@ export function initSearch(container: HTMLElement): () => void {
 							className: "w-full",
 						}),
 					})}
+					${Field({
+						htmlFor: "tier-filter",
+						label: t("tierFilter"),
+						input: Select({
+							id: "tier-filter",
+							className: "w-full",
+							options: [
+								{ value: "", label: t("tierFilterAll") },
+								{ value: "High Value Deal", label: t("tierHigh") },
+								{ value: "Good Deal", label: t("tierGood") },
+								{ value: "Fair Price", label: t("tierFair") },
+								{ value: "Overpriced", label: t("tierOverpriced") },
+							],
+						}),
+					})}
 				</div>
 				<div class="flex flex-wrap gap-1.75 pt-3.5">
 					${CHECK_FILTERS().map((f) => Chip({ id: f.id, label: f.label }))}
@@ -470,6 +485,7 @@ export function initSearch(container: HTMLElement): () => void {
 	}
 	for (const f of NUM_FILTERS()) add(ge(f.id), "input", updateChips);
 	add(ge("category"), "input", updateChips);
+	add(ge("tier-filter"), "change", () => bus.emit(EVENTS.DEALS_UPDATED));
 
 	add(document, "keydown", (e: KeyboardEvent) => {
 		if (

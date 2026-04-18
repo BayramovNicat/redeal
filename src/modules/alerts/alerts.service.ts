@@ -65,14 +65,29 @@ export async function runAlerts(): Promise<void> {
 
 	for (const alert of alerts) {
 		try {
-			const { location: rawLocation, threshold: rawThreshold, ...propertyFilters } = alert.filters as AlertFilters;
+			const {
+				location: rawLocation,
+				threshold: rawThreshold,
+				...propertyFilters
+			} = alert.filters as AlertFilters;
 			const location = rawLocation ?? "__all__";
 			const threshold = Number(rawThreshold ?? 10);
-			const filterArgs = { ...propertyFilters, since: alert.last_run_at ?? undefined };
+			const filterArgs = {
+				...propertyFilters,
+				since: alert.last_run_at ?? undefined,
+			};
 			const pageArgs: PaginationOptions = { limit: 10 };
 
-			const locations = location === "__all__" ? "__all__" : location.split(",").filter(Boolean);
-			const { data } = await getUndervalued(locations, threshold, filterArgs, pageArgs);
+			const locations =
+				location === "__all__"
+					? "__all__"
+					: location.split(",").filter(Boolean);
+			const { data } = await getUndervalued(
+				locations,
+				threshold,
+				filterArgs,
+				pageArgs,
+			);
 
 			await prisma.alert.update({
 				where: { id: alert.id },

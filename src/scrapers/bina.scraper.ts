@@ -42,7 +42,7 @@ const ACCEPT_LANGUAGES: [string, ...string[]] = [
 ];
 
 function pick<T>(arr: [T, ...T[]]): T {
-	return arr[Math.floor(Math.random() * arr.length)]!;
+	return arr[Math.floor(Math.random() * arr.length)] as T;
 }
 
 function randomHeaders(): Record<string, string> {

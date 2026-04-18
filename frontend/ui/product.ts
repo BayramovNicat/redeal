@@ -51,7 +51,16 @@ export function Product({
 		const dropLabel =
 			dropCount > 0 ? `▼ ${t("tagPriceDrop", { n: dropCount })}` : null;
 
+		const isNew =
+			!!property.posted_date &&
+			Date.now() - new Date(property.posted_date).getTime() < 86400000;
+
 		const tagList = [
+			{
+				if: isNew,
+				label: t("tagNew"),
+				cls: "text-(--accent) border-[rgba(99,102,241,0.5)] bg-(--accent-dim) font-semibold",
+			},
 			{
 				if: dropCount > 0,
 				label: dropLabel || "",
@@ -127,7 +136,7 @@ export function Product({
 
 		element = html`<article
 			class="bg-(--surface)
-      border border-(--border)
+      border
       rounded-(--r-lg)
       p-4
       flex flex-col
@@ -135,9 +144,9 @@ export function Product({
       cursor-pointer
       transition-[border-color,box-shadow,transform]
       duration-200
-      hover:border-(--border-h)
       hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
       hover:-translate-y-0.5"
+      style="border-color:${property.tier === "Overpriced" ? "var(--red-b)" : "var(--border)"}"
 		>
 			${thumb}
 			<div class="flex justify-between items-start gap-2">
@@ -186,9 +195,11 @@ export function Product({
 				${StatBox({ label: t("rooms"), value: property.rooms ?? "—" })}
 				${StatBox({ label: t("floor"), value: floorStr })}
 			</div>
-			${tags.length
-				? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
-				: ""}
+			${
+				tags.length
+					? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
+					: ""
+			}
 			<div class="flex items-center justify-between mt-auto">
 				<a
 					class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
@@ -213,6 +224,38 @@ export function Product({
 			: html`<div
 					class="w-10 h-10 rounded-(--r-sm) bg-(--surface-2) shrink-0"
 				></div>`;
+
+		const isNewRow =
+			!!property.posted_date &&
+			Date.now() - new Date(property.posted_date).getTime() < 86400000;
+		const rowTagList = [
+			{
+				if: isNewRow,
+				label: t("tagNew"),
+				cls: "text-(--accent) border-[rgba(99,102,241,0.5)] bg-(--accent-dim)",
+			},
+			{
+				if: (property.price_drop_count ?? 0) > 0,
+				label: `▼ ${t("tagPriceDrop", { n: property.price_drop_count ?? 0 })}`,
+				cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)",
+			},
+			{
+				if: property.is_urgent,
+				label: `⚡ ${t("tagUrgent")}`,
+				cls: "text-(--red) border-(--red-b) bg-(--red-dim)",
+			},
+			{
+				if: property.has_document,
+				label: t("tagDocument"),
+				cls: "text-(--blue) border-(--blue-b) bg-(--blue-dim)",
+			},
+		];
+		const rowTagEls = rowTagList
+			.filter((rt) => rt.if)
+			.map((rt) => Tag({ label: rt.label, className: rt.cls }));
+		const rowTagsEl = rowTagEls.length
+			? html`<div class="flex flex-wrap gap-1 mt-1">${rowTagEls}</div>`
+			: null;
 
 		element = html`<div
 			class="bg-(--surface)
@@ -248,10 +291,9 @@ export function Product({
 				<div class="mt-0.5 text-xs text-(--muted) truncate">
 					${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"}
 					${t("rooms_")} · ${t("floor_")} ${floorStr} ·
-					₼${fmt(property.price_per_sqm, 0)}/m²${property.is_urgent
-						? " · ⚡"
-						: ""}
+					₼${fmt(property.price_per_sqm, 0)}/m²
 				</div>
+				${rowTagsEl}
 			</div>
 			<div class="flex items-center gap-1">
 				${bmarkBtn}${hideBtn}${galleryBtn}
@@ -260,7 +302,7 @@ export function Product({
 				class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
 				href="${property.source_url}"
 				target="_blank"
-				rel="noopener"
+				rel="noopener noreferrer"
 				style="white-space:nowrap"
 				>${t("viewShort")}</a
 			>

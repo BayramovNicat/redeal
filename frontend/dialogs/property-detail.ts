@@ -21,133 +21,136 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 
 	// ── DOM scaffold ────────────────────────────────────────────────────────
 	const modal = html`
-    <dialog
-      id="prop-detail-modal"
-      class="bg-transparent border-none p-0 max-w-screen max-h-screen w-full h-full backdrop:bg-black/80 backdrop:backdrop-blur-sm focus:outline-none"
-    >
-      <div
-        class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+		<dialog
+			id="prop-detail-modal"
+			class="bg-transparent border-none p-0 max-w-screen max-h-screen w-full h-full backdrop:bg-black/80 backdrop:backdrop-blur-sm focus:outline-none"
+		>
+			<div
+				class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
                flex flex-col overflow-hidden
                bg-(--surface) border border-(--border) rounded-(--r-lg) text-(--text)
                shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
-        style="width:calc(100vw - 2rem);max-width:900px;max-height:calc(100vh - 2rem)"
-      >
-        <!-- Close button (fixed) -->
-        <button
-          id="pd-close"
-          class="absolute top-3 right-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-95"
-        >
-          ${Icons.close(16)}
-        </button>
+				style="width:calc(100vw - 2rem);max-width:900px;max-height:calc(100vh - 2rem)"
+			>
+				<!-- Close button (fixed) -->
+				<button
+					id="pd-close"
+					class="absolute top-3 right-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-95"
+				>
+					${Icons.close(16)}
+				</button>
 
-        <!-- Scrollable body -->
-        <div class="overflow-y-auto flex-1 min-h-0">
-          <!-- Gallery placeholder -->
-          <div id="pd-gallery-ct"></div>
+				<!-- Scrollable body -->
+				<div class="overflow-y-auto flex-1 min-h-0">
+					<!-- Gallery placeholder -->
+					<div id="pd-gallery-ct"></div>
 
-          <!-- Header -->
-          <div class="px-5 pt-4 pb-3 border-b border-(--border)">
-            <div class="flex items-center justify-between gap-3 mb-1">
-              <div
-                id="pd-location"
-                class="text-xs text-(--muted) truncate"
-              ></div>
-              <div
-                id="pd-posted"
-                class="text-xs text-(--muted) shrink-0"
-              ></div>
-            </div>
-            <div class="flex items-center gap-2.5">
-              <span
-                id="pd-price"
-                class="text-2xl font-bold tracking-tight"
-              ></span>
-              <span
-                id="pd-tier"
-                class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
-              ></span>
-            </div>
-          </div>
+					<!-- Header -->
+					<div class="px-5 pt-4 pb-3 border-b border-(--border)">
+						<div class="flex items-center justify-between gap-3 mb-1">
+							<div
+								id="pd-location"
+								class="text-xs text-(--muted) truncate"
+							></div>
+							<div id="pd-posted" class="text-xs text-(--muted) shrink-0"></div>
+						</div>
+						<div class="flex items-center gap-2.5">
+							<span
+								id="pd-price"
+								class="text-2xl font-bold tracking-tight"
+							></span>
+							<span
+								id="pd-tier"
+								class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
+							></span>
+						</div>
+					</div>
 
-          <!-- Stats grid -->
-          <div class="px-5 py-4 border-b border-(--border)">
-            <div id="pd-stats" class="grid grid-cols-4 gap-2 mb-3"></div>
-            <!-- Discount bar -->
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs text-(--muted)"
-                >${t("propMarketAvg")}
-                <span id="pd-mkt-avg" class="text-(--text-2) font-medium"></span
-              ></span>
-              <span id="pd-disc-pct" class="text-sm font-bold"></span>
-            </div>
-            <div class="h-2 bg-(--surface-3) rounded-full overflow-hidden">
-              <div
-                id="pd-disc-bar"
-                class="h-full rounded-full transition-[width] duration-500 ease-out"
-                style="width:0%"
-              ></div>
-            </div>
-            <!-- Tags -->
-            <div
-              id="pd-tags"
-              class="flex-wrap gap-1.25 mt-3 empty:hidden"
-            ></div>
-          </div>
+					<!-- Stats grid -->
+					<div class="px-5 py-4 border-b border-(--border)">
+						<div id="pd-stats" class="grid grid-cols-4 gap-2 mb-3"></div>
+						<!-- Discount bar -->
+						<div class="flex items-center justify-between mb-1.5">
+							<span class="text-xs text-(--muted)"
+								>${t("propMarketAvg")}
+								<span id="pd-mkt-avg" class="text-(--text-2) font-medium"></span
+							></span>
+							<span id="pd-disc-pct" class="text-sm font-bold"></span>
+						</div>
+						<div class="h-1 bg-(--surface-3) rounded-full overflow-hidden">
+							<div
+								id="pd-disc-bar"
+								class="h-full rounded-full transition-[width] duration-500 ease-out"
+								style="width:0%"
+							></div>
+						</div>
+						<!-- Tags -->
+						<div
+							id="pd-tags"
+							class="flex-wrap gap-1.25 mt-3 empty:hidden"
+						></div>
+					</div>
 
-          <!-- Description -->
-          <div
-            id="pd-desc-section"
-            class="px-5 py-4 border-b border-(--border) hidden"
-          >
-            <div
-              class="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-2"
-            >
-              ${t("btnDescription")}
-            </div>
-            <p
-              id="pd-desc-body"
-              class="text-sm text-(--text-2) leading-[1.75] whitespace-pre-wrap"
-            ></p>
-          </div>
+					<!-- Description -->
+					<div
+						id="pd-desc-section"
+						class="px-5 py-4 border-b border-(--border) hidden"
+					>
+						<div
+							class="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-2"
+						>
+							${t("btnDescription")}
+						</div>
+						<p
+							id="pd-desc-body"
+							class="text-sm text-(--text-2) leading-[1.75] whitespace-pre-wrap"
+						></p>
+					</div>
 
-          <!-- Map -->
-          <div id="pd-map-section" class="border-b border-(--border) hidden">
-            <div id="pd-map-ct" class="w-full" style="height:260px"></div>
-          </div>
-        </div>
+					<!-- Map -->
+					<div id="pd-map-section" class="border-b border-(--border) hidden">
+						<div id="pd-map-ct" class="w-full" style="height:260px"></div>
+					</div>
+				</div>
 
-        <!-- Footer — fixed to bottom -->
-        <div
-          class="px-5 py-3 flex items-center justify-between gap-3 border-t border-(--border) bg-(--surface) shrink-0"
-        >
-          <a
-            id="pd-link"
-            href="#"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors hover:text-(--text)"
-            rel="noopener noreferrer"
-          >
-            ${t("viewListing")} ${Icons.external()}
-          </a>
-          <div class="flex items-center gap-1.5">
-            <button
-              id="pd-bmark-btn"
-              class="inline-flex items-center gap-1.25 text-xs px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) text-(--muted) hover:text-(--text) transition-colors"
-            >
-              ${Icons.bookmark(false)} <span>${t("btnSave")}</span>
-            </button>
-            <button
-              id="pd-hide-btn"
-              class="inline-flex items-center gap-1.25 text-xs px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) text-(--muted) hover:text-red-400 transition-colors"
-            >
-              ${Icons.hide()} <span>${t("btnHide")}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </dialog>
-  ` as HTMLDialogElement;
+				<!-- Footer — fixed to bottom -->
+				<div
+					class="px-5 py-3 flex items-center justify-between gap-3 border-t border-(--border) bg-(--surface) shrink-0"
+				>
+					<a
+						id="pd-link"
+						href="#"
+						target="_blank"
+						rel="noopener"
+						class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors hover:text-(--text)"
+						rel="noopener noreferrer"
+					>
+						${t("viewListing")} ${Icons.external()}
+					</a>
+					<div class="flex items-center gap-1.5">
+						<button
+							id="pd-share-btn"
+							class="inline-flex items-center gap-1.25 text-xs px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) text-(--muted) hover:text-(--text) transition-colors"
+						>
+							${Icons.external()} <span>${t("btnShare")}</span>
+						</button>
+						<button
+							id="pd-bmark-btn"
+							class="inline-flex items-center gap-1.25 text-xs px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) text-(--muted) hover:text-(--text) transition-colors"
+						>
+							${Icons.bookmark(false)} <span>${t("btnSave")}</span>
+						</button>
+						<button
+							id="pd-hide-btn"
+							class="inline-flex items-center gap-1.25 text-xs px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) text-(--muted) hover:text-red-400 transition-colors"
+						>
+							${Icons.hide()} <span>${t("btnHide")}</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</dialog>
+	` as HTMLDialogElement;
 
 	// ── Refs ─────────────────────────────────────────────────────────────────
 	const $ = <T extends HTMLElement>(id: string): T => {
@@ -178,6 +181,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 	const $descSec = $("pd-desc-section");
 	const $descBody = $("pd-desc-body");
 	const $link = $<HTMLAnchorElement>("pd-link");
+	const $shareBtn = $("pd-share-btn");
 	const $bmarkBtn = $("pd-bmark-btn");
 	const $hideBtn = $("pd-hide-btn");
 	$tags.classList.add("flex");
@@ -314,7 +318,20 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		el.addEventListener(ev, fn);
 	}
 
-	// bookmark / hide wire-up — emit custom DOM events the products feature can catch
+	// share / bookmark / hide wire-up
+	$shareBtn.addEventListener("click", () => {
+		if (!currentProperty) return;
+		const url = currentProperty.source_url;
+		navigator.clipboard.writeText(url).then(() => {
+			const span = $shareBtn.querySelector("span");
+			if (!span) return;
+			const prev = span.textContent;
+			span.textContent = t("shareCopied");
+			setTimeout(() => {
+				span.textContent = prev;
+			}, 2000);
+		});
+	});
 	$bmarkBtn.addEventListener("click", () => {
 		if (currentProperty) {
 			modal.dispatchEvent(

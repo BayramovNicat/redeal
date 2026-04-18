@@ -2,7 +2,17 @@ import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { CardCallbacks, Property } from "../core/types";
-import { fmt, frag, ge, hide, html, show, toast, trust } from "../core/utils";
+import {
+	fmt,
+	frag,
+	ge,
+	hide,
+	html,
+	show,
+	toast,
+	trust,
+	tTier,
+} from "../core/utils";
 
 import { openGallery } from "../dialogs/gallery";
 import { openPropertyDetail } from "../dialogs/property-detail";
@@ -11,7 +21,6 @@ import { EmptyState } from "../ui/empty-state";
 import { Icons } from "../ui/icons";
 import { Product } from "../ui/product";
 import { Select } from "../ui/select";
-import { SkeletonList } from "../ui/skeleton";
 import { hideMapView, initMapView, showMapView } from "./map-view";
 
 /**
@@ -21,33 +30,33 @@ import { hideMapView, initMapView, showMapView } from "./map-view";
 export function initProducts(container: HTMLElement): () => void {
 	// 1. Initial State Area
 	const resultsBar = html`
-    <div id="results-bar-container">
-      <div
-        class="flex items-center justify-between mb-4 gap-2.5 flex-wrap"
-        id="results-bar"
-        style="display: none"
-      >
-        <div
-          class="text-sm text-(--text-2) [&_strong]:text-(--text) [&_strong]:font-semibold"
-          id="results-meta"
-        ></div>
-        <div class="flex items-center gap-1.75">
-          ${Button({
+		<div id="results-bar-container">
+			<div
+				class="flex items-center justify-between mb-4 gap-2.5 flex-wrap"
+				id="results-bar"
+				style="display: none"
+			>
+				<div
+					class="text-sm text-(--text-2) [&_strong]:text-(--text) [&_strong]:font-semibold"
+					id="results-meta"
+				></div>
+				<div class="flex items-center gap-1.75">
+					${Button({
 						id: "export-btn",
 						title: t("exportBtn"),
 						content: frag`${Icons.download()} ${t("exportBtn")}`,
 					})}
-          ${Button({
+					${Button({
 						id: "alert-btn",
 						title: t("telegramAlerts"),
 						content: frag`${Icons.bell()} ${t("alertMe")}`,
 					})}
-          ${Button({
+					${Button({
 						id: "saved-btn",
 						className: "hidden",
 						content: frag`${Icons.bookmark(false)} ${t("saved")} <span id="saved-badge"></span>`,
 					})}
-          ${Select({
+					${Select({
 						id: "sort-sel",
 						variant: "xs",
 						ariaLabel: t("sortBy"),
@@ -55,13 +64,14 @@ export function initProducts(container: HTMLElement): () => void {
 						options: [
 							{ value: "disc", label: t("sortDisc") },
 							{ value: "drops", label: t("sortDrops") },
+							{ value: "new", label: t("sortNew") },
 							{ value: "price-asc", label: t("sortPriceAsc") },
 							{ value: "price-desc", label: t("sortPriceDesc") },
 							{ value: "area", label: t("sortArea") },
 							{ value: "ppsm", label: t("sortPpsm") },
 						],
 					})}
-          ${Button({
+					${Button({
 						id: "vgrid",
 						variant: "square",
 						color: "indigo",
@@ -69,7 +79,7 @@ export function initProducts(container: HTMLElement): () => void {
 						title: t("gridView"),
 						content: Icons.grid(),
 					})}
-          ${Button({
+					${Button({
 						id: "vlist",
 						variant: "square",
 						color: "indigo",
@@ -77,7 +87,7 @@ export function initProducts(container: HTMLElement): () => void {
 						title: t("listView"),
 						content: Icons.list(),
 					})}
-          ${Button({
+					${Button({
 						id: "vmapview",
 						variant: "square",
 						color: "indigo",
@@ -85,10 +95,10 @@ export function initProducts(container: HTMLElement): () => void {
 						title: t("mapView"),
 						content: Icons.mapPins(),
 					})}
-        </div>
-      </div>
-    </div>
-  `;
+				</div>
+			</div>
+		</div>
+	`;
 	const loading = EmptyState({
 		id: "s-loading",
 		icon: Icons.spinnerLg(),
@@ -127,6 +137,27 @@ export function initProducts(container: HTMLElement): () => void {
 
 	const cleanupMapView = initMapView(ge("map-view-ct"));
 
+	// Back-to-top button
+	const backToTopBtn = html`<button
+		type="button"
+		id="back-to-top"
+		aria-label="${t("backToTop")}"
+		class="fixed bottom-5 right-5 z-40 w-9 h-9 rounded-full bg-(--surface-3) border border-(--border) text-(--muted) flex items-center justify-center shadow-lg transition-all duration-200 hover:text-(--text) hover:border-(--border-h) opacity-0 pointer-events-none"
+		style="font-size:14px"
+	>
+		↑
+	</button>`;
+	document.body.appendChild(backToTopBtn);
+	const onScroll = () => {
+		const show = window.scrollY > 450;
+		backToTopBtn.style.opacity = show ? "1" : "0";
+		backToTopBtn.style.pointerEvents = show ? "auto" : "none";
+	};
+	window.addEventListener("scroll", onScroll, { passive: true });
+	backToTopBtn.addEventListener("click", () =>
+		window.scrollTo({ top: 0, behavior: "smooth" }),
+	);
+
 	// Restore persisted sort
 	const savedSort = localStorage.getItem("re-sort");
 	if (savedSort) (ge("sort-sel") as HTMLSelectElement).value = savedSort;
@@ -159,10 +190,20 @@ export function initProducts(container: HTMLElement): () => void {
 			: state.allResults.filter((p) => !state.hidden.has(p.source_url));
 
 		const sortBy = (ge("sort-sel") as HTMLSelectElement)?.value || "disc";
+		const tierSel =
+			(document.querySelector("#tier-filter") as HTMLSelectElement)?.value ||
+			"";
+		if (tierSel) list = list.filter((p) => p.tier === tierSel);
+
 		list = [...list].sort((a, b) => {
 			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
 			if (sortBy === "drops")
 				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
+			if (sortBy === "new")
+				return (
+					new Date(b.posted_date ?? 0).getTime() -
+					new Date(a.posted_date ?? 0).getTime()
+				);
 			if (sortBy === "price-asc") return a.price - b.price;
 			if (sortBy === "price-desc") return b.price - a.price;
 			if (sortBy === "area") return b.area_sqm - a.area_sqm;
@@ -180,12 +221,12 @@ export function initProducts(container: HTMLElement): () => void {
 		hide("s-empty");
 
 		const wrap = html`<div
-      class="${
+			class="${
 				state.currentView === "grid"
 					? "grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[580px]:grid-cols-1"
 					: "flex flex-col gap-2"
 			}"
-    ></div>`;
+		></div>`;
 
 		let newCount = 0;
 		for (const property of list) {
@@ -208,10 +249,28 @@ export function initProducts(container: HTMLElement): () => void {
 		ct.appendChild(wrap);
 
 		const showing = list.length;
+		const tierCounts = list.reduce<Record<string, number>>((acc, p) => {
+			acc[p.tier] = (acc[p.tier] ?? 0) + 1;
+			return acc;
+		}, {});
+		const tierBadges: { tier: string; color: string }[] = [
+			{ tier: "High Value Deal", color: "var(--green)" },
+			{ tier: "Good Deal", color: "var(--blue)" },
+			{ tier: "Fair Price", color: "var(--yellow)" },
+			{ tier: "Overpriced", color: "var(--red)" },
+		];
+		const distStr = tierBadges
+			.filter((tb) => tierCounts[tb.tier])
+			.map(
+				(tb) =>
+					`<span style="color:${tb.color}">${tierCounts[tb.tier]} ${tTier(tb.tier, true)}</span>`,
+			)
+			.join(' <span style="color:var(--border)">·</span> ');
+
 		ge("results-meta").innerHTML = trust(
 			state.showingSaved
 				? `<strong>${showing}</strong> ${showing !== 1 ? t("savedDeals") : t("savedDeal")}`
-				: `<strong>${showing}</strong> ${showing !== 1 ? t("results") : t("result")}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>` : ""}`,
+				: `<strong>${showing}</strong> ${showing !== 1 ? t("results") : t("result")}${state.currentTotal > state.allResults.length ? ` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>` : ""}${distStr ? ` <span style="color:var(--border)">·</span> ${distStr}` : ""}`,
 		) as string;
 
 		if (!state.showingSaved && state.allResults.length < state.currentTotal) {
@@ -300,6 +359,11 @@ export function initProducts(container: HTMLElement): () => void {
 			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
 			if (sortBy === "drops")
 				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
+			if (sortBy === "new")
+				return (
+					new Date(b.posted_date ?? 0).getTime() -
+					new Date(a.posted_date ?? 0).getTime()
+				);
 			if (sortBy === "price-asc") return a.price - b.price;
 			if (sortBy === "price-desc") return b.price - a.price;
 			if (sortBy === "area") return b.area_sqm - a.area_sqm;
@@ -384,7 +448,10 @@ export function initProducts(container: HTMLElement): () => void {
 	add(ge("export-btn"), "click", () => handleExport());
 
 	add(ge("sort-sel"), "change", () => {
-		localStorage.setItem("re-sort", (ge("sort-sel") as HTMLSelectElement).value);
+		localStorage.setItem(
+			"re-sort",
+			(ge("sort-sel") as HTMLSelectElement).value,
+		);
 		state.renderedSet.clear();
 		render();
 	});
@@ -458,6 +525,21 @@ export function initProducts(container: HTMLElement): () => void {
 
 	const offDeals = bus.on(EVENTS.DEALS_UPDATED, () => render());
 
+	// Scroll restore: save position before detail opens, restore on close
+	let savedScrollY = 0;
+	const offPropOpen = bus.on(EVENTS.PROPERTY_OPEN, () => {
+		savedScrollY = window.scrollY;
+	});
+	const onDialogClose = (e: Event) => {
+		const el = e.target as HTMLElement;
+		if (el.id === "prop-detail-modal" && savedScrollY > 0) {
+			requestAnimationFrame(() =>
+				window.scrollTo({ top: savedScrollY, behavior: "instant" }),
+			);
+		}
+	};
+	document.addEventListener("close", onDialogClose, true);
+
 	// Detail modal bookmark / hide events (bubble up from the dialog)
 	const onPdBmark = (e: Event) => {
 		const p = (e as CustomEvent<Property>).detail;
@@ -480,8 +562,12 @@ export function initProducts(container: HTMLElement): () => void {
 			state.scrollObserver = null;
 		}
 		offDeals();
+		offPropOpen();
 		document.removeEventListener("pd:bmark", onPdBmark);
 		document.removeEventListener("pd:hide", onPdHide);
+		document.removeEventListener("close", onDialogClose, true);
+		window.removeEventListener("scroll", onScroll);
+		backToTopBtn.remove();
 		cleanupMapView();
 	};
 }
