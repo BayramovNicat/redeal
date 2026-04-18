@@ -1,6 +1,7 @@
 import type { ScrapeProgressEvent } from "../scrapers/base.scraper.js";
 import { BinaScraper } from "../scrapers/bina.scraper.js";
 import { ScrapingService } from "../services/scraping.service.js";
+import { parseQueryNum } from "../utils/query.js";
 
 const scrapingService = new ScrapingService([new BinaScraper()]);
 
@@ -11,8 +12,7 @@ const scrapingService = new ScrapingService([new BinaScraper()]);
  * Optional query params: maxPages, startPage, endPage, delayMs
  */
 export function streamScrape(req: Request): Response {
-	const url = new URL(req.url);
-	const q = url.searchParams;
+	const q = new URL(req.url).searchParams;
 
 	const encoder = new TextEncoder();
 	const stream = new ReadableStream({
@@ -23,16 +23,11 @@ export function streamScrape(req: Request): Response {
 				);
 			};
 
-			const maxPages = q.get("maxPages");
-			const startPage = q.get("startPage");
-			const endPage = q.get("endPage");
-			const delayMs = q.get("delayMs");
-
 			const options = {
-				maxPages: maxPages !== null ? parseInt(maxPages, 10) : 20,
-				startPage: startPage !== null ? parseInt(startPage, 10) : undefined,
-				endPage: endPage !== null ? parseInt(endPage, 10) : undefined,
-				delayMs: delayMs !== null ? parseInt(delayMs, 10) : 800,
+				maxPages: parseQueryNum(q.get("maxPages")) ?? 20,
+				startPage: parseQueryNum(q.get("startPage")),
+				endPage: parseQueryNum(q.get("endPage")),
+				delayMs: parseQueryNum(q.get("delayMs")) ?? 800,
 				onProgress: send,
 			};
 

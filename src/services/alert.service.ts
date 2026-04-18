@@ -1,31 +1,10 @@
+import type { AlertFilters } from "../types.js";
 import { classifyDeal } from "../utils/deals.js";
 import { prisma } from "../utils/prisma.js";
 import { AnalyticsService } from "./analytics.service.js";
 import { sendMessage } from "./telegram.service.js";
 
 const analytics = new AnalyticsService();
-
-type AlertFilters = {
-	location?: string;
-	threshold?: number;
-	minPrice?: number;
-	maxPrice?: number;
-	minArea?: number;
-	maxArea?: number;
-	minRooms?: number;
-	maxRooms?: number;
-	minFloor?: number;
-	maxFloor?: number;
-	minTotalFloors?: number;
-	maxTotalFloors?: number;
-	hasDocument?: boolean;
-	hasMortgage?: boolean;
-	hasRepair?: boolean;
-	isUrgent?: boolean;
-	notLastFloor?: boolean;
-	hasActiveMortgage?: boolean;
-	category?: string;
-};
 
 function fmt(n: number, d = 0): string {
 	return Number(n).toLocaleString("az-AZ", { maximumFractionDigits: d });

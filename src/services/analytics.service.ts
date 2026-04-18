@@ -31,7 +31,7 @@ import type {
 	PropertyRowWithHistory,
 	TrendPoint,
 } from "../types.js";
-import { classifyDeal } from "../utils/deals.js";
+import { type DealTier, classifyDeal } from "../utils/deals.js";
 import { queryRaw } from "../utils/prisma.js";
 
 export class AnalyticsService {
@@ -140,7 +140,7 @@ export class AnalyticsService {
 	/**
 	 * Fetches specific properties by source_url list with location avg comparison.
 	 */
-	async getPropertiesByUrls(urls: string[]) {
+	async getPropertiesByUrls(urls: string[]): Promise<(PropertyRow & { tier: DealTier })[]> {
 		const rows = await queryRaw<PropertyRow[]>(Prisma.sql`
 			WITH avgs AS (
 				SELECT location_name, AVG(price_per_sqm) AS avg_ppsm

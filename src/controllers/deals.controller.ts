@@ -11,6 +11,7 @@ type TrendCacheEntry = {
 };
 const trendCache = new Map<string, TrendCacheEntry>();
 const TREND_TTL_MS = 30 * 60_000; // 30 min — data changes only on scrape cycles
+const TREND_CACHE_MAX = 300; // evict oldest entry when limit hit
 
 /** GET /api/deals/locations — distinct location names that have at least one listing */
 export async function getLocations(): Promise<Response> {
@@ -35,6 +36,10 @@ export async function getTrend(req: Request): Promise<Response> {
 	}
 	try {
 		const data = await analytics.getPriceTrend(location);
+		if (trendCache.size >= TREND_CACHE_MAX) {
+			const oldest = trendCache.keys().next().value;
+			if (oldest !== undefined) trendCache.delete(oldest);
+		}
 		trendCache.set(location, { data, cachedAt: Date.now() });
 		return res.json({ location, data }, 1800, 300);
 	} catch (err) {

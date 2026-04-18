@@ -76,6 +76,15 @@ export type MapPinRow = {
 	discount_percent: number;
 };
 
+/** Shape of the filters JSON stored in Alert.filters — subset of PropertyFilters + alert-specific fields */
+export type AlertFilters = Omit<
+	PropertyFilters,
+	"minPriceSqm" | "maxPriceSqm" | "since" | "limit" | "offset"
+> & {
+	location?: string;
+	threshold?: number;
+};
+
 export type TrendPoint = {
 	week: Date;
 	avg_ppsm: number;
