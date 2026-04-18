@@ -130,7 +130,7 @@ export function Product({
             ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
           >
           <span class="text-base font-bold" style="color:${tier.c}"
-            >-${property.discount_percent}%</span
+            >${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(property.discount_percent)}%</span
           >
         </div>
         <div class="h-1 bg-(--surface-3) rounded-full overflow-hidden">
@@ -183,7 +183,7 @@ export function Product({
     >
       <div class="text-center">
         <div class="text-lg font-bold" style="color: ${tier.c}">
-          -${property.discount_percent}%
+          ${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(property.discount_percent)}%
         </div>
         <div class="text-xs text-(--muted) mt-0.5">
           ${tTier(property.tier, true)}

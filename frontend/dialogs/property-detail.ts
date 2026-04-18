@@ -215,7 +215,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 
 		// Discount bar
 		$mktAvg.textContent = `₼${fmt(p.location_avg_price_per_sqm, 0)}/m²`;
-		$discPct.textContent = `-${p.discount_percent}%`;
+		$discPct.textContent = `${p.discount_percent >= 0 ? "-" : "+"}${Math.abs(p.discount_percent)}%`;
 		$discPct.style.color = tier.c;
 		const barW = Math.min(100, Math.max(2, p.discount_percent * 2.5));
 		$discBar.style.width = `${barW}%`;
