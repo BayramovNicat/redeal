@@ -21,6 +21,9 @@ export type PropertyFilters = {
 	hasActiveMortgage?: boolean;
 	category?: string;
 	since?: Date;
+};
+
+export type PaginationOptions = {
 	limit?: number;
 	offset?: number;
 };
@@ -78,7 +81,7 @@ export type MapPinRow = {
 /** Shape of the filters JSON stored in Alert.filters — subset of PropertyFilters + alert-specific fields */
 export type AlertFilters = Omit<
 	PropertyFilters,
-	"minPriceSqm" | "maxPriceSqm" | "since" | "limit" | "offset"
+	"minPriceSqm" | "maxPriceSqm" | "since"
 > & {
 	location?: string;
 	threshold?: number;

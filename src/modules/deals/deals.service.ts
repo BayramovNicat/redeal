@@ -20,6 +20,7 @@ import type {
 	HeatmapPoint,
 	MapPin,
 	MapPinRow,
+	PaginationOptions,
 	PriceHistoryEntry,
 	PropertyFilters,
 	PropertyRow,
@@ -223,8 +224,9 @@ export async function getUndervaluedByLocation(
 	locations: string[],
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
+	pagination: PaginationOptions = {},
 ): Promise<{ total: number; data: (PropertyRow & { tier: DealTier })[] }> {
-	const { limit = 200, offset = 0 } = filters;
+	const { limit = 200, offset = 0 } = pagination;
 	const factor = (100 - thresholdPercent) / 100.0;
 
 	const conditions = [
@@ -261,8 +263,9 @@ export async function getUndervaluedByLocation(
 export async function getUndervaluedAll(
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
+	pagination: PaginationOptions = {},
 ): Promise<{ total: number; data: (PropertyRow & { tier: DealTier })[] }> {
-	const { limit = 200, offset = 0 } = filters;
+	const { limit = 200, offset = 0 } = pagination;
 	const factor = (100 - thresholdPercent) / 100.0;
 
 	const conditions = [
@@ -298,7 +301,7 @@ export async function getUndervaluedAll(
 
 export async function getPriceDropDeals(
 	location: string[] | "__all__",
-	options: { minDropCount?: number; limit?: number; offset?: number } = {},
+	options: { minDropCount?: number } & PaginationOptions = {},
 ): Promise<{
 	total: number;
 	data: (PropertyRow & {

@@ -2,6 +2,7 @@ import {
 	getUndervaluedAll,
 	getUndervaluedByLocation,
 } from "@/modules/deals/deals.service.js";
+import type { PaginationOptions } from "@/types/index.js";
 import { sendMessage } from "@/modules/telegram/telegram.service.js";
 import type { AlertFilters } from "@/types/index.js";
 import { classifyDeal } from "@/utils/deals.js";
@@ -92,16 +93,17 @@ export async function runAlerts(): Promise<void> {
 				hasActiveMortgage: raw.hasActiveMortgage,
 				category: raw.category,
 				since,
-				limit: 10,
 			};
+			const pageArgs: PaginationOptions = { limit: 10 };
 
 			const { data } =
 				location === "__all__"
-					? await getUndervaluedAll(threshold, filterArgs)
+					? await getUndervaluedAll(threshold, filterArgs, pageArgs)
 					: await getUndervaluedByLocation(
 							location.split(",").filter(Boolean),
 							threshold,
 							filterArgs,
+							pageArgs,
 						);
 
 			await prisma.alert.update({
