@@ -1,3 +1,4 @@
+import { runAlerts } from "@/modules/alerts/alerts.service.js";
 import { ScrapingService } from "@/modules/scrape/scrape.service.js";
 import { BinaScraper } from "@/scrapers/bina.scraper.js";
 import { acquireLock, releaseLock } from "@/utils/scrape-lock.js";
@@ -15,6 +16,7 @@ export function startCron(): void {
 			const results = await cronService.runAll({ maxPages: 40, delayMs: 800 });
 			const total = results.reduce((sum, r) => sum + r.persisted, 0);
 			console.log(`[Cron] Hourly scrape done — persisted=${total}`);
+			await runAlerts();
 		} catch (err) {
 			console.error("[Cron] Hourly scrape failed:", err);
 		} finally {

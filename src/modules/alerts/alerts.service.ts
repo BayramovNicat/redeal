@@ -1,10 +1,6 @@
-import {
-	getUndervaluedAll,
-	getUndervaluedByLocation,
-} from "@/modules/deals/deals.service.js";
-import type { PaginationOptions } from "@/types/index.js";
+import { getUndervalued } from "@/modules/deals/deals.service.js";
 import { sendMessage } from "@/modules/telegram/telegram.service.js";
-import type { AlertFilters } from "@/types/index.js";
+import type { AlertFilters, PaginationOptions } from "@/types/index.js";
 import { classifyDeal } from "@/utils/deals.js";
 import { prisma } from "@/utils/prisma.js";
 
@@ -69,42 +65,14 @@ export async function runAlerts(): Promise<void> {
 
 	for (const alert of alerts) {
 		try {
-			const raw = alert.filters as AlertFilters;
-			const location = raw.location ?? "__all__";
-			const threshold = Number(raw.threshold ?? 10);
-			const since = alert.last_run_at;
-
-			const filterArgs = {
-				minPrice: raw.minPrice,
-				maxPrice: raw.maxPrice,
-				minArea: raw.minArea,
-				maxArea: raw.maxArea,
-				minRooms: raw.minRooms,
-				maxRooms: raw.maxRooms,
-				minFloor: raw.minFloor,
-				maxFloor: raw.maxFloor,
-				minTotalFloors: raw.minTotalFloors,
-				maxTotalFloors: raw.maxTotalFloors,
-				hasDocument: raw.hasDocument,
-				hasMortgage: raw.hasMortgage,
-				hasRepair: raw.hasRepair,
-				isUrgent: raw.isUrgent,
-				notLastFloor: raw.notLastFloor,
-				hasActiveMortgage: raw.hasActiveMortgage,
-				category: raw.category,
-				since,
-			};
+			const { location: rawLocation, threshold: rawThreshold, ...propertyFilters } = alert.filters as AlertFilters;
+			const location = rawLocation ?? "__all__";
+			const threshold = Number(rawThreshold ?? 10);
+			const filterArgs = { ...propertyFilters, since: alert.last_run_at ?? undefined };
 			const pageArgs: PaginationOptions = { limit: 10 };
 
-			const { data } =
-				location === "__all__"
-					? await getUndervaluedAll(threshold, filterArgs, pageArgs)
-					: await getUndervaluedByLocation(
-							location.split(",").filter(Boolean),
-							threshold,
-							filterArgs,
-							pageArgs,
-						);
+			const locations = location === "__all__" ? "__all__" : location.split(",").filter(Boolean);
+			const { data } = await getUndervalued(locations, threshold, filterArgs, pageArgs);
 
 			await prisma.alert.update({
 				where: { id: alert.id },

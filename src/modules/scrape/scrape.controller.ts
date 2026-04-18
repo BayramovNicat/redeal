@@ -1,3 +1,4 @@
+import { runAlerts } from "@/modules/alerts/alerts.service.js";
 import type { ScrapeProgressEvent } from "@/scrapers/base.scraper.js";
 import { BinaScraper } from "@/scrapers/bina.scraper.js";
 import { parseQueryNum } from "@/utils/query.js";
@@ -48,6 +49,7 @@ export function streamScrape(req: Request): Response {
 					maxPages: options.maxPages,
 				});
 				await scrapingService.runAll(options);
+				await runAlerts();
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
 				console.error("[ScrapeController] streamScrape:", err);

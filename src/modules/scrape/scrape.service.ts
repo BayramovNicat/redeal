@@ -1,11 +1,33 @@
 import { Prisma } from "@prisma/client";
-import { runAlerts } from "@/modules/alerts/alerts.service.js";
 import type {
 	IScraper,
 	ScrapedListing,
 	ScraperOptions,
 } from "@/scrapers/base.scraper.js";
 import { prisma, queryRaw } from "@/utils/prisma.js";
+
+type PreparedRow = {
+	source_url: string;
+	price: number;
+	area_sqm: number;
+	price_per_sqm: number;
+	district: string;
+	location_name: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	rooms: number | null;
+	floor: number | null;
+	total_floors: number | null;
+	category: string | null;
+	has_document: boolean | null;
+	has_mortgage: boolean | null;
+	has_repair: boolean | null;
+	description: string | null;
+	image_urls: string[];
+	is_urgent: boolean;
+	has_active_mortgage: boolean;
+	posted_date: Date | null;
+};
 
 export interface ScrapeResult {
 	platform: string;
@@ -75,8 +97,6 @@ export class ScrapingService {
 
 		const total_persisted = results.reduce((sum, r) => sum + r.persisted, 0);
 		options?.onProgress?.({ type: "complete", total_persisted });
-
-		await runAlerts();
 
 		return results;
 	}
@@ -200,81 +220,87 @@ export class ScrapingService {
 					err,
 				);
 				for (const r of chunk) {
-					try {
-						const existing = await prisma.property.findUnique({
-							where: { source_url: r.source_url },
-							select: { id: true, price: true, price_per_sqm: true },
-						});
-						const isPriceDrop =
-							existing !== null && Number(existing.price) > r.price;
-						await prisma.property.upsert({
-							where: { source_url: r.source_url },
-							update: {
-								price: r.price,
-								area_sqm: r.area_sqm,
-								price_per_sqm: r.price_per_sqm,
-								district: r.district,
-								location_name: r.location_name,
-								latitude: r.latitude,
-								longitude: r.longitude,
-								rooms: r.rooms,
-								floor: r.floor,
-								total_floors: r.total_floors,
-								category: r.category,
-								has_document: r.has_document,
-								has_mortgage: r.has_mortgage,
-								has_repair: r.has_repair,
-								description: r.description,
-								image_urls: r.image_urls,
-								is_urgent: r.is_urgent,
-								has_active_mortgage: r.has_active_mortgage,
-								posted_date: r.posted_date,
-								...(isPriceDrop ? { price_drop_count: { increment: 1 } } : {}),
-							},
-							create: {
-								source_url: r.source_url,
-								price: r.price,
-								area_sqm: r.area_sqm,
-								price_per_sqm: r.price_per_sqm,
-								district: r.district,
-								location_name: r.location_name,
-								latitude: r.latitude,
-								longitude: r.longitude,
-								rooms: r.rooms,
-								floor: r.floor,
-								total_floors: r.total_floors,
-								category: r.category,
-								has_document: r.has_document,
-								has_mortgage: r.has_mortgage,
-								has_repair: r.has_repair,
-								description: r.description,
-								image_urls: r.image_urls,
-								is_urgent: r.is_urgent,
-								has_active_mortgage: r.has_active_mortgage,
-								posted_date: r.posted_date,
-								price_drop_count: 0,
-							},
-						});
-						if (isPriceDrop && existing) {
-							await prisma.priceHistory.create({
-								data: {
-									property_id: existing.id,
-									price: existing.price,
-									price_per_sqm: existing.price_per_sqm,
-								},
-							});
-						}
+					const result = await this.persistSingleListing(r);
+					if (result.ok) {
 						persisted++;
-					} catch (e) {
+					} else {
 						skipped++;
-						errors.push(
-							`${r.source_url}: ${e instanceof Error ? e.message : String(e)}`,
-						);
+						errors.push(result.error);
 					}
 				}
 			}
 		}
 
 		return { persisted, skipped, errors };
+	}
+
+	private async persistSingleListing(r: PreparedRow): Promise<{ ok: true } | { ok: false; error: string }> {
+		try {
+			const existing = await prisma.property.findUnique({
+				where: { source_url: r.source_url },
+				select: { id: true, price: true, price_per_sqm: true },
+			});
+			const isPriceDrop = existing !== null && Number(existing.price) > r.price;
+			await prisma.property.upsert({
+				where: { source_url: r.source_url },
+				update: {
+					price: r.price,
+					area_sqm: r.area_sqm,
+					price_per_sqm: r.price_per_sqm,
+					district: r.district,
+					location_name: r.location_name,
+					latitude: r.latitude,
+					longitude: r.longitude,
+					rooms: r.rooms,
+					floor: r.floor,
+					total_floors: r.total_floors,
+					category: r.category,
+					has_document: r.has_document,
+					has_mortgage: r.has_mortgage,
+					has_repair: r.has_repair,
+					description: r.description,
+					image_urls: r.image_urls,
+					is_urgent: r.is_urgent,
+					has_active_mortgage: r.has_active_mortgage,
+					posted_date: r.posted_date,
+					...(isPriceDrop ? { price_drop_count: { increment: 1 } } : {}),
+				},
+				create: {
+					source_url: r.source_url,
+					price: r.price,
+					area_sqm: r.area_sqm,
+					price_per_sqm: r.price_per_sqm,
+					district: r.district,
+					location_name: r.location_name,
+					latitude: r.latitude,
+					longitude: r.longitude,
+					rooms: r.rooms,
+					floor: r.floor,
+					total_floors: r.total_floors,
+					category: r.category,
+					has_document: r.has_document,
+					has_mortgage: r.has_mortgage,
+					has_repair: r.has_repair,
+					description: r.description,
+					image_urls: r.image_urls,
+					is_urgent: r.is_urgent,
+					has_active_mortgage: r.has_active_mortgage,
+					posted_date: r.posted_date,
+					price_drop_count: 0,
+				},
+			});
+			if (isPriceDrop && existing) {
+				await prisma.priceHistory.create({
+					data: {
+						property_id: existing.id,
+						price: existing.price,
+						price_per_sqm: existing.price_per_sqm,
+					},
+				});
+			}
+			return { ok: true };
+		} catch (e) {
+			return { ok: false, error: `${r.source_url}: ${e instanceof Error ? e.message : String(e)}` };
+		}
 	}
 }

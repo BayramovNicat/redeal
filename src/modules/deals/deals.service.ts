@@ -220,8 +220,8 @@ export async function getMapPins(options: {
 	}));
 }
 
-export async function getUndervaluedByLocation(
-	locations: string[],
+export async function getUndervalued(
+	locations: string[] | "__all__",
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
 	pagination: PaginationOptions = {},
@@ -229,8 +229,16 @@ export async function getUndervaluedByLocation(
 	const { limit = 200, offset = 0 } = pagination;
 	const factor = (100 - thresholdPercent) / 100.0;
 
+	const isAll = locations === "__all__";
+	const avgLocCondition = isAll
+		? Prisma.sql`location_name IS NOT NULL`
+		: Prisma.sql`location_name IN (${Prisma.join(locations)})`;
+	const pLocCondition = isAll
+		? Prisma.sql`p.location_name IS NOT NULL`
+		: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
+
 	const conditions = [
-		Prisma.sql`p.location_name IN (${Prisma.join(locations)})`,
+		pLocCondition,
 		Prisma.sql`p.price_per_sqm > 0`,
 		Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`,
 		...applyFilters(filters),
@@ -240,46 +248,7 @@ export async function getUndervaluedByLocation(
 		WITH loc_avg AS (
 			SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
 			FROM "Property"
-			WHERE location_name IN (${Prisma.join(locations)})
-			${locAvgBaseConditions()}
-			GROUP BY location_name
-			HAVING COUNT(*) >= 3
-		)
-		SELECT
-			p.*,
-			ROUND(loc_avg.avg_ppsm::numeric, 2)                                                AS location_avg_price_per_sqm,
-			ROUND(((loc_avg.avg_ppsm - p.price_per_sqm) / loc_avg.avg_ppsm * 100)::numeric, 2) AS discount_percent,
-			COUNT(*) OVER ()                                                                    AS total_count
-		FROM "Property" p
-		JOIN loc_avg ON p.location_name = loc_avg.location_name
-		WHERE ${Prisma.join(conditions, " AND ")}
-		ORDER BY discount_percent DESC
-		LIMIT ${limit} OFFSET ${offset}
-	`);
-
-	return mapResponse(rows);
-}
-
-export async function getUndervaluedAll(
-	thresholdPercent = 10,
-	filters: PropertyFilters = {},
-	pagination: PaginationOptions = {},
-): Promise<{ total: number; data: (PropertyRow & { tier: DealTier })[] }> {
-	const { limit = 200, offset = 0 } = pagination;
-	const factor = (100 - thresholdPercent) / 100.0;
-
-	const conditions = [
-		Prisma.sql`p.location_name IS NOT NULL`,
-		Prisma.sql`p.price_per_sqm > 0`,
-		Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`,
-		...applyFilters(filters),
-	];
-
-	const rows = await queryRaw<PropertyRowWithCount[]>(Prisma.sql`
-		WITH loc_avg AS (
-			SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
-			FROM "Property"
-			WHERE location_name IS NOT NULL
+			WHERE ${avgLocCondition}
 				${locAvgBaseConditions()}
 			GROUP BY location_name
 			HAVING COUNT(*) >= 3

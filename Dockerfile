@@ -25,7 +25,7 @@ COPY --from=prisma /app/node_modules ./node_modules
 COPY --from=prisma /app/prisma ./prisma
 COPY src ./src
 COPY --from=build /app/public ./public
-COPY package.json ./
+COPY package.json tsconfig.json ./
 
 EXPOSE 3000
 
