@@ -138,6 +138,7 @@ export function tTier(tier: string, short = false): string {
 		"High Value Deal": short ? "tierHighShort" : "tierHigh",
 		"Good Deal": short ? "tierGoodShort" : "tierGood",
 		"Fair Price": short ? "tierFairShort" : "tierFair",
+		"Overpriced": short ? "tierOverpricedShort" : "tierOverpriced",
 	};
 	const key = map[tier] || (short ? "tierNormalShort" : "tierNormal");
 	return t(key);

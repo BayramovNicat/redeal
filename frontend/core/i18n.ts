@@ -212,10 +212,12 @@ const translations = {
 		tierGood: "Good Deal",
 		tierFair: "Fair Price",
 		tierNormal: "Market Price",
+		tierOverpriced: "Overpriced",
 		tierHighShort: "High Value",
 		tierGoodShort: "Good",
 		tierFairShort: "Fair",
 		tierNormalShort: "Market",
+		tierOverpricedShort: "Overpriced",
 	},
 
 	az: {
@@ -410,10 +412,12 @@ const translations = {
 		tierGood: "Yaxşı təklif",
 		tierFair: "Normal qiymət",
 		tierNormal: "Bazar qiyməti",
+		tierOverpriced: "Baha qiymət",
 		tierHighShort: "Əla",
 		tierGoodShort: "Yaxşı",
 		tierFairShort: "Normal",
 		tierNormalShort: "Bazar",
+		tierOverpricedShort: "Baha",
 	},
 
 	ru: {
@@ -609,10 +613,12 @@ const translations = {
 		tierGood: "Хорошая цена",
 		tierFair: "Средняя цена",
 		tierNormal: "Рыночная цена",
+		tierOverpriced: "Завышена цена",
 		tierHighShort: "Выгодно",
 		tierGoodShort: "Хорошо",
 		tierFairShort: "Средне",
 		tierNormalShort: "Рынок",
+		tierOverpricedShort: "Дорого",
 	},
 } as const;
 
