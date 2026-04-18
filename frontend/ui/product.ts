@@ -49,9 +49,7 @@ export function Product({
 				? `₼${fmt(originalPrice, 0)} → ₼${fmt(property.price, 0)}`
 				: null;
 		const dropLabel =
-			dropCount > 0
-				? `▼ ${t("tagPriceDrop", { n: dropCount })}`
-				: null;
+			dropCount > 0 ? `▼ ${t("tagPriceDrop", { n: dropCount })}` : null;
 
 		const tagList = [
 			{
@@ -128,7 +126,7 @@ export function Product({
 				: null;
 
 		element = html`<article
-      class="bg-(--surface)
+			class="bg-(--surface)
       border border-(--border)
       rounded-(--r-lg)
       p-4
@@ -140,70 +138,70 @@ export function Product({
       hover:border-(--border-h)
       hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
       hover:-translate-y-0.5"
-    >
-      ${thumb}
-      <div class="flex justify-between items-start gap-2">
-        <div class="min-w-0">
-          <div class="text-xs text-(--muted) mb-0.75 tracking-tight">
-            ${property.location_name ?? property.district ?? "—"}
-          </div>
-          <div class="text-xl font-bold tracking-[-0.5px] leading-[1.1]">
-            ₼ ${fmt(property.price)}
-          </div>
-        </div>
-          <span
-            class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
-            style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
-            >${tTier(property.tier)}</span
-          >
-      </div>
-      <div>
-        <div class="flex items-center justify-between mb-1.75">
-          <span class="text-xs text-(--muted)"
-            >${t("marketAvg")}
-            ₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
-          >
-          <div class="flex items-center gap-1.5">
-            ${spark}
-            <span class="text-base font-bold" style="color:${tier.c}"
-              >${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(property.discount_percent)}%</span
-            >
-          </div>
-        </div>
-        <div class="h-2 bg-(--surface-3) rounded-full overflow-hidden">
-          <div
-            class="h-full rounded-full transition-[width] duration-500 ease-in-out"
-            style="width:${barW}%;background:${tier.hex}"
-          ></div>
-        </div>
-      </div>
-      <div class="grid grid-cols-4 gap-1.5">
-        ${StatBox({
+		>
+			${thumb}
+			<div class="flex justify-between items-start gap-2">
+				<div class="min-w-0">
+					<div class="text-xs text-(--muted) mb-0.75 tracking-tight">
+						${property.location_name ?? property.district ?? "—"}
+					</div>
+					<div class="text-xl font-bold tracking-[-0.5px] leading-[1.1]">
+						₼ ${fmt(property.price)}
+					</div>
+				</div>
+				<span
+					class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
+					style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
+					>${tTier(property.tier)}</span
+				>
+			</div>
+			<div>
+				<div class="flex items-center justify-between mb-1.75">
+					<span class="text-xs text-(--muted)"
+						>${t("marketAvg")}
+						₼${fmt(property.location_avg_price_per_sqm, 0)}/m²</span
+					>
+					<div class="flex items-center gap-1.5">
+						${spark}
+						<span class="text-base font-bold" style="color:${tier.c}"
+							>${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(
+								property.discount_percent,
+							)}%</span
+						>
+					</div>
+				</div>
+				<div class="h-1 bg-(--surface-3) rounded-full overflow-hidden">
+					<div
+						class="h-full rounded-full transition-[width] duration-500 ease-in-out"
+						style="width:${barW}%;background:${tier.hex}"
+					></div>
+				</div>
+			</div>
+			<div class="grid grid-cols-4 gap-1.5">
+				${StatBox({
 					label: t("area"),
 					value: `${fmt(property.area_sqm, 1)} m²`,
 				})}
-        ${StatBox({ label: t("ppsm"), value: fmt(property.price_per_sqm, 0) })}
-        ${StatBox({ label: t("rooms"), value: property.rooms ?? "—" })}
-        ${StatBox({ label: t("floor"), value: floorStr })}
-      </div>
-      ${
-				tags.length
-					? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
-					: ""
-			}
-      <div class="flex items-center justify-between mt-auto">
-        <a
-          class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
-          href="${property.source_url}"
-          target="_blank"
-          rel="noopener noreferrer"
-          >${t("viewListing")} ${Icons.external()}</a
-        >
-        <div class="flex items-center gap-1">
-          ${galleryBtn}${bmarkBtn}${hideBtn}
-        </div>
-      </div>
-    </article>`;
+				${StatBox({ label: t("ppsm"), value: fmt(property.price_per_sqm, 0) })}
+				${StatBox({ label: t("rooms"), value: property.rooms ?? "—" })}
+				${StatBox({ label: t("floor"), value: floorStr })}
+			</div>
+			${tags.length
+				? html`<div class="flex flex-wrap gap-1.25">${tags}</div>`
+				: ""}
+			<div class="flex items-center justify-between mt-auto">
+				<a
+					class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
+					href="${property.source_url}"
+					target="_blank"
+					rel="noopener noreferrer"
+					>${t("viewListing")} ${Icons.external()}</a
+				>
+				<div class="flex items-center gap-1">
+					${galleryBtn}${bmarkBtn}${hideBtn}
+				</div>
+			</div>
+		</article>`;
 	} else {
 		const rowThumbUrl = property.image_urls?.[0];
 		const rowThumb = rowThumbUrl
@@ -212,10 +210,12 @@ export function Product({
 					className:
 						"w-10 h-10 rounded-(--r-sm) overflow-hidden bg-(--surface-3) shrink-0",
 				})
-			: html`<div class="w-10 h-10 rounded-(--r-sm) bg-(--surface-2) shrink-0"></div>`;
+			: html`<div
+					class="w-10 h-10 rounded-(--r-sm) bg-(--surface-2) shrink-0"
+				></div>`;
 
 		element = html`<div
-      class="bg-(--surface)
+			class="bg-(--surface)
       border border-(--border)
       rounded-(--r)
       px-4 py-3
@@ -226,43 +226,45 @@ export function Product({
       transition-colors duration-150
       hover:border-(--border-h)
       hover:bg-(--surface-2)"
-    >
-      ${rowThumb}
-      <div class="text-center">
-        <div class="text-lg font-bold" style="color: ${tier.c}">
-          ${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(property.discount_percent)}%
-        </div>
-        <div class="text-xs text-(--muted) mt-0.5">
-          ${tTier(property.tier, true)}
-        </div>
-      </div>
-      <div class="min-w-0">
-        <div class="text-sm font-bold">
-          ₼ ${fmt(property.price)}
-          <span class="font-normal text-(--muted) text-xs">
-            · ${property.location_name ?? property.district ?? "—"}
-          </span>
-        </div>
-        <div class="mt-0.5 text-xs text-(--muted) truncate">
-          ${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"}
-          ${t("rooms_")} · ${t("floor_")} ${floorStr} ·
-          ₼${fmt(property.price_per_sqm, 0)}/m²${
-						property.is_urgent ? " · ⚡" : ""
-					}
-        </div>
-      </div>
-      <div class="flex items-center gap-1">
-        ${bmarkBtn}${hideBtn}${galleryBtn}
-      </div>
-      <a
-        class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
-        href="${property.source_url}"
-        target="_blank"
-        rel="noopener"
-        style="white-space:nowrap"
-        >${t("viewShort")}</a
-      >
-    </div>`;
+		>
+			${rowThumb}
+			<div class="text-center">
+				<div class="text-lg font-bold" style="color: ${tier.c}">
+					${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(
+						property.discount_percent,
+					)}%
+				</div>
+				<div class="text-xs text-(--muted) mt-0.5">
+					${tTier(property.tier, true)}
+				</div>
+			</div>
+			<div class="min-w-0">
+				<div class="text-sm font-bold">
+					₼ ${fmt(property.price)}
+					<span class="font-normal text-(--muted) text-xs">
+						· ${property.location_name ?? property.district ?? "—"}
+					</span>
+				</div>
+				<div class="mt-0.5 text-xs text-(--muted) truncate">
+					${fmt(property.area_sqm, 1)} m² · ${property.rooms ?? "—"}
+					${t("rooms_")} · ${t("floor_")} ${floorStr} ·
+					₼${fmt(property.price_per_sqm, 0)}/m²${property.is_urgent
+						? " · ⚡"
+						: ""}
+				</div>
+			</div>
+			<div class="flex items-center gap-1">
+				${bmarkBtn}${hideBtn}${galleryBtn}
+			</div>
+			<a
+				class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
+				href="${property.source_url}"
+				target="_blank"
+				rel="noopener"
+				style="white-space:nowrap"
+				>${t("viewShort")}</a
+			>
+		</div>`;
 	}
 
 	attachActionListeners({ element, property, callbacks });
