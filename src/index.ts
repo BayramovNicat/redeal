@@ -1,4 +1,4 @@
-import { PORT } from "@/config.js";
+import { IS_DEV, PORT } from "@/config.js";
 import { initStatic, serveStatic } from "@/middleware/static.js";
 import { startCron } from "@/plugins/cron.js";
 import { routes } from "@/routes.js";
@@ -20,4 +20,4 @@ console.log("  GET  /health");
 console.log("  GET  /api/deals/undervalued?location=Yasamal&threshold=10");
 console.log("  GET  /api/scrape/stream?maxPages=20&delayMs=800");
 
-startCron();
+if (!IS_DEV) startCron();
