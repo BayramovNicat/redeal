@@ -112,6 +112,7 @@ export function initSearch(container: HTMLElement): () => void {
 						onClose: () => {
 							(ge(f.id) as HTMLInputElement).checked = false;
 							updateChips();
+							debouncedSearch();
 						},
 					}),
 				);
@@ -127,6 +128,7 @@ export function initSearch(container: HTMLElement): () => void {
 						onClose: () => {
 							(ge(f.id) as HTMLInputElement).value = "";
 							updateChips();
+							debouncedSearch();
 						},
 					}),
 				);
@@ -141,6 +143,7 @@ export function initSearch(container: HTMLElement): () => void {
 					onClose: () => {
 						(ge("category") as HTMLSelectElement).value = "";
 						updateChips();
+						debouncedSearch();
 					},
 				}),
 			);
@@ -154,6 +157,7 @@ export function initSearch(container: HTMLElement): () => void {
 					onClose: () => {
 						(ge("hasActiveMortgage") as HTMLSelectElement).value = "";
 						updateChips();
+						debouncedSearch();
 					},
 				}),
 			);
@@ -167,6 +171,7 @@ export function initSearch(container: HTMLElement): () => void {
 					onClose: () => {
 						(ge("descriptionSearch") as HTMLInputElement).value = "";
 						updateChips();
+						debouncedSearch();
 					},
 				}),
 			);
@@ -202,6 +207,12 @@ export function initSearch(container: HTMLElement): () => void {
 			cnt.style.display = "none";
 		}
 	}
+
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
+	const debouncedSearch = () => {
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => void doSearch(false), 500);
+	};
 
 	async function doSearch(more = false): Promise<void> {
 		const locs = (ge("loc") as MultiSelectElement).getValue();
@@ -486,19 +497,27 @@ export function initSearch(container: HTMLElement): () => void {
 	// Filter change listeners
 	add(ge("hasActiveMortgage"), "change", () => {
 		updateChips();
-		void doSearch(false);
+		debouncedSearch();
 	});
-	add(ge("descriptionSearch"), "input", updateChips);
+	add(ge("descriptionSearch"), "input", () => {
+		updateChips();
+		debouncedSearch();
+	});
 	for (const f of CHECK_FILTERS()) {
 		add(ge(f.id), "change", () => {
 			updateChips();
-			void doSearch(false);
+			debouncedSearch();
 		});
 	}
-	for (const f of NUM_FILTERS()) add(ge(f.id), "input", updateChips);
+	for (const f of NUM_FILTERS()) {
+		add(ge(f.id), "input", () => {
+			updateChips();
+			debouncedSearch();
+		});
+	}
 	add(ge("category"), "change", () => {
 		updateChips();
-		void doSearch(false);
+		debouncedSearch();
 	});
 	add(ge("tier-filter"), "change", () => bus.emit(EVENTS.DEALS_UPDATED));
 
