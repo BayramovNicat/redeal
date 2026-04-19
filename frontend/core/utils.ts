@@ -115,12 +115,12 @@ export function timeAgo(s: string | null | undefined): string | null {
 
 export function toast(msg: string, err = false): void {
 	const el = html`<div
-    class="bg-(--surface-3) border border-(--border) rounded-(--r) px-4 py-2.5 text-[13px] text-(--text-2) shadow-[0_4px_20px_rgba(0,0,0,0.5)] pointer-events-auto animate-[fadeUp_0.2s_ease] ${
-			err ? "border-(--red-b) text-(--red)" : ""
-		}"
-  >
-    ${msg}
-  </div>`;
+		class="bg-(--surface-3) border border-(--border) rounded-(--r) px-4 py-2.5 text-[13px] text-(--text-2) shadow-[0_4px_20px_rgba(0,0,0,0.5)] pointer-events-auto animate-[fadeUp_0.2s_ease] ${err
+			? "border-(--red-b) text-(--red)"
+			: ""}"
+	>
+		${msg}
+	</div>`;
 	ge("toasts").appendChild(el);
 	setTimeout(() => el.remove(), 3800);
 }
@@ -209,3 +209,23 @@ export const frag = (
 ): DocumentFragment => {
 	return _parse(strings, values);
 };
+
+export function makeEventManager() {
+	const handlers: [HTMLElement | Document | Window, string, EventListener][] =
+		[];
+	const add = <T extends Event>(
+		el: HTMLElement | Document | Window,
+		ev: string,
+		fn: (e: T) => void,
+	) => {
+		const listener = fn as EventListener;
+		el.addEventListener(ev, listener);
+		handlers.push([el, ev, listener]);
+	};
+	const cleanup = () => {
+		handlers.forEach(([el, ev, fn]) => {
+			el.removeEventListener(ev, fn);
+		});
+	};
+	return { add, cleanup };
+}

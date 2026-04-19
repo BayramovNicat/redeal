@@ -2,7 +2,7 @@ import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
 import { state } from "../core/state";
 import type { Property } from "../core/types";
-import { frag, ge, hide, show, toast } from "../core/utils";
+import { frag, ge, hide, makeEventManager, show, toast } from "../core/utils";
 import { Chip, CloseableChip } from "../ui/chip";
 import { Field } from "../ui/field";
 import { Icons } from "../ui/icons";
@@ -464,16 +464,7 @@ export function initSearch(container: HTMLElement): () => void {
 	}
 
 	// 3. Events
-	const handlers: [HTMLElement | Document, string, EventListener][] = [];
-	const add = <T extends Event>(
-		el: HTMLElement | Document,
-		ev: string,
-		fn: (e: T) => void,
-	) => {
-		const listener = fn as EventListener;
-		el.addEventListener(ev, listener);
-		handlers.push([el, ev, listener]);
-	};
+	const { add, cleanup: cleanupHandlers } = makeEventManager();
 
 	add(ge("search-btn"), "click", () => void doSearch(false));
 	let threshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -569,9 +560,7 @@ export function initSearch(container: HTMLElement): () => void {
 	})();
 
 	return () => {
-		handlers.forEach(([el, ev, fn]) => {
-			el.removeEventListener(ev, fn);
-		});
+		cleanupHandlers();
 		offSearch();
 	};
 }

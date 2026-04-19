@@ -8,6 +8,7 @@ import {
 	ge,
 	hide,
 	html,
+	makeEventManager,
 	show,
 	toast,
 	trust,
@@ -180,9 +181,24 @@ export function initProducts(container: HTMLElement): () => void {
 		onDetail: openPropertyDetail,
 	};
 
-	/**
-	 * Core rendering logic for the products list
-	 */
+	function sortDeals(list: Property[], sortBy: string): Property[] {
+		return [...list].sort((a, b) => {
+			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
+			if (sortBy === "drops")
+				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
+			if (sortBy === "new")
+				return (
+					new Date(b.posted_date ?? 0).getTime() -
+					new Date(a.posted_date ?? 0).getTime()
+				);
+			if (sortBy === "price-asc") return a.price - b.price;
+			if (sortBy === "price-desc") return b.price - a.price;
+			if (sortBy === "area") return b.area_sqm - a.area_sqm;
+			if (sortBy === "ppsm") return a.price_per_sqm - b.price_per_sqm;
+			return 0;
+		});
+	}
+
 	function render(): void {
 		const ct = ge("cards");
 		if (!ct) return;
@@ -211,21 +227,7 @@ export function initProducts(container: HTMLElement): () => void {
 
 		ct.replaceChildren();
 
-		list = [...list].sort((a, b) => {
-			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
-			if (sortBy === "drops")
-				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
-			if (sortBy === "new")
-				return (
-					new Date(b.posted_date ?? 0).getTime() -
-					new Date(a.posted_date ?? 0).getTime()
-				);
-			if (sortBy === "price-asc") return a.price - b.price;
-			if (sortBy === "price-desc") return b.price - a.price;
-			if (sortBy === "area") return b.area_sqm - a.area_sqm;
-			if (sortBy === "ppsm") return a.price_per_sqm - b.price_per_sqm;
-			return 0;
-		});
+		list = sortDeals(list, sortBy);
 
 		if (!list.length) {
 			hide("results-bar");
@@ -371,21 +373,7 @@ export function initProducts(container: HTMLElement): () => void {
 			? state.savedOnlyResults.filter((p) => state.bookmarks.has(p.source_url))
 			: state.allResults.filter((p) => !state.hidden.has(p.source_url));
 
-		list = [...list].sort((a, b) => {
-			if (sortBy === "disc") return b.discount_percent - a.discount_percent;
-			if (sortBy === "drops")
-				return (b.price_drop_count ?? 0) - (a.price_drop_count ?? 0);
-			if (sortBy === "new")
-				return (
-					new Date(b.posted_date ?? 0).getTime() -
-					new Date(a.posted_date ?? 0).getTime()
-				);
-			if (sortBy === "price-asc") return a.price - b.price;
-			if (sortBy === "price-desc") return b.price - a.price;
-			if (sortBy === "area") return b.area_sqm - a.area_sqm;
-			if (sortBy === "ppsm") return a.price_per_sqm - b.price_per_sqm;
-			return 0;
-		});
+		list = sortDeals(list, sortBy);
 
 		if (!list.length) return;
 
@@ -450,16 +438,7 @@ export function initProducts(container: HTMLElement): () => void {
 	}
 
 	// 4. Event Handlers
-	const handlers: [HTMLElement, string, EventListener][] = [];
-	const add = <T extends Event>(
-		el: HTMLElement,
-		ev: string,
-		fn: (e: T) => void,
-	) => {
-		const listener = fn as EventListener;
-		el.addEventListener(ev, listener);
-		handlers.push([el, ev, listener]);
-	};
+	const { add, cleanup: cleanupHandlers } = makeEventManager();
 
 	add(ge("export-btn"), "click", () => handleExport());
 
@@ -570,9 +549,7 @@ export function initProducts(container: HTMLElement): () => void {
 
 	// 5. Cleanup
 	return () => {
-		handlers.forEach(([el, ev, fn]) => {
-			el.removeEventListener(ev, fn);
-		});
+		cleanupHandlers();
 		if (state.scrollObserver) {
 			state.scrollObserver.disconnect();
 			state.scrollObserver = null;

@@ -133,8 +133,10 @@ export function initAlerts(root: HTMLElement): () => void {
 	const handleDelete = async (token: string, rowEl: HTMLElement) => {
 		try {
 			await fetch(`/api/alerts/${token}`, { method: "DELETE" });
-		} catch {
-			/* best effort */
+		} catch (e) {
+			console.error("[Alerts] delete failed:", e);
+			toast(t("failedAlert"), true);
+			return;
 		}
 		rowEl.remove();
 		if (itemsEl.children.length === 0) {
@@ -154,7 +156,8 @@ export function initAlerts(root: HTMLElement): () => void {
 			);
 			const d = (await res.json()) as { alerts?: Alert[] };
 			updateAlertList(d.alerts ?? [], itemsEl, listEl, handleDelete);
-		} catch {
+		} catch (e) {
+			console.error("[Alerts] fetchAlerts failed:", e);
 			updateAlertList([], itemsEl, listEl, handleDelete);
 		}
 	};
