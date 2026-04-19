@@ -111,6 +111,15 @@ export function Product({
 				return el;
 			});
 
+		const tierTip =
+			property.discount_percent >= 0
+				? t("tierTipBelow", {
+						n: String(Math.abs(Math.round(property.discount_percent))),
+					})
+				: t("tierTipAbove", {
+						n: String(Math.abs(Math.round(property.discount_percent))),
+					});
+
 		const thumbUrl = property.image_urls?.[0];
 		const imgCount = property.image_urls?.length ?? 0;
 		const thumb = thumbUrl
@@ -145,7 +154,8 @@ export function Product({
       transition-[border-color,box-shadow,transform]
       duration-200
       hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
-      hover:-translate-y-0.5"
+      hover:-translate-y-0.5
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg)"
       style="border-color:${property.tier === "Overpriced" ? "var(--red-b)" : "var(--border)"}"
 		>
 			${thumb}
@@ -161,6 +171,7 @@ export function Product({
 				<span
 					class="inline-flex items-center text-[10px] font-semibold tracking-wider px-2 py-0.75 rounded-full border border-current whitespace-nowrap"
 					style="color:${tier.c};background:${tier.bg};border-color:${tier.b}"
+					title="${tierTip}"
 					>${tTier(property.tier)}</span
 				>
 			</div>
@@ -215,15 +226,33 @@ export function Product({
 		</article>`;
 	} else {
 		const rowThumbUrl = property.image_urls?.[0];
+		const rowImgCount = property.image_urls?.length ?? 0;
 		const rowThumb = rowThumbUrl
 			? LazyThumb({
 					src: rowThumbUrl,
 					className:
-						"w-10 h-10 rounded-(--r-sm) overflow-hidden bg-(--surface-3) shrink-0",
+						"relative w-10 h-10 rounded-(--r-sm) overflow-hidden bg-(--surface-3) shrink-0",
 				})
 			: html`<div
 					class="w-10 h-10 rounded-(--r-sm) bg-(--surface-2) shrink-0"
 				></div>`;
+
+		if (rowThumbUrl && rowImgCount > 1) {
+			const badge = document.createElement("span");
+			badge.className =
+				"absolute bottom-0.5 right-0.5 bg-black/70 text-white text-[8px] font-medium px-1 py-px rounded-full tabular-nums pointer-events-none leading-none";
+			badge.textContent = String(rowImgCount);
+			rowThumb.appendChild(badge);
+		}
+
+		const rowTierTip =
+			property.discount_percent >= 0
+				? t("tierTipBelow", {
+						n: String(Math.abs(Math.round(property.discount_percent))),
+					})
+				: t("tierTipAbove", {
+						n: String(Math.abs(Math.round(property.discount_percent))),
+					});
 
 		const isNewRow =
 			!!property.posted_date &&
@@ -268,10 +297,11 @@ export function Product({
       cursor-pointer
       transition-colors duration-150
       hover:border-(--border-h)
-      hover:bg-(--surface-2)"
+      hover:bg-(--surface-2)
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-1 focus-visible:ring-offset-(--bg)"
 		>
 			${rowThumb}
-			<div class="text-center">
+			<div class="text-center" title="${rowTierTip}">
 				<div class="text-lg font-bold" style="color: ${tier.c}">
 					${property.discount_percent >= 0 ? "-" : "+"}${Math.abs(
 						property.discount_percent,
@@ -323,6 +353,13 @@ function attachActionListeners({
 	property: Property;
 	callbacks: CardCallbacks;
 }) {
+	element.setAttribute("tabindex", "0");
+	element.addEventListener("keydown", (e: KeyboardEvent) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			callbacks.onDetail(property);
+		}
+	});
 	element.addEventListener("click", (e: MouseEvent) => {
 		const target = e.target as HTMLElement;
 		const btn = target.closest("button[data-action]");

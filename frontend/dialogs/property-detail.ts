@@ -1,8 +1,8 @@
 import { divIcon, type map, marker } from "leaflet";
 import { bus, EVENTS } from "../core/events";
 import { t } from "../core/i18n";
-import type { Property } from "../core/types";
-import { fmt, fmtFloor, html, timeAgo, tTier } from "../core/utils";
+import type { PriceHistoryEntry, Property } from "../core/types";
+import { fmt, fmtFloor, getLocale, html, timeAgo, tTier } from "../core/utils";
 import { Tag } from "../ui/chip";
 import { GalleryView } from "../ui/gallery-view";
 import { Icons } from "../ui/icons";
@@ -10,6 +10,119 @@ import { initLeaflet } from "../ui/map-base";
 import { StatBox } from "../ui/stat-box";
 import { ts } from "../ui/tier";
 import { openGallery } from "./gallery";
+
+function PriceHistoryChart(
+	history: PriceHistoryEntry[],
+	color: string,
+	locale: string,
+): SVGSVGElement {
+	const data = [...history].reverse();
+	const prices = data.map((h) => Number(h.price));
+	const min = Math.min(...prices);
+	const max = Math.max(...prices);
+	const range = max - min || 1;
+	const W = 400,
+		H = 72,
+		PT = 8,
+		PB = 20;
+
+	const xy = (i: number, p: number) => ({
+		x: (i / (prices.length - 1)) * W,
+		y: PT + (1 - (p - min) / range) * (H - PT - PB),
+	});
+
+	const ns = "http://www.w3.org/2000/svg";
+	const svg = document.createElementNS(ns, "svg");
+	svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+	svg.setAttribute("preserveAspectRatio", "none");
+	svg.style.cssText = "width:100%;height:72px;display:block;overflow:visible";
+	svg.setAttribute("aria-hidden", "true");
+
+	const gradId = `ph-${Math.random().toString(36).slice(2, 7)}`;
+	const defs = document.createElementNS(ns, "defs");
+	const grad = document.createElementNS(ns, "linearGradient");
+	grad.id = gradId;
+	grad.setAttribute("x1", "0");
+	grad.setAttribute("y1", "0");
+	grad.setAttribute("x2", "0");
+	grad.setAttribute("y2", "1");
+	const s1 = document.createElementNS(ns, "stop");
+	s1.setAttribute("offset", "0%");
+	s1.setAttribute("stop-color", color);
+	s1.setAttribute("stop-opacity", "0.2");
+	const s2 = document.createElementNS(ns, "stop");
+	s2.setAttribute("offset", "100%");
+	s2.setAttribute("stop-color", color);
+	s2.setAttribute("stop-opacity", "0");
+	grad.append(s1, s2);
+	defs.appendChild(grad);
+	svg.appendChild(defs);
+
+	const first = xy(0, prices[0]);
+	const last = xy(prices.length - 1, prices[prices.length - 1]);
+	const ptStr = prices.map((p, i) => {
+		const pt = xy(i, p);
+		return `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+	});
+	const area = document.createElementNS(ns, "path");
+	area.setAttribute(
+		"d",
+		`M ${first.x} ${H - PB} L ${ptStr.join(" L ")} L ${last.x} ${H - PB} Z`,
+	);
+	area.setAttribute("fill", `url(#${gradId})`);
+	svg.appendChild(area);
+
+	const line = document.createElementNS(ns, "polyline");
+	line.setAttribute(
+		"points",
+		prices
+			.map((p, i) => {
+				const pt = xy(i, p);
+				return `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
+			})
+			.join(" "),
+	);
+	line.setAttribute("fill", "none");
+	line.setAttribute("stroke", color);
+	line.setAttribute("stroke-width", "2");
+	line.setAttribute("stroke-linecap", "round");
+	line.setAttribute("stroke-linejoin", "round");
+	svg.appendChild(line);
+
+	for (const [i, p] of [
+		[0, prices[0]],
+		[prices.length - 1, prices[prices.length - 1]],
+	] as [number, number][]) {
+		const pt = xy(i, p);
+		const dot = document.createElementNS(ns, "circle");
+		dot.setAttribute("cx", pt.x.toFixed(1));
+		dot.setAttribute("cy", pt.y.toFixed(1));
+		dot.setAttribute("r", "3");
+		dot.setAttribute("fill", color);
+		svg.appendChild(dot);
+	}
+
+	const fmtD = (s: string) =>
+		new Date(s).toLocaleDateString(locale, { month: "short", day: "numeric" });
+	const tl = document.createElementNS(ns, "text");
+	tl.setAttribute("x", "1");
+	tl.setAttribute("y", String(H - 3));
+	tl.setAttribute("fill", "var(--muted)");
+	tl.setAttribute("font-size", "10");
+	tl.textContent = fmtD(data[0].recorded_at);
+	svg.appendChild(tl);
+
+	const tr = document.createElementNS(ns, "text");
+	tr.setAttribute("x", String(W - 1));
+	tr.setAttribute("y", String(H - 3));
+	tr.setAttribute("fill", "var(--muted)");
+	tr.setAttribute("font-size", "10");
+	tr.setAttribute("text-anchor", "end");
+	tr.textContent = fmtD(data[data.length - 1].recorded_at);
+	svg.appendChild(tr);
+
+	return svg;
+}
 
 /**
  * Unified property detail modal — images, map, description, all info.
@@ -89,6 +202,12 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 							id="pd-tags"
 							class="flex-wrap gap-1.25 mt-3 empty:hidden"
 						></div>
+					</div>
+
+					<!-- Price history chart -->
+					<div id="pd-history-section" class="px-5 py-4 border-b border-(--border) hidden">
+						<div class="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-2.5">${t("priceHistory")}</div>
+						<div id="pd-history-chart"></div>
 					</div>
 
 					<!-- Description -->
@@ -177,6 +296,8 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 	const $discPct = $("pd-disc-pct");
 	const $discBar = $("pd-disc-bar");
 	const $tags = $("pd-tags");
+	const $historySec = $("pd-history-section");
+	const $historyChart = $("pd-history-chart");
 	const $mapSec = $("pd-map-section");
 	const $descSec = $("pd-desc-section");
 	const $descBody = $("pd-desc-body");
@@ -199,6 +320,14 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		$price.textContent = `₼ ${fmt(p.price)}`;
 		$tier.textContent = tTier(p.tier);
 		$tier.style.cssText = `color:${tier.c};background:${tier.bg};border-color:${tier.b}`;
+		$tier.title =
+			p.discount_percent >= 0
+				? t("tierTipBelow", {
+						n: String(Math.abs(Math.round(p.discount_percent))),
+					})
+				: t("tierTipAbove", {
+						n: String(Math.abs(Math.round(p.discount_percent))),
+					});
 
 		const ago = p.posted_date ? timeAgo(p.posted_date) : "";
 		$posted.textContent = ago ? `${t("propPosted")} ${ago}` : "";
@@ -278,6 +407,16 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 			$mapSec.classList.add("hidden");
 		}
 
+		// Price history chart
+		if (p.price_history && p.price_history.length >= 2) {
+			$historySec.classList.remove("hidden");
+			$historyChart.replaceChildren(
+				PriceHistoryChart(p.price_history, tier.hex, getLocale()),
+			);
+		} else {
+			$historySec.classList.add("hidden");
+		}
+
 		// Description
 		if (p.description) {
 			$descSec.classList.remove("hidden");
@@ -322,7 +461,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 	$shareBtn.addEventListener("click", () => {
 		if (!currentProperty) return;
 		const url = currentProperty.source_url;
-		navigator.clipboard.writeText(url).then(() => {
+		const showCopied = () => {
 			const span = $shareBtn.querySelector("span");
 			if (!span) return;
 			const prev = span.textContent;
@@ -330,7 +469,15 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 			setTimeout(() => {
 				span.textContent = prev;
 			}, 2000);
-		});
+		};
+		if (navigator.share) {
+			navigator
+				.share({ url, title: currentProperty.location_name ?? "Property" })
+				.then(showCopied)
+				.catch(() => navigator.clipboard.writeText(url).then(showCopied));
+		} else {
+			navigator.clipboard.writeText(url).then(showCopied);
+		}
 	});
 	$bmarkBtn.addEventListener("click", () => {
 		if (currentProperty) {

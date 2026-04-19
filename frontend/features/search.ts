@@ -419,6 +419,9 @@ export function initSearch(container: HTMLElement): () => void {
 				<div class="flex flex-wrap gap-1.75 pt-3.5">
 					${CHECK_FILTERS().map((f) => Chip({ id: f.id, label: f.label }))}
 				</div>
+				<div class="flex justify-end pt-2.5">
+					<button type="button" id="clear-filters-btn" class="inline-flex items-center gap-1 text-xs text-(--muted) hover:text-(--text) transition-colors border border-(--border) hover:border-(--border-h) rounded-(--r-sm) px-2.5 py-1.25">${t("clearFilters")}</button>
+				</div>
 			</div>
 		</div>
 		<div id="chips-row" class="flex flex-wrap gap-1.5 mb-3.5" style="display:none"></div>
@@ -462,9 +465,12 @@ export function initSearch(container: HTMLElement): () => void {
 	};
 
 	add(ge("search-btn"), "click", () => void doSearch(false));
+	let threshTimer: ReturnType<typeof setTimeout> | null = null;
 	add(ge("thresh"), "input", (e) => {
 		const val = (e.target as HTMLInputElement).value;
 		ge("tval").textContent = val === "0" ? t("all") : `${val}%`;
+		if (threshTimer) clearTimeout(threshTimer);
+		threshTimer = setTimeout(() => void doSearch(false), 500);
 	});
 	add(ge("adv-toggle"), "click", () => {
 		const panel = ge("adv-panel");
@@ -478,14 +484,34 @@ export function initSearch(container: HTMLElement): () => void {
 	});
 
 	// Filter change listeners
-	add(ge("hasActiveMortgage"), "change", updateChips);
+	add(ge("hasActiveMortgage"), "change", () => {
+		updateChips();
+		void doSearch(false);
+	});
 	add(ge("descriptionSearch"), "input", updateChips);
 	for (const f of CHECK_FILTERS()) {
-		add(ge(f.id), "change", updateChips);
+		add(ge(f.id), "change", () => {
+			updateChips();
+			void doSearch(false);
+		});
 	}
 	for (const f of NUM_FILTERS()) add(ge(f.id), "input", updateChips);
-	add(ge("category"), "input", updateChips);
+	add(ge("category"), "change", () => {
+		updateChips();
+		void doSearch(false);
+	});
 	add(ge("tier-filter"), "change", () => bus.emit(EVENTS.DEALS_UPDATED));
+
+	add(ge("clear-filters-btn"), "click", () => {
+		for (const f of NUM_FILTERS()) (ge(f.id) as HTMLInputElement).value = "";
+		for (const f of CHECK_FILTERS())
+			(ge(f.id) as HTMLInputElement).checked = false;
+		(ge("category") as HTMLSelectElement).value = "";
+		(ge("hasActiveMortgage") as HTMLSelectElement).value = "";
+		(ge("descriptionSearch") as HTMLInputElement).value = "";
+		updateChips();
+		void doSearch(false);
+	});
 
 	add(document, "keydown", (e: KeyboardEvent) => {
 		if (

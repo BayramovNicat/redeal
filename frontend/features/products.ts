@@ -30,7 +30,7 @@ import { hideMapView, initMapView, showMapView } from "./map-view";
 export function initProducts(container: HTMLElement): () => void {
 	// 1. Initial State Area
 	const resultsBar = html`
-		<div id="results-bar-container">
+		<div id="results-bar-container" class="sticky top-0 z-10 pb-2" style="background:var(--bg)">
 			<div
 				class="flex items-center justify-between mb-4 gap-2.5 flex-wrap"
 				id="results-bar"
