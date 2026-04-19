@@ -2,6 +2,10 @@ import { t } from "../core/i18n";
 import { html } from "../core/utils";
 import { Icons } from "./icons";
 
+function toThumbUrl(src: string): string {
+	return src.replace("/uploads/full/", "/uploads/f460x345/");
+}
+
 interface GalleryConfig {
 	fullscreen?: boolean;
 	onExpand?: () => void;
@@ -101,7 +105,7 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 		if (!slide) return;
 		const img = slide.querySelector("img");
 		if (img && !img.src && urls[i]) {
-			img.src = urls[i];
+			img.src = fullscreen ? urls[i] : toThumbUrl(urls[i]);
 		}
 	}
 
@@ -191,7 +195,9 @@ export function GalleryView(config: GalleryConfig = {}): GalleryViewInstance {
 				const img = document.createElement("img");
 				img.referrerPolicy = "no-referrer";
 				img.alt = t("propPhotoAlt", { n: i + 1, total });
-				img.className = "max-h-full max-w-full object-contain";
+				img.draggable = false;
+				img.className =
+					"max-h-full max-w-full object-contain select-none pointer-events-none";
 				if (fullscreen) {
 					img.classList.add("shadow-2xl", "rounded-sm");
 				}

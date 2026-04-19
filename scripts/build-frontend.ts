@@ -4,6 +4,30 @@ import postcss from "postcss";
 
 const watchMode = process.argv.includes("--watch");
 
+const reloadClients = new Set<{
+	send(data: string): void;
+	readyState: number;
+}>();
+
+if (watchMode) {
+	Bun.serve({
+		port: 3001,
+		fetch(req, server) {
+			if (server.upgrade(req)) return undefined as unknown as Response;
+			return new Response("WS reload server", { status: 200 });
+		},
+		websocket: {
+			open(ws) {
+				reloadClients.add(ws);
+			},
+			close(ws) {
+				reloadClients.delete(ws);
+			},
+			message() {},
+		},
+	});
+}
+
 mkdirSync("./public", { recursive: true });
 
 async function build() {
@@ -19,6 +43,7 @@ async function build() {
 		naming: "app.js",
 		minify: true,
 		target: "browser",
+		define: { __DEV__: watchMode ? "true" : "false" },
 	});
 	if (!jsResult.success) {
 		for (const log of jsResult.logs) console.error(log);
@@ -87,13 +112,27 @@ async function build() {
 	console.log(
 		`Built public/  app.js ${jsSizeKB} KB  styles.css ${cssSizeKB} KB  sw.js ${swSizeKB} KB  index.html ✓  manifest.json ✓`,
 	);
+
+	for (const client of reloadClients) {
+		try {
+			client.send("reload");
+		} catch {}
+	}
 }
 
 await build();
 
 if (watchMode) {
 	let timer: ReturnType<typeof setTimeout> | null = null;
-	const SKIP_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".svg"]);
+	const SKIP_EXTS = new Set([
+		".png",
+		".jpg",
+		".jpeg",
+		".webp",
+		".gif",
+		".ico",
+		".svg",
+	]);
 	watch("./frontend", { recursive: true }, (_event, filename) => {
 		if (!filename) return;
 		const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();

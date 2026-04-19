@@ -45,7 +45,11 @@ export function initGallery(root: HTMLElement): () => void {
 		[
 			modal.querySelector(".fixed") as HTMLElement,
 			"click",
-			() => modal.close(),
+			(e: Event) => {
+				const target = e.target as HTMLElement;
+				if (target.closest("#gallery-content")) return;
+				modal.close();
+			},
 		],
 		[
 			modal.querySelector("#gallery-close") as HTMLElement,

@@ -55,7 +55,14 @@ window.addEventListener("pagehide", (e) => {
 	}
 });
 
-// 5. Register Service Worker
+// 5. Dev hot-reload
+declare const __DEV__: boolean;
+if (__DEV__) {
+	const devWs = new WebSocket("ws://localhost:3001");
+	devWs.onmessage = () => location.reload();
+}
+
+// 6. Register Service Worker
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
 		navigator.serviceWorker
