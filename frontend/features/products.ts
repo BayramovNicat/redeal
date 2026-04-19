@@ -30,9 +30,13 @@ import { hideMapView, initMapView, showMapView } from "./map-view";
 export function initProducts(container: HTMLElement): () => void {
 	// 1. Initial State Area
 	const resultsBar = html`
-		<div id="results-bar-container" class="sticky top-0 z-10 pb-2" style="background:var(--bg)">
+		<div
+			id="results-bar-container"
+			class="sticky top-0 z-10"
+			style="background:var(--bg)"
+		>
 			<div
-				class="flex items-center justify-between mb-4 gap-2.5 flex-wrap"
+				class="flex items-center justify-between mb-2 p-2 gap-2.5 flex-wrap"
 				id="results-bar"
 				style="display: none"
 			>
@@ -152,6 +156,12 @@ export function initProducts(container: HTMLElement): () => void {
 		const show = window.scrollY > 450;
 		backToTopBtn.style.opacity = show ? "1" : "0";
 		backToTopBtn.style.pointerEvents = show ? "auto" : "none";
+		const bar = ge("results-bar");
+		if (bar) {
+			const stuck =
+				(ge("results-bar-container")?.getBoundingClientRect().top ?? 1) <= 0;
+			bar.classList.toggle("mb-2", !stuck);
+		}
 	};
 	window.addEventListener("scroll", onScroll, { passive: true });
 	backToTopBtn.addEventListener("click", () =>
@@ -227,11 +237,9 @@ export function initProducts(container: HTMLElement): () => void {
 		hide("s-empty");
 
 		const wrap = html`<div
-			class="${
-				state.currentView === "grid"
-					? "grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[580px]:grid-cols-1"
-					: "flex flex-col gap-2"
-			}"
+			class="${state.currentView === "grid"
+				? "grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[580px]:grid-cols-1"
+				: "flex flex-col gap-2"}"
 		></div>`;
 
 		let newCount = 0;
