@@ -237,9 +237,11 @@ export function initProducts(container: HTMLElement): () => void {
 		hide("s-empty");
 
 		const wrap = html`<div
-			class="${state.currentView === "grid"
-				? "grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[580px]:grid-cols-1"
-				: "flex flex-col gap-2"}"
+			class="${
+				state.currentView === "grid"
+					? "grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[580px]:grid-cols-1"
+					: "flex flex-col gap-2"
+			}"
 		></div>`;
 
 		let newCount = 0;

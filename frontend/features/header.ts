@@ -1,6 +1,6 @@
 import { bus, EVENTS } from "../core/events";
 import { getLang, setLang, t } from "../core/i18n";
-import { frag, ge, html } from "../core/utils";
+import { ge, html } from "../core/utils";
 import { openHeatmap } from "../dialogs/heatmap";
 import { Button } from "../ui/button";
 import { HealthStatus } from "../ui/health-status";
@@ -16,57 +16,100 @@ const LANGS = [
 
 function LangSwitcher(): HTMLElement {
 	const cur = getLang();
-	const el = html`<div class="flex items-center gap-0.5 border border-(--border) rounded-(--r-sm) p-0.5"></div>`;
+
+	const trigger = html`<button
+		type="button"
+		class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-(--r-sm) border border-(--border) bg-(--surface-2) text-(--muted) hover:text-(--text) hover:border-(--border-h) transition-all duration-150 select-none"
+	>
+		${cur.toUpperCase()}${Icons.chevron(10)}
+	</button>`;
+
+	const dropdown = html`<div
+		class="absolute right-0 top-full mt-1 z-50 min-w-18 rounded-(--r-sm) border border-(--border) bg-(--surface) shadow-lg py-0.5 hidden"
+	></div>`;
+
 	for (const lang of LANGS) {
-		const btn = html`<button
-      type="button"
-      class="px-2 py-0.5 text-xs font-semibold rounded-[3px] transition-colors duration-150 ${cur === lang.code ? "bg-(--accent-solid) text-white" : "text-(--muted) hover:text-(--text)"}"
-    >${lang.label}</button>`;
-		btn.addEventListener("click", () => setLang(lang.code));
-		el.appendChild(btn);
+		const item = html`<button
+			type="button"
+			class="w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors duration-100 ${
+				cur === lang.code
+					? "text-(--accent)"
+					: "text-(--muted) hover:text-(--text) hover:bg-(--surface-2)"
+			}"
+		>
+			${lang.label}
+		</button>`;
+		item.addEventListener("click", () => setLang(lang.code));
+		dropdown.appendChild(item);
 	}
-	return el;
+
+	const wrapper = html`<div class="relative"></div>`;
+	wrapper.appendChild(trigger);
+	wrapper.appendChild(dropdown);
+
+	let open = false;
+	const show = () => {
+		open = true;
+		dropdown.classList.remove("hidden");
+	};
+	const hide = () => {
+		open = false;
+		dropdown.classList.add("hidden");
+	};
+
+	trigger.addEventListener("click", (e) => {
+		e.stopPropagation();
+		open ? hide() : show();
+	});
+
+	document.addEventListener("click", () => {
+		if (open) hide();
+	});
+
+	return wrapper;
 }
 
 export function initHeader(container: HTMLElement): () => void {
 	const logo = html`
-    <div class="flex items-center gap-2.5 group cursor-pointer">
-      <div
-        class="w-8.5 h-8.5 rounded-(--r-sm) bg-(--accent-dim) border border-[rgba(99,102,241,0.35)] flex items-center justify-center text-(--accent) shrink-0 transition-transform group-hover:scale-105"
-      >
-        ${Icons.home()}
-      </div>
-      <div>
-        <div class="text-base font-bold tracking-[-0.3px]">${t("appName")}</div>
-        <div class="text-xs text-(--muted) mt-px">
-          ${t("appTagline")}
-        </div>
-      </div>
-    </div>
-  `;
+		<div class="flex items-center gap-2.5 group cursor-pointer">
+			<div
+				class="w-8 h-8 rounded-(--r-sm) bg-(--accent-dim) border border-[rgba(99,102,241,0.35)] flex items-center justify-center text-(--accent) shrink-0 transition-transform group-hover:scale-105"
+			>
+				${Icons.home()}
+			</div>
+			<span class="text-sm font-bold tracking-[-0.3px]">${t("appName")}</span>
+			${HealthStatus()}
+		</div>
+	`;
 
 	logo.addEventListener("click", () => window.location.reload());
 
 	const mapBtn = Button({
 		title: t("priceMapTitle"),
 		color: "indigo",
-		content: frag`${Icons.globe()} ${t("priceMap")}`,
+		variant: "square",
+		ariaLabel: t("priceMap"),
+		content: Icons.globe(),
 	});
 
 	const statsBtn = Button({
 		title: t("districtStats"),
 		color: "indigo",
-		content: frag`${Icons.barChart()} ${t("statsBtn")}`,
+		variant: "square",
+		ariaLabel: t("statsBtn"),
+		content: Icons.barChart(),
 	});
 
 	const header = html`
-    <header
-      class="flex items-center justify-between pt-6 pb-5 border-b border-(--border) mb-6"
-    >
-      ${logo}
-      <div class="flex items-center gap-2">${LangSwitcher()} ${statsBtn} ${mapBtn} ${HealthStatus()}</div>
-    </header>
-  `;
+		<header
+			class="flex items-center justify-between py-3.5 border-b border-(--border) mb-4"
+		>
+			${logo}
+			<div class="flex items-center gap-1.5">
+				${statsBtn}${mapBtn}${LangSwitcher()}
+			</div>
+		</header>
+	`;
 
 	const onStatsClick = () => openDistrictStats();
 	statsBtn.addEventListener("click", onStatsClick);
