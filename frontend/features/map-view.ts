@@ -3,11 +3,12 @@ import {
 	circleMarker,
 	featureGroup,
 	type map as LeafletMap,
+	tooltip as leafletTooltip,
 } from "leaflet";
 import { bus, EVENTS } from "../core/events";
 import { state } from "../core/state";
 import type { MapPin, Property } from "../core/types";
-import { fmt, toast } from "../core/utils";
+import { fmt, fmtFloor, toast } from "../core/utils";
 import { openPropertyDetail } from "../dialogs/property-detail";
 import { initLeaflet } from "../ui/map-base";
 import { ts } from "../ui/tier";
@@ -17,6 +18,14 @@ const pinLayers: CircleMarker[] = [];
 let mapContainer: HTMLElement | null = null;
 let isFetching = false;
 let fitDone = false;
+
+const sharedTooltip = leafletTooltip({
+	sticky: false,
+	direction: "top",
+	opacity: 1,
+	className:
+		"!bg-(--surface-3) !border-(--border-h) !rounded-(--r-sm) !shadow-[0_8px_24px_rgba(0,0,0,0.5)] !p-0 [&::before]:!hidden",
+});
 
 function clearPins(): void {
 	for (const l of pinLayers) l.remove();
@@ -56,30 +65,50 @@ async function fetchAndRender(): Promise<void> {
 				opacity: 1,
 			});
 
-			const roomsStr = pin.rooms ? ` · ${pin.rooms}br` : "";
-			const locHtml = pin.location_name
-				? `<div style="font-size:10px;color:var(--muted);margin-top:1px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pin.location_name}</div>`
+			const discSign = pin.discount_percent >= 0 ? "-" : "+";
+			const discAbs = Math.abs(Math.round(pin.discount_percent));
+			const floorStr = fmtFloor(pin.floor, pin.total_floors);
+			const meta = [
+				pin.area_sqm ? `${fmt(pin.area_sqm, 0)} m²` : null,
+				pin.rooms ? `${pin.rooms}br` : null,
+				floorStr ? `fl ${floorStr}` : null,
+			]
+				.filter(Boolean)
+				.join(" · ");
+			const thumbHtml = pin.image_url
+				? `<img src="${pin.image_url}" style="width:52px;height:52px;object-fit:cover;flex-shrink:0;border-radius:5px">`
 				: "";
-			cm.bindTooltip(
-				`<div style="padding:8px 12px;min-width:130px">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">₼ ${fmt(pin.price)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">₼${fmt(pin.price_per_sqm, 0)}/m²${roomsStr}</div>
-          ${locHtml}
-          <div style="margin-top:5px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:9999px;display:inline-block;color:${tStyle.c};background:${tStyle.bg};border:1px solid ${tStyle.b}">${pin.tier}</div>
-        </div>`,
-				{
-					sticky: false,
-					direction: "top",
-					opacity: 1,
-					className:
-						"!bg-(--surface-3) !border-(--border-h) !rounded-(--r-sm) !shadow-[0_8px_24px_rgba(0,0,0,0.5)] !p-0 [&::before]:!hidden",
-				},
-			);
+			const tipContent = `<div style="padding:10px 12px;min-width:180px;max-width:240px">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            ${thumbHtml}
+            <div style="min-width:0;flex:1">
+              <div style="margin-bottom:4px">
+                <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.2">₼ ${fmt(pin.price)}</div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+                <span>₼${fmt(pin.price_per_sqm, 0)}/m²</span>
+                <span style="color:${tStyle.c};font-weight:700">${discSign}${discAbs}%</span>
+              </div>
+              ${meta ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">${meta}</div>` : ""}
+            </div>
+          </div>
+        </div>`;
 
-			cm.on("mouseover", () => cm.setRadius(10));
-			cm.on("mouseout", () => cm.setRadius(7));
+			cm.on("mouseover", () => {
+				cm.setRadius(10);
+				if (lmap) {
+					sharedTooltip.setContent(tipContent);
+					sharedTooltip.setLatLng([pin.lat, pin.lng]);
+					sharedTooltip.addTo(lmap);
+				}
+			});
+			cm.on("mouseout", () => {
+				cm.setRadius(7);
+				sharedTooltip.remove();
+			});
 
 			cm.on("click", async () => {
+				sharedTooltip.remove();
 				try {
 					const r = await fetch("/api/deals/by-urls", {
 						method: "POST",
@@ -124,6 +153,7 @@ export function initMapView(container: HTMLElement): () => void {
 	return () => {
 		offDeals();
 		clearPins();
+		sharedTooltip.remove();
 		if (lmap) {
 			lmap.remove();
 			lmap = null;

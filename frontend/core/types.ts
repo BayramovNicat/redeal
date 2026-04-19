@@ -36,6 +36,9 @@ export interface MapPin {
 	lng: number;
 	price: number;
 	price_per_sqm: number;
+	area_sqm: number | null;
+	floor: number | null;
+	total_floors: number | null;
 	rooms: number | null;
 	location_name: string | null;
 	image_url: string | null;
