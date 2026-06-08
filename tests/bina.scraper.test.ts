@@ -77,5 +77,16 @@ describe("BinaScraper", () => {
 			"https://bina.az/baki/alqi-satqi/heyet-evleri",
 			"https://bina.az/kiraye",
 		]);
+
+		// Combined cron filters should only hit sale apartments.
+		fetchedReferers.length = 0;
+		await scraper.scrape({
+			maxPages: 1,
+			listingType: "sale",
+			categoryId: "1",
+		});
+		expect(fetchedReferers).toEqual([
+			"https://bina.az/baki/alqi-satqi/menziller",
+		]);
 	});
 });

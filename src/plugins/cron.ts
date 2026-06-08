@@ -8,6 +8,8 @@ export function startCron(): void {
 			const run = await scrapeRunsService.run("cron", {
 				maxPages: 10,
 				delayMs: 800,
+				listingType: "sale",
+				categoryId: "1",
 			});
 			if (run.status === "success") {
 				await runAlerts();
