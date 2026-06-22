@@ -132,11 +132,19 @@ export async function initMap(ui: PropertyDetailUI): Promise<void> {
 	const { divIcon, marker } = await import("leaflet");
 	const mapIcon = divIcon({
 		className: "",
-		html: /*html*/ `<div class="w-3 h-3 rounded-full bg-(--green) border-2 border-(--bg) animate-[mpulse_2s_ease-out_infinite]"></div>`,
+		html: /*html*/ `<div class="w-3 h-3 rounded-full bg-(--green) border-2 border-(--bg) animate-[mpulse_2s_ease-out_infinite] cursor-pointer"></div>`,
 		iconSize: [12, 12],
 		iconAnchor: [6, 6],
 	});
-	if (ui.lmap) ui.lmark = marker([0, 0], { icon: mapIcon }).addTo(ui.lmap);
+	if (ui.lmap) {
+		ui.lmark = marker([0, 0], { icon: mapIcon }).addTo(ui.lmap);
+		ui.lmark.on("click", () => {
+			if (ui.currentProperty?.latitude && ui.currentProperty?.longitude) {
+				const url = `https://www.google.com/maps/search/?api=1&query=${ui.currentProperty.latitude},${ui.currentProperty.longitude}`;
+				window.open(url, "_blank");
+			}
+		});
+	}
 
 	ui.mapSecEl.style.visibility = "";
 	if (wasHidden) ui.mapSecEl.classList.add("hidden");
