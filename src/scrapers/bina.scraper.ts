@@ -130,7 +130,7 @@ interface ESItemNode {
 	hasMortgage: boolean | null;
 	hasRepair: boolean | null;
 	hasBillOfSale: boolean | null;
-	price: { value: number; currency: string };
+	price: { total: number; currency: string };
 	area: { value: number };
 	location: {
 		name: string;
@@ -239,7 +239,7 @@ export class BinaScraper extends BaseScraper {
 				const details = await this.batchFetchDetails(ids, propertyType.referer);
 
 				for (const { node } of edges) {
-					const price = node.price.value;
+					const price = node.price.total;
 					const area = node.area.value;
 					if (price <= 0 || area <= 0) continue;
 
@@ -369,7 +369,7 @@ export class BinaScraper extends BaseScraper {
               hasMortgage
               hasRepair
               hasBillOfSale
-              price { value currency }
+              price { total currency }
               area  { value }
               location { name slug id latitude longitude }
             }
