@@ -24,20 +24,24 @@ const debouncedFetch = debounce(async () => {
 	const pins = await fetchMapPins(state);
 	if (pins === null) return;
 
+	const filteredPins = pins.filter(
+		(p) => !globalState.hidden.has(p.source_url),
+	);
+
 	state.pinGroup.clearLayers();
-	for (const pin of pins) {
+	for (const pin of filteredPins) {
 		const cm = createPinMarker(pin, state);
 		cm.addTo(state.pinGroup);
 	}
 
-	if (pins.length > 0 && !state.fitDone && state.lmap) {
+	if (filteredPins.length > 0 && !state.fitDone && state.lmap) {
 		state.fitDone = true;
 		const { latLngBounds } = await import("leaflet");
-		const b = latLngBounds(pins.map((p) => [p.lat, p.lng]));
+		const b = latLngBounds(filteredPins.map((p) => [p.lat, p.lng]));
 		state.lmap.fitBounds(b.pad(0.12));
 	}
 
-	updateResultsMeta(pins);
+	updateResultsMeta(filteredPins);
 }, 150);
 
 export function initMapView(container: HTMLElement): () => void {
