@@ -42,10 +42,39 @@ export async function initLeaflet(
 		attributionControl: false,
 	});
 
-	LtileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-		subdomains: "abcd",
-		maxZoom: 19,
-	}).addTo(lmap);
+	const cartoKey =
+		typeof window !== "undefined"
+			? (window as unknown as { CARTO_API_KEY?: string }).CARTO_API_KEY ||
+				localStorage.getItem("carto_api_key")
+			: null;
+
+	if (cartoKey) {
+		LtileLayer(
+			`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`,
+			{
+				subdomains: "abcd",
+				maxZoom: 19,
+			},
+		).addTo(lmap);
+	} else {
+		// Esri World Dark Gray Canvas basemap (Base + Reference labels) - no API key required
+		LtileLayer(
+			"https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+			{
+				maxNativeZoom: 16,
+				maxZoom: 19,
+				attribution: "Tiles &copy; Esri",
+			},
+		).addTo(lmap);
+
+		LtileLayer(
+			"https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+			{
+				maxNativeZoom: 16,
+				maxZoom: 19,
+			},
+		).addTo(lmap);
+	}
 
 	return lmap;
 }
