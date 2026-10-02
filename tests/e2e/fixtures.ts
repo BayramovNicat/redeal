@@ -105,6 +105,9 @@ export async function mockApi(page: Page, options: MockApiOptions = {}) {
 	await page.route("https://*.basemaps.cartocdn.com/**", async (route) => {
 		await route.fulfill({ status: 204, body: "" });
 	});
+	await page.route("https://mt*.google.com/**", async (route) => {
+		await route.fulfill({ status: 204, body: "" });
+	});
 	await page.route("**/api/deals/locations", async (route) => {
 		if (options.locationsStatus && options.locationsStatus >= 400) {
 			await route.fulfill({

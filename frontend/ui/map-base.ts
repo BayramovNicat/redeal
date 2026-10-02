@@ -42,39 +42,15 @@ export async function initLeaflet(
 		attributionControl: false,
 	});
 
-	const cartoKey =
-		typeof window !== "undefined"
-			? (window as unknown as { CARTO_API_KEY?: string }).CARTO_API_KEY ||
-				localStorage.getItem("carto_api_key")
-			: null;
-
-	if (cartoKey) {
-		LtileLayer(
-			`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`,
-			{
-				subdomains: "abcd",
-				maxZoom: 19,
-			},
-		).addTo(lmap);
-	} else {
-		// Esri World Dark Gray Canvas basemap (Base + Reference labels) - no API key required
-		LtileLayer(
-			"https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-			{
-				maxNativeZoom: 16,
-				maxZoom: 19,
-				attribution: "Tiles &copy; Esri",
-			},
-		).addTo(lmap);
-
-		LtileLayer(
-			"https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-			{
-				maxNativeZoom: 16,
-				maxZoom: 19,
-			},
-		).addTo(lmap);
-	}
+	// Google Maps standard roadmap raster tiles (no API key required)
+	LtileLayer(
+		"https://mt{s}.google.com/vt/lyrs=m&hl=az&gl=AZ&x={x}&y={y}&z={z}",
+		{
+			subdomains: ["0", "1", "2", "3"],
+			maxZoom: 22,
+			attribution: "&copy; Google Maps",
+		},
+	).addTo(lmap);
 
 	return lmap;
 }
@@ -99,3 +75,33 @@ export function MapDialog({
 		content: html`<div id="${containerId}" class="w-full h-120 relative"></div>`,
 	});
 }
+
+/**
+ * MapLibre GL style specification using Google standard roadmap raster tiles.
+ */
+export const googleRoadmapStyle = {
+	version: 8 as const,
+	sources: {
+		"google-roadmap": {
+			type: "raster" as const,
+			tiles: [
+				"https://mt0.google.com/vt/lyrs=m&hl=az&gl=AZ&x={x}&y={y}&z={z}",
+				"https://mt1.google.com/vt/lyrs=m&hl=az&gl=AZ&x={x}&y={y}&z={z}",
+				"https://mt2.google.com/vt/lyrs=m&hl=az&gl=AZ&x={x}&y={y}&z={z}",
+				"https://mt3.google.com/vt/lyrs=m&hl=az&gl=AZ&x={x}&y={y}&z={z}",
+			],
+			tileSize: 256,
+			attribution: "&copy; Google Maps",
+		},
+	},
+	layers: [
+		{
+			id: "google-roadmap-layer",
+			type: "raster" as const,
+			source: "google-roadmap",
+			minzoom: 0,
+			maxzoom: 22,
+		},
+	],
+};
+
