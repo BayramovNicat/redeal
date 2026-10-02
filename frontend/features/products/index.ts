@@ -23,6 +23,7 @@ import { Product } from "@/ui/product";
 import { renderProductsBar } from "./bar";
 import { appendSkeletons, renderList, updatePagination } from "./list";
 import {
+	deleteItem,
 	handleExport,
 	hideItem,
 	sortDeals,
@@ -122,6 +123,21 @@ export function initProducts(container: HTMLElement): () => void {
 		frag`${productsBar}${ui.loadingState}${ui.emptyState}${ui.welcomeState}${ui.cardsContainer}${ui.sentinel}${ui.loadMoreContainer}${ui.mapViewContainer}`,
 	);
 	document.body.appendChild(ui.backToTopBtn);
+
+	let isAdminUser = false;
+	void import("@/features/auth/api").then(({ isCurrentUserAdmin }) => {
+		void isCurrentUserAdmin().then((isAdmin) => {
+			if (isAdmin) {
+				isAdminUser = true;
+				cardCallbacks.onDelete = (p) => {
+					void deleteItem(p).then((deleted) => {
+						if (deleted) updateSavedBadge();
+					});
+				};
+				render();
+			}
+		});
+	});
 
 	const cardCallbacks: CardCallbacks = {
 		onBM: (p) => {
@@ -708,8 +724,23 @@ export function initProducts(container: HTMLElement): () => void {
 			}
 		}
 	};
+	const onPdDelete = (e: Event) => {
+		const p = (e as CustomEvent<Property>).detail;
+		if (p) {
+			const dialog = e.target instanceof HTMLDialogElement ? e.target : null;
+			void deleteItem(p).then((deleted) => {
+				if (deleted) {
+					updateSavedBadge();
+					if (dialog?.open) {
+						dialog.close();
+					}
+				}
+			});
+		}
+	};
 	add(document, "pd:bmark", onPdBmark);
 	add(document, "pd:hide", onPdHide);
+	add(document, "pd:delete", onPdDelete);
 
 	function prepareFocusRestore(url: string): () => void {
 		const cards = Array.from(

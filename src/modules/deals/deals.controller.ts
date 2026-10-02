@@ -3,10 +3,47 @@ import { readJsonBody } from "@/utils/json-body.js";
 import { parseQueryBool, parseQueryNum } from "@/utils/query.js";
 import { ResponseHelper } from "@/utils/response.js";
 import * as dealsService from "./deals.service.js";
+import { prisma } from "@/utils/prisma.js";
 import {
 	checkAndDeleteEndedListing,
 	checkAndDeleteEndedListings,
 } from "./listing-status.service.js";
+
+export async function deleteDeal(req: Request): Promise<Response> {
+	try {
+		const body = await readJsonBody<{ url?: string; id?: string | number }>(req);
+		if (!body.ok) {
+			return ResponseHelper.error(
+				body.status === 413 ? "Payload too large" : "Invalid JSON",
+				body.status,
+			);
+		}
+		const url = body.data?.url?.trim();
+		const rawId = body.data?.id;
+		const idNum =
+			rawId !== undefined && rawId !== null && !Number.isNaN(Number(rawId))
+				? Number(rawId)
+				: undefined;
+
+		if (!url && idNum === undefined) {
+			return ResponseHelper.error('A valid "url" or numeric "id" is required', 400);
+		}
+
+		const where = url ? { source_url: url } : { id: idNum };
+		const result = await prisma.property.deleteMany({
+			where,
+		});
+
+		if (result.count === 0) {
+			return ResponseHelper.error("Property not found", 404);
+		}
+
+		return ResponseHelper.publicJson({ ok: true, deleted: result.count }, 0, 0);
+	} catch (err) {
+		console.error("[DealsController] deleteDeal:", err);
+		return ResponseHelper.error("Failed to delete deal", 500);
+	}
+}
 
 type TrendCacheEntry = {
 	data: Awaited<ReturnType<typeof dealsService.getPriceTrend>>;

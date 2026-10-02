@@ -99,6 +99,7 @@ export interface CardCallbacks {
 	onHide: (url: string) => void;
 	onGallery: (urls: string[], index?: number) => void;
 	onDetail: (p: Property) => void;
+	onDelete?: (p: Property) => void;
 }
 
 declare global {

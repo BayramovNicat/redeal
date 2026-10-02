@@ -23,7 +23,7 @@ function LangSwitcher(evm: ReturnType<typeof makeEventManager>): HTMLElement {
 		`,
 		variant: "padded",
 		color: "indigo",
-		className: "group h-7 px-2 font-bold",
+		className: "group h-8 px-2.5 font-bold rounded-(--r-sm)",
 	});
 
 	const dropdown = html`
@@ -87,7 +87,7 @@ function StatsButton(): HTMLButtonElement {
 		variant: "square",
 		ariaLabel: t("statsBtn"),
 		content: Icons.barChart(14),
-		className: "size-8",
+		className: "size-8 rounded-(--r-sm)",
 		onclick: async () => {
 			const { initDistrictStats, openDistrictStats } = await import(
 				"./district-stats/index"
@@ -109,7 +109,7 @@ function ScrapeOpsButton(): HTMLButtonElement {
 		variant: "square",
 		ariaLabel: t("scrapeOps"),
 		content: Icons.refresh(14),
-		className: "size-8",
+		className: "size-8 rounded-(--r-sm)",
 		onclick: async () => {
 			const { initScrapeOps, openScrapeOps } = await import(
 				"./scrape-ops/index"
@@ -131,7 +131,7 @@ function WhitelistButton(): HTMLButtonElement {
 		variant: "square",
 		ariaLabel: "Allowed Accounts",
 		content: Icons.user(14),
-		className: "size-8",
+		className: "size-8 rounded-(--r-sm)",
 		onclick: async () => {
 			const { openWhitelistDialog } = await import(
 				"@/features/auth/whitelist-dialog"
@@ -180,14 +180,17 @@ export function initHeader(container: HTMLElement): () => void {
 		}
 	});
 
-	const adminActions = html`<span></span>`;
+	const adminActions = html`<div class="inline-flex items-center gap-1.5"></div>`;
 	const userActions = html`<span></span>`;
 	const header = html`
 		<header class="flex items-center justify-between py-4 border-b border-(--border) mb-6">
 			${logo}
-			<div class="flex items-center gap-2">
-				${StatsButton()} ${adminActions}
-				<div class="w-px h-4 bg-(--border) mx-1"></div>
+			<div class="flex items-center gap-1.5 sm:gap-2">
+				<div class="flex items-center gap-1.5">
+					${StatsButton()}
+					${adminActions}
+				</div>
+				<div class="w-px h-4.5 bg-(--border) mx-1 shrink-0"></div>
 				${LangSwitcher(evm)}
 				${userActions}
 			</div>
@@ -203,12 +206,12 @@ export function initHeader(container: HTMLElement): () => void {
 			}
 
 			const avatarEl = user.avatar
-				? html`<img src="${user.avatar}" alt="${user.name || user.email}" class="size-6 rounded-full object-cover border border-(--border)" />`
-				: html`<div class="size-6 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center">${(user.name || user.email || "U")[0].toUpperCase()}</div>`;
+				? html`<img src="${user.avatar}" alt="${user.name || user.email}" class="size-6.5 rounded-full object-cover border border-(--border) shadow-xs" />`
+				: html`<div class="size-6.5 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center border border-(--accent-b)/30 shadow-xs">${(user.name || user.email || "U")[0].toUpperCase()}</div>`;
 
 			const roleBadge =
 				user.role === "admin"
-					? html`<span class="rounded bg-(--accent-dim) px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-(--accent) border border-(--accent-b)/30 uppercase">admin</span>`
+					? html`<span class="rounded-(--r-sm) bg-(--accent-dim) px-1.5 py-0.5 text-[9px] font-black tracking-wider text-(--accent) border border-(--accent-b)/40 uppercase shadow-2xs">admin</span>`
 					: "";
 
 			const logoutBtn = Button({
@@ -217,15 +220,15 @@ export function initHeader(container: HTMLElement): () => void {
 				color: "red",
 				variant: "square",
 				content: Icons.logOut(13),
-				className: "size-8",
+				className: "size-8 rounded-(--r-sm)",
 				onclick: () => void logoutUser(),
 			});
 
 			const userBlock = html`
-				<div class="flex items-center gap-1.5 ml-1 pl-2 border-l border-(--border)">
-					<div class="flex items-center gap-1.5 px-1 py-0.5" title="${user.email}">
+				<div class="flex items-center gap-2 ml-1 pl-2 border-l border-(--border)">
+					<div class="flex items-center gap-2 px-1 py-0.5" title="${user.email}">
 						${avatarEl}
-						<span class="text-xs font-semibold text-(--text) max-w-[120px] truncate max-[640px]:hidden">
+						<span class="text-xs font-semibold text-(--text) max-w-[130px] truncate max-[640px]:hidden">
 							${user.name || user.email.split("@")[0]}
 						</span>
 						${roleBadge}

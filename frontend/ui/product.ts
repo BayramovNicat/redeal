@@ -37,7 +37,11 @@ export function Product({
 	const tier = ts(property.tier);
 	const floorStr = fmtFloor(property.floor, property.total_floors);
 
-	const { bmarkBtn, hideBtn, galleryBtn } = createButtons(property, bookmarked);
+	const { bmarkBtn, hideBtn, galleryBtn, deleteBtn } = createButtons(
+		property,
+		bookmarked,
+		Boolean(callbacks.onDelete),
+	);
 
 	let element: HTMLElement;
 
@@ -268,7 +272,7 @@ export function Product({
 					>${t("viewListing")} ${Icons.external(10)}</a
 				>
 				<div class="flex items-center gap-1 max-[480px]:hidden">
-					${galleryBtn}${bmarkBtn}${hideBtn}
+					${galleryBtn}${bmarkBtn}${hideBtn}${deleteBtn}
 				</div>
 			</div>
 		</article>`;
@@ -379,7 +383,7 @@ export function Product({
 				${rowTagsEl}
 			</div>
 			<div class="flex items-center gap-1">
-				${bmarkBtn}${hideBtn}${galleryBtn}
+				${bmarkBtn}${hideBtn}${deleteBtn}${galleryBtn}
 			</div>
 			<a
 				class="inline-flex items-center gap-1.25 text-xs text-(--muted) transition-colors duration-150 hover:text-(--text)"
@@ -429,6 +433,9 @@ function attachActionListeners({
 				case "hide":
 					callbacks.onHide(property.source_url);
 					break;
+				case "delete":
+					callbacks.onDelete?.(property);
+					break;
 				case "gallery":
 					callbacks.onGallery(property.image_urls ?? [], 0);
 					break;
@@ -443,7 +450,11 @@ function attachActionListeners({
 	});
 }
 
-function createButtons(property: Property, bookmarked: boolean) {
+function createButtons(
+	property: Property,
+	bookmarked: boolean,
+	canDelete = false,
+) {
 	const bmarkBtn = Button({
 		variant: "square",
 		color: "yellow",
@@ -463,6 +474,17 @@ function createButtons(property: Property, bookmarked: boolean) {
 		content: Icons.hide(12),
 	});
 
+	const deleteBtn = canDelete
+		? Button({
+				variant: "square",
+				color: "red",
+				title: t("btnDelete"),
+				ariaLabel: t("btnDelete"),
+				dataset: { action: "delete" },
+				content: Icons.trash(12),
+			})
+		: "";
+
 	const galleryBtn =
 		(property.image_urls?.length ?? 0) > 0
 			? Button({
@@ -475,5 +497,5 @@ function createButtons(property: Property, bookmarked: boolean) {
 				})
 			: "";
 
-	return { bmarkBtn, hideBtn, galleryBtn };
+	return { bmarkBtn, hideBtn, galleryBtn, deleteBtn };
 }

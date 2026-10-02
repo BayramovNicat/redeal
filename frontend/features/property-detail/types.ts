@@ -24,6 +24,7 @@ export interface PropertyDetailUI {
 	shareBtn: HTMLButtonElement;
 	bmarkBtn: HTMLButtonElement;
 	hideBtn: HTMLButtonElement;
+	deleteBtn: HTMLButtonElement;
 	endedBannerEl: HTMLElement;
 
 	// State/Refs

@@ -3,8 +3,10 @@ import { formatListing } from "../../src/modules/alerts/alerts.service.js";
 import {
 	addWhitelistedEmail,
 	createSession,
+	setAdminRole,
 	upsertGoogleUser,
 } from "../../src/modules/auth/auth.service.js";
+import { prisma } from "../../src/utils/prisma.js";
 
 const baseUrl = process.env.TEST_BASE_URL ?? "http://localhost:3000";
 const isCi = process.env.CI === "true";
@@ -825,6 +827,107 @@ describe("public API", () => {
 			},
 		);
 		expect(badChatId.status).toBe(400);
+	});
+
+	test("DELETE /api/deals/item permissions and functionality", async () => {
+		if (skipIfNoServer()) return;
+
+		const testItemUrl = "https://test.redeal.local/admin-delete-deal-item";
+
+		// 1. Unauthenticated request returns 401
+		const unauthRes = await fetch(`${baseUrl}/api/deals/item`, {
+			method: "DELETE",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ url: testItemUrl }),
+		});
+		expect(unauthRes.status).toBe(401);
+
+		// 2. Regular non-admin user returns 403
+		const regularEmail = "reg-user-delete-test@redeal.local";
+		await addWhitelistedEmail(regularEmail, "Regular User");
+		const regularUser = await upsertGoogleUser({
+			sub: "google-sub-regular-delete",
+			email: regularEmail,
+			name: "Regular User",
+		});
+		const regularSession = await createSession(regularUser.id);
+		const regularCookie = `redeal_session=${regularSession.signedCookieValue}`;
+
+		const regularRes = await fetch(`${baseUrl}/api/deals/item`, {
+			method: "DELETE",
+			headers: {
+				"content-type": "application/json",
+				cookie: regularCookie,
+			},
+			body: JSON.stringify({ url: testItemUrl }),
+		});
+		expect(regularRes.status).toBe(403);
+
+		// 3. Admin user: create sample property in DB and delete it
+		const adminEmail = "admin-delete-test@redeal.local";
+		await addWhitelistedEmail(adminEmail, "Admin User");
+		const adminUser = await upsertGoogleUser({
+			sub: "google-sub-admin-delete",
+			email: adminEmail,
+			name: "Admin User",
+		});
+		await setAdminRole(adminEmail, true);
+		const adminSession = await createSession(adminUser.id);
+		const adminCookie = `redeal_session=${adminSession.signedCookieValue}`;
+
+		// Insert property to delete
+		await prisma.property.deleteMany({ where: { source_url: testItemUrl } });
+		await prisma.property.create({
+			data: {
+				source_url: testItemUrl,
+				price: 150000,
+				area_sqm: 100,
+				price_per_sqm: 1500,
+				district: "Yasamal",
+				location_name: "Yasamal",
+				category: "new",
+				listing_type: "sale",
+			},
+		});
+
+		// Admin deletes property
+		const adminDeleteRes = await fetch(`${baseUrl}/api/deals/item`, {
+			method: "DELETE",
+			headers: {
+				"content-type": "application/json",
+				cookie: adminCookie,
+			},
+			body: JSON.stringify({ url: testItemUrl }),
+		});
+		expect(adminDeleteRes.status).toBe(200);
+		const body = (await adminDeleteRes.json()) as { ok: boolean; deleted: number };
+		expect(body.ok).toBe(true);
+		expect(body.deleted).toBe(1);
+
+		// Verify it no longer exists
+		const exists = await prisma.property.findUnique({
+			where: { source_url: testItemUrl },
+		});
+		expect(exists).toBeNull();
+
+		// Deleting already deleted item returns 404
+		const notFoundRes = await fetch(`${baseUrl}/api/deals/item`, {
+			method: "DELETE",
+			headers: {
+				"content-type": "application/json",
+				cookie: adminCookie,
+			},
+			body: JSON.stringify({ url: testItemUrl }),
+		});
+		expect(notFoundRes.status).toBe(404);
+
+		// Clean up
+		await prisma.whitelistedEmail.deleteMany({
+			where: { email: { in: [regularEmail, adminEmail] } },
+		});
+		await prisma.user.deleteMany({
+			where: { email: { in: [regularEmail, adminEmail] } },
+		});
 	});
 });
 

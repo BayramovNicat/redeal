@@ -151,6 +151,8 @@ const translations = {
 		// Buttons
 		btnSave: "Save",
 		btnHide: "Hide",
+		btnDelete: "Delete",
+		confirmDelete: "Are you sure you want to permanently delete this listing?",
 		btnDescription: "Description",
 		btnMap: "Map",
 		btnPhotos: "Photos",
@@ -181,6 +183,8 @@ const translations = {
 		toastRemoved: "Removed from saved",
 		toastSaved: "★ Deal saved",
 		toastHidden: "Item hidden",
+		toastDeleted: "Item permanently deleted",
+		deleteFailed: "Failed to delete item",
 		listingEnded: "This listing has ended and was removed.",
 		listingEndedBanner: "This listing has ended on bina.az.",
 
@@ -412,6 +416,8 @@ const translations = {
 
 		btnSave: "Saxla",
 		btnHide: "Gizlət",
+		btnDelete: "Sil",
+		confirmDelete: "Bu elanı birdəfəlik silmək istədiyinizdən əminsiniz?",
 		btnDescription: "Təsvir",
 		btnMap: "Xəritədə bax",
 		btnPhotos: "Fotolar",
@@ -441,6 +447,8 @@ const translations = {
 		toastRemoved: "Saxlanılanlardan silindi",
 		toastSaved: "★ Elan saxlanıldı",
 		toastHidden: "Elan gizlədildi",
+		toastDeleted: "Elan birdəfəlik silindi",
+		deleteFailed: "Elan silinmədi",
 		listingEnded: "Elanın müddəti başa çatıb və silindi.",
 		listingEndedBanner: "Bu elanın müddəti bina.az-da başa çatıb.",
 
@@ -670,6 +678,8 @@ const translations = {
 
 		btnSave: "Сохранить",
 		btnHide: "Скрыть",
+		btnDelete: "Удалить",
+		confirmDelete: "Вы уверены, что хотите навсегда удалить это объявление?",
 		btnDescription: "Описание",
 		btnMap: "Карта",
 		btnPhotos: "Фото",
@@ -700,6 +710,8 @@ const translations = {
 		toastRemoved: "Удалено из сохранённых",
 		toastSaved: "★ Объявление сохранено",
 		toastHidden: "Объявление скрыто",
+		toastDeleted: "Объявление навсегда удалено",
+		deleteFailed: "Не удалось удалить объявление",
 		listingEnded: "Срок объявления истёк, оно удалено.",
 		listingEndedBanner: "Срок этого объявления на bina.az истёк.",
 

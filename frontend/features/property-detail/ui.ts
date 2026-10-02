@@ -16,9 +16,10 @@ export function renderPropertyDetailLayout(
 		onShare: () => void;
 		onBookmark: () => void;
 		onHide: () => void;
+		onDelete: () => void;
 	},
 ): HTMLElement {
-	const { onExpand, onShare, onBookmark, onHide } = callbacks;
+	const { onExpand, onShare, onBookmark, onHide, onDelete } = callbacks;
 
 	ui.gallery = Gallery({ onExpand, className: "flex-1 min-h-0" });
 
@@ -108,6 +109,17 @@ export function renderPropertyDetailLayout(
 		title: t("btnHide"),
 	}) as HTMLButtonElement;
 
+	ui.deleteBtn = Button({
+		content: Icons.trash(16),
+		variant: "padded",
+		color: "red",
+		className:
+			"w-12.5 h-12.5 flex items-center justify-center shrink-0 hidden text-(--red) hover:bg-(--red-dim)",
+		onclick: onDelete,
+		title: t("btnDelete"),
+	}) as HTMLButtonElement;
+	ui.deleteBtn.setAttribute("aria-label", t("btnDelete"));
+
 	const leftCol = html`
 		<div class="w-full md:flex-1 min-w-0 bg-(--surface) flex flex-col h-auto md:h-full shrink-0">
 			<div class="h-64 md:h-auto md:flex-1 min-h-0 overflow-hidden">${ui.gallery}</div>
@@ -172,7 +184,7 @@ export function renderPropertyDetailLayout(
 			>
 				${ui.linkEl}
 				<div class="flex items-center justify-center gap-3">
-					${ui.bmarkBtn} ${ui.shareBtn} ${ui.hideBtn}
+					${ui.bmarkBtn} ${ui.shareBtn} ${ui.hideBtn} ${ui.deleteBtn}
 				</div>
 			</div>
 		</div>

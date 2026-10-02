@@ -29,6 +29,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		shareBtn: null as unknown as HTMLButtonElement,
 		bmarkBtn: null as unknown as HTMLButtonElement,
 		hideBtn: null as unknown as HTMLButtonElement,
+		deleteBtn: null as unknown as HTMLButtonElement,
 		endedBannerEl: null as unknown as HTMLElement,
 		currentProperty: null,
 		lmap: null,
@@ -95,9 +96,28 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 				ui.modal.close();
 			}
 		},
+		onDelete: () => {
+			if (ui.currentProperty) {
+				ui.modal.dispatchEvent(
+					new CustomEvent("pd:delete", {
+						bubbles: true,
+						detail: ui.currentProperty,
+					}),
+				);
+			}
+		},
 	});
 
 	root.appendChild(layout);
+
+	// Check if user is admin to display delete button
+	void import("@/features/auth/api").then(({ isCurrentUserAdmin }) => {
+		void isCurrentUserAdmin().then((isAdmin) => {
+			if (isAdmin) {
+				ui.deleteBtn.classList.remove("hidden");
+			}
+		});
+	});
 
 	const onKey = (e: KeyboardEvent) => {
 		if (e.key === "ArrowLeft") ui.gallery.navigate(-1);

@@ -63,6 +63,36 @@ export function hideItem(url: string): void {
 }
 
 /**
+ * Permanently deletes a property via API and removes from state.
+ */
+export async function deleteItem(p: Property): Promise<boolean> {
+	if (!window.confirm(t("confirmDelete"))) return false;
+
+	try {
+		const { deleteDealApi } = await import("@/features/auth/api");
+		await deleteDealApi(p.source_url);
+
+		state.allResults = state.allResults.filter(
+			(item) => item.source_url !== p.source_url,
+		);
+		state.savedOnlyResults = state.savedOnlyResults.filter(
+			(item) => item.source_url !== p.source_url,
+		);
+		state.bookmarks.delete(p.source_url);
+		state.bookmarkData.delete(p.source_url);
+		state.hidden.delete(p.source_url);
+		syncStateToStorage();
+
+		toast(t("toastDeleted"));
+		bus.emit(EVENTS.DEALS_UPDATED);
+		return true;
+	} catch (err) {
+		toast((err as Error).message || t("deleteFailed"), true);
+		return false;
+	}
+}
+
+/**
  * Exports currently visible properties to clipboard or file.
  */
 export function handleExport(sortBy: string): void {

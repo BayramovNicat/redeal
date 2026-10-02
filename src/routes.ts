@@ -16,6 +16,7 @@ import {
 import { requireAdmin, requireAuth } from "@/modules/auth/auth.middleware.js";
 import {
 	checkEndedListing,
+	deleteDeal,
 	getDealsByJsonItems,
 	getDealsByUrls,
 	getHeatmap,
@@ -86,6 +87,7 @@ export const routes = {
 	"/api/deals/map-pins": { GET: requireAuth(br(getMapPins)) },
 	"/api/deals/by-json-items": { POST: requireAuth(br(getDealsByJsonItems)) },
 	"/api/deals/by-urls": { POST: requireAuth(br(getDealsByUrls)) },
+	"/api/deals/item": { DELETE: requireAdmin(br(deleteDeal)) },
 	"/api/deals/check-ended": { POST: requireAuth(br(checkEndedListing)) },
 	"/api/heatmap": { GET: requireAuth(br(getHeatmap)) },
 	"/api/scrape/runs": { GET: requireAuth(br(getScrapeRuns)) },

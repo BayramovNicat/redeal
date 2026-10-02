@@ -13,26 +13,54 @@ export interface WhitelistItem {
 	created_at: string;
 }
 
-export async function fetchAuthUser(): Promise<{
+let cachedUserPromise: Promise<{
+	authenticated: boolean;
+	user: AuthUser | null;
+}> | null = null;
+
+export async function fetchAuthUser(forceRefresh = false): Promise<{
 	authenticated: boolean;
 	user: AuthUser | null;
 }> {
-	try {
-		const res = await fetch("/api/auth/me", {
-			headers: { Accept: "application/json" },
-			credentials: "same-origin",
-		});
-		if (!res.ok) return { authenticated: false, user: null };
-		const data = (await res.json()) as {
-			authenticated: boolean;
-			user: AuthUser | null;
-		};
-		return {
-			authenticated: Boolean(data.authenticated),
-			user: data.user ?? null,
-		};
-	} catch {
-		return { authenticated: false, user: null };
+	if (!cachedUserPromise || forceRefresh) {
+		cachedUserPromise = (async () => {
+			try {
+				const res = await fetch("/api/auth/me", {
+					headers: { Accept: "application/json" },
+					credentials: "same-origin",
+				});
+				if (!res.ok) return { authenticated: false, user: null };
+				const data = (await res.json()) as {
+					authenticated: boolean;
+					user: AuthUser | null;
+				};
+				return {
+					authenticated: Boolean(data.authenticated),
+					user: data.user ?? null,
+				};
+			} catch {
+				return { authenticated: false, user: null };
+			}
+		})();
+	}
+	return cachedUserPromise;
+}
+
+export async function isCurrentUserAdmin(): Promise<boolean> {
+	const { user } = await fetchAuthUser();
+	return user?.role === "admin";
+}
+
+export async function deleteDealApi(url: string): Promise<void> {
+	const res = await fetch("/api/deals/item", {
+		method: "DELETE",
+		headers: { "Content-Type": "application/json" },
+		credentials: "same-origin",
+		body: JSON.stringify({ url }),
+	});
+	if (!res.ok) {
+		const err = (await res.json()) as { error?: string };
+		throw new Error(err.error || `Failed to delete deal (${res.status})`);
 	}
 }
 
