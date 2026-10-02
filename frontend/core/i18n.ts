@@ -818,7 +818,9 @@ function getInitialLang(): Lang {
 		return saved;
 	}
 
-	const browserLang = (navigator.language || "en").split("-")[0].toLowerCase();
+	const browserLang = (
+		(navigator.language || "en").split("-")[0] ?? "en"
+	).toLowerCase();
 	const detected: Lang =
 		browserLang === "az" || browserLang === "ru" ? browserLang : "en";
 

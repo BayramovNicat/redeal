@@ -93,18 +93,9 @@ export async function deleteItem(p: Property): Promise<boolean> {
 }
 
 /**
- * Exports currently visible properties to clipboard or file.
+ * Formats a list of properties as plain text for export.
  */
-export function handleExport(sortBy: string): void {
-	const list = sortDeals(
-		state.showingSaved
-			? state.savedOnlyResults.filter((p) => state.bookmarks.has(p.source_url))
-			: state.allResults.filter((p) => !state.hidden.has(p.source_url)),
-		sortBy,
-	);
-
-	if (!list.length) return;
-
+export function formatExportText(list: Property[]): string {
 	const lines: string[] = [
 		`REDEAL PROPERTY EXPORT — ${list.length} listings`,
 		`Exported: ${new Date().toISOString()}`,
@@ -132,11 +123,11 @@ export function handleExport(sortBy: string): void {
 
 		lines.push(`--- [${i + 1}] ---`);
 		lines.push(`Location: ${loc}`);
+		if (p.latitude != null && p.longitude != null) {
+			lines.push(`Coordinates: ${p.latitude}, ${p.longitude}`);
+		}
 		lines.push(
 			`Price: ₼${fmt(p.price)} | Area: ${p.area_sqm}m² | ₼/m²: ${fmt(p.price_per_sqm)}`,
-		);
-		lines.push(
-			`Market avg ₼/m²: ${fmt(p.location_avg_price_per_sqm)} | Discount: ${Number(p.discount_percent).toFixed(1)}% (${p.tier})`,
 		);
 		if (details) lines.push(`Details: ${details}`);
 		if (tags.length) lines.push(`Tags: ${tags.join(", ")}`);
@@ -147,7 +138,23 @@ export function handleExport(sortBy: string): void {
 		lines.push(`URL: ${p.source_url}`, "");
 	});
 
-	const text = lines.join("\n");
+	return lines.join("\n");
+}
+
+/**
+ * Exports currently visible properties to clipboard or file.
+ */
+export function handleExport(sortBy: string): void {
+	const list = sortDeals(
+		state.showingSaved
+			? state.savedOnlyResults.filter((p) => state.bookmarks.has(p.source_url))
+			: state.allResults.filter((p) => !state.hidden.has(p.source_url)),
+		sortBy,
+	);
+
+	if (!list.length) return;
+
+	const text = formatExportText(list);
 	navigator.clipboard
 		.writeText(text)
 		.then(() => toast(t("exportCopied")))
