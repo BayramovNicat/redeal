@@ -1,4 +1,24 @@
 import type { Page } from "@playwright/test";
+import {
+	addWhitelistedEmail,
+	createSession,
+	upsertGoogleUser,
+} from "../../src/modules/auth/auth.service.js";
+
+let e2eSessionCookie = "";
+async function getE2eSessionCookie(): Promise<string> {
+	if (e2eSessionCookie) return e2eSessionCookie;
+	const email = "e2e-runner@redeal.local";
+	await addWhitelistedEmail(email, "E2E Test Runner");
+	const user = await upsertGoogleUser({
+		sub: "e2e-google-sub",
+		email,
+		name: "E2E Tester",
+	});
+	const session = await createSession(user.id);
+	e2eSessionCookie = session.signedCookieValue;
+	return e2eSessionCookie;
+}
 
 export const deal = {
 	source_url: "https://example.com/deal-1",
@@ -102,6 +122,27 @@ type MockApiOptions = {
 };
 
 export async function mockApi(page: Page, options: MockApiOptions = {}) {
+	const cookieVal = await getE2eSessionCookie();
+	await page.context().addCookies([
+		{
+			name: "redeal_session",
+			value: cookieVal,
+			url: "http://localhost:3000",
+		},
+	]);
+	await page.route("**/api/auth/me", async (route) => {
+		await route.fulfill({
+			json: {
+				authenticated: true,
+				user: {
+					id: "e2e-test-user",
+					email: "e2e-runner@redeal.local",
+					name: "E2E Tester",
+					role: "admin",
+				},
+			},
+		});
+	});
 	await page.route("https://*.basemaps.cartocdn.com/**", async (route) => {
 		await route.fulfill({ status: 204, body: "" });
 	});

@@ -5,6 +5,16 @@ import {
 	getAlerts,
 } from "@/modules/alerts/alerts.controller.js";
 import {
+	handleAddWhitelist,
+	handleGetMe,
+	handleGetWhitelist,
+	handleGoogleCallback,
+	handleGoogleLogin,
+	handleLogout,
+	handleRemoveWhitelist,
+} from "@/modules/auth/auth.controller.js";
+import { requireAuth } from "@/modules/auth/auth.middleware.js";
+import {
 	checkEndedListing,
 	getDealsByJsonItems,
 	getDealsByUrls,
@@ -54,22 +64,39 @@ export const routes = {
 			});
 		}),
 	},
-	"/api/deals/locations": { GET: br(getLocations) },
-	"/api/deals/trend": { GET: br(getTrend) },
-	"/api/deals/undervalued": { GET: br(getUndervaluedDeals) },
-	"/api/deals/undervalued/validate": { POST: br(validateUndervaluedDeals) },
-	"/api/deals/price-drops": { GET: br(getPriceDrops) },
-	"/api/deals/map-pins": { GET: br(getMapPins) },
-	"/api/deals/by-json-items": { POST: br(getDealsByJsonItems) },
-	"/api/deals/by-urls": { POST: br(getDealsByUrls) },
-	"/api/deals/check-ended": { POST: br(checkEndedListing) },
-	"/api/heatmap": { GET: br(getHeatmap) },
-	"/api/scrape/runs": { GET: br(getScrapeRuns) },
-	"/api/scrape/session": { GET: br(getScrapeAdminSessionStatus) },
-	"/api/scrape/login": { POST: br(loginScrapeAdmin) },
-	"/api/scrape/logout": { POST: br(logoutScrapeAdmin) },
-	"/api/scrape/run": { POST: br(runScrape) },
-	"/api/alerts": { GET: br(getAlerts), POST: br(createAlert) },
-	"/api/alerts/:token": { DELETE: br(deleteAlert) },
+	// Authentication & Whitelist endpoints
+	"/api/auth/google": { GET: handleGoogleLogin },
+	"/api/auth/google/callback": { GET: handleGoogleCallback },
+	"/api/auth/me": { GET: handleGetMe },
+	"/api/auth/logout": { POST: handleLogout, GET: handleLogout },
+	"/api/auth/whitelist": {
+		GET: requireAuth(handleGetWhitelist),
+		POST: requireAuth(handleAddWhitelist),
+	},
+	"/api/auth/whitelist/:email": { DELETE: requireAuth(handleRemoveWhitelist) },
+
+	// Protected Data & Deals endpoints
+	"/api/deals/locations": { GET: requireAuth(br(getLocations)) },
+	"/api/deals/trend": { GET: requireAuth(br(getTrend)) },
+	"/api/deals/undervalued": { GET: requireAuth(br(getUndervaluedDeals)) },
+	"/api/deals/undervalued/validate": {
+		POST: requireAuth(br(validateUndervaluedDeals)),
+	},
+	"/api/deals/price-drops": { GET: requireAuth(br(getPriceDrops)) },
+	"/api/deals/map-pins": { GET: requireAuth(br(getMapPins)) },
+	"/api/deals/by-json-items": { POST: requireAuth(br(getDealsByJsonItems)) },
+	"/api/deals/by-urls": { POST: requireAuth(br(getDealsByUrls)) },
+	"/api/deals/check-ended": { POST: requireAuth(br(checkEndedListing)) },
+	"/api/heatmap": { GET: requireAuth(br(getHeatmap)) },
+	"/api/scrape/runs": { GET: requireAuth(br(getScrapeRuns)) },
+	"/api/scrape/session": { GET: getScrapeAdminSessionStatus },
+	"/api/scrape/login": { POST: loginScrapeAdmin },
+	"/api/scrape/logout": { POST: logoutScrapeAdmin },
+	"/api/scrape/run": { POST: runScrape },
+	"/api/alerts": {
+		GET: requireAuth(br(getAlerts)),
+		POST: requireAuth(br(createAlert)),
+	},
+	"/api/alerts/:token": { DELETE: requireAuth(br(deleteAlert)) },
 	"/api/telegram/webhook": { POST: br(handleWebhook) },
 } as const;

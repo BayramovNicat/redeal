@@ -1,5 +1,6 @@
 import { getLang, setLang, t } from "@/core/i18n";
 import { cn, html, makeEventManager } from "@/core/utils";
+import { type AuthUser, fetchAuthUser, logoutUser } from "@/features/auth/api";
 import { fetchScrapeAdminSession } from "@/features/scrape-ops/api";
 import { Button } from "@/ui/button";
 import { Icons } from "@/ui/icons";
@@ -164,6 +165,7 @@ export function initHeader(container: HTMLElement): () => void {
 	});
 
 	const adminActions = html`<span></span>`;
+	const userActions = html`<span></span>`;
 	const header = html`
 		<header class="flex items-center justify-between py-4 border-b border-(--border) mb-6">
 			${logo}
@@ -171,6 +173,7 @@ export function initHeader(container: HTMLElement): () => void {
 				${StatsButton()} ${adminActions}
 				<div class="w-px h-4 bg-(--border) mx-1"></div>
 				${LangSwitcher(evm)}
+				${userActions}
 			</div>
 		</header>
 	`;
@@ -178,6 +181,36 @@ export function initHeader(container: HTMLElement): () => void {
 	container.appendChild(header);
 	void fetchScrapeAdminSession().then((authenticated) => {
 		if (authenticated) adminActions.replaceChildren(ScrapeOpsButton());
+	});
+	void fetchAuthUser().then(({ authenticated, user }) => {
+		if (authenticated && user) {
+			const avatarEl = user.avatar
+				? html`<img src="${user.avatar}" alt="${user.name || user.email}" class="size-6 rounded-full object-cover border border-(--border)" />`
+				: html`<div class="size-6 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center">${(user.name || user.email || "U")[0].toUpperCase()}</div>`;
+
+			const logoutBtn = Button({
+				title: "Sign out",
+				ariaLabel: "Sign out",
+				color: "red",
+				variant: "square",
+				content: Icons.logOut(13),
+				className: "size-8",
+				onclick: () => void logoutUser(),
+			});
+
+			const userBlock = html`
+				<div class="flex items-center gap-1.5 ml-1 pl-2 border-l border-(--border)">
+					<div class="flex items-center gap-1.5 px-1 py-0.5" title="${user.email}">
+						${avatarEl}
+						<span class="text-xs font-semibold text-(--text) max-w-[120px] truncate max-[640px]:hidden">
+							${user.name || user.email.split("@")[0]}
+						</span>
+					</div>
+					${logoutBtn}
+				</div>
+			`;
+			userActions.replaceChildren(userBlock);
+		}
 	});
 
 	return () => {

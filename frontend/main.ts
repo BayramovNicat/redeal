@@ -21,7 +21,12 @@ if (!root) throw new Error("Root element #app not found");
 
 const cleanups: (() => void)[] = [];
 
-if (window.location.pathname === "/admin") {
+if (window.location.pathname === "/login") {
+	const loginArea = html`<main></main>`;
+	root.appendChild(loginArea);
+	const { initLogin } = await import("@/features/login");
+	cleanups.push(initLogin(loginArea));
+} else if (window.location.pathname === "/admin") {
 	const adminArea = html`<main></main>`;
 	root.appendChild(
 		html`<div class="w-full px-5 pt-0 pb-20">${adminArea}</div>`,

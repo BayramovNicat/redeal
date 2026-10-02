@@ -118,3 +118,40 @@ model ScrapeRun {
   @@index([status, started_at])
   @@index([trigger, started_at])
 }
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  name       String?
+  avatar     String?
+  google_id  String?   @unique
+  role       String    @default("user")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  sessions   Session[]
+
+  @@index([email])
+}
+
+model WhitelistedEmail {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  note       String?
+  created_at DateTime @default(now())
+
+  @@index([email])
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  user_id    String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([user_id])
+}

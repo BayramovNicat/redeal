@@ -1,4 +1,5 @@
 import { html } from "@/core/utils";
+import { WhitelistManager } from "@/features/auth/whitelist-manager";
 import {
 	fetchScrapeAdminSession,
 	loginScrapeAdmin,
@@ -38,8 +39,10 @@ export function initAdmin(container: HTMLElement): () => void {
 	password.hidden = true;
 	submit.hidden = true;
 	logout.hidden = true;
+	const whitelistArea = html`<div class="w-full mt-4"></div>`;
+	whitelistArea.hidden = true;
 	const form = html`
-		<form class="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center gap-4 px-5">
+		<form class="mx-auto flex min-h-[70vh] max-w-lg flex-col justify-center gap-4 px-5">
 			<div class="flex flex-col gap-1 text-center">
 				<h1 class="text-2xl font-extrabold text-(--text)">Admin</h1>
 				${loadingText}
@@ -49,6 +52,7 @@ export function initAdmin(container: HTMLElement): () => void {
 			${error}
 			${password}
 			${submit}
+			${whitelistArea}
 			${logout}
 		</form>
 	` as HTMLFormElement;
@@ -64,6 +68,12 @@ export function initAdmin(container: HTMLElement): () => void {
 		password.hidden = signedIn;
 		submit.hidden = signedIn;
 		logout.hidden = !signedIn;
+		whitelistArea.hidden = !signedIn;
+		if (signedIn) {
+			whitelistArea.replaceChildren(WhitelistManager());
+		} else {
+			whitelistArea.replaceChildren();
+		}
 	};
 
 	form.onsubmit = async (event) => {

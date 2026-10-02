@@ -1,10 +1,24 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { formatListing } from "../../src/modules/alerts/alerts.service.js";
+import {
+	addWhitelistedEmail,
+	createSession,
+	upsertGoogleUser,
+} from "../../src/modules/auth/auth.service.js";
 
 const baseUrl = process.env.TEST_BASE_URL ?? "http://localhost:3000";
 const isCi = process.env.CI === "true";
 let serverAvailable = false;
 let seedAvailable = false;
+let authCookie = "";
+
+function authFetch(url: string, init?: RequestInit) {
+	const headers = new Headers(init?.headers);
+	if (authCookie && !headers.has("cookie")) {
+		headers.set("cookie", authCookie);
+	}
+	return fetch(url, { ...init, headers });
+}
 
 beforeAll(async () => {
 	try {
@@ -12,7 +26,17 @@ beforeAll(async () => {
 		serverAvailable = res.ok;
 		if (!serverAvailable) return;
 
-		const seedRes = await fetch(`${baseUrl}/api/deals/by-urls`, {
+		const testEmail = "test-deals-runner@redeal.local";
+		await addWhitelistedEmail(testEmail, "Test Runner");
+		const user = await upsertGoogleUser({
+			sub: "test-google-sub",
+			email: testEmail,
+			name: "Test Runner",
+		});
+		const session = await createSession(user.id);
+		authCookie = `redeal_session=${session.signedCookieValue}`;
+
+		const seedRes = await authFetch(`${baseUrl}/api/deals/by-urls`, {
 			method: "POST",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({
@@ -49,8 +73,8 @@ function skipIfNoSeed() {
 	return false;
 }
 
-async function getJson(path: string) {
-	const res = await fetch(`${baseUrl}${path}`);
+async function getJson(path: string, headers: Record<string, string> = {}) {
+	const res = await authFetch(`${baseUrl}${path}`, { headers });
 	let body: unknown = null;
 	try {
 		body = await res.json();
@@ -63,7 +87,7 @@ async function postJson(
 	body: unknown,
 	headers: Record<string, string> = {},
 ) {
-	const res = await fetch(`${baseUrl}${path}`, {
+	const res = await authFetch(`${baseUrl}${path}`, {
 		method: "POST",
 		headers: { "content-type": "application/json", ...headers },
 		body: typeof body === "string" ? body : JSON.stringify(body),
@@ -96,7 +120,7 @@ describe("public API", () => {
 
 	test("API responses support brotli compression", async () => {
 		if (skipIfNoServer()) return;
-		const res = await fetch(`${baseUrl}/api/deals/locations`, {
+		const res = await authFetch(`${baseUrl}/api/deals/locations`, {
 			headers: { "accept-encoding": "br" },
 		});
 
@@ -611,7 +635,7 @@ describe("public API", () => {
 		const token = (created as { token: string }).token;
 
 		// foreign chat_id cannot delete another user's alert
-		const foreignDelete = await fetch(
+		const foreignDelete = await authFetch(
 			`${baseUrl}/api/alerts/${token}?chat_id=987654322`,
 			{
 				method: "DELETE",
@@ -620,7 +644,7 @@ describe("public API", () => {
 		expect(foreignDelete.status).toBe(404);
 
 		// owner can delete their own alert
-		const ownerDelete = await fetch(
+		const ownerDelete = await authFetch(
 			`${baseUrl}/api/alerts/${token}?chat_id=987654321`,
 			{
 				method: "DELETE",
@@ -671,11 +695,11 @@ describe("public API", () => {
 		).alerts.find((item) => item.token === token);
 		expect(alert?.label).toHaveLength(80);
 
-		const firstDelete = await fetch(
+		const firstDelete = await authFetch(
 			`${baseUrl}/api/alerts/${token}?chat_id=987654322`,
 			{ method: "DELETE" },
 		);
-		const secondDelete = await fetch(
+		const secondDelete = await authFetch(
 			`${baseUrl}/api/alerts/${token}?chat_id=987654322`,
 			{ method: "DELETE" },
 		);
@@ -785,13 +809,16 @@ describe("public API", () => {
 		if (skipIfNoServer()) return;
 
 		// missing chat_id → 400
-		const noChatId = await fetch(`${baseUrl}/api/alerts/nonexistent-token`, {
-			method: "DELETE",
-		});
+		const noChatId = await authFetch(
+			`${baseUrl}/api/alerts/nonexistent-token`,
+			{
+				method: "DELETE",
+			},
+		);
 		expect(noChatId.status).toBe(400);
 
 		// non-numeric chat_id → 400
-		const badChatId = await fetch(
+		const badChatId = await authFetch(
 			`${baseUrl}/api/alerts/nonexistent-token?chat_id=abc`,
 			{
 				method: "DELETE",
