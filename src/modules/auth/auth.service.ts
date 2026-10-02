@@ -153,20 +153,78 @@ export async function getWhitelistedEmails() {
 // User & session management
 export async function upsertGoogleUser(profile: GoogleUserProfile) {
 	const normalizedEmail = profile.email.trim().toLowerCase();
+	const whitelistEntry = await prisma.whitelistedEmail.findUnique({
+		where: { email: normalizedEmail },
+	});
+	const assignedRole = whitelistEntry?.role === "admin" ? "admin" : "user";
+
 	return prisma.user.upsert({
 		where: { email: normalizedEmail },
 		update: {
 			name: profile.name ?? null,
 			avatar: profile.picture ?? null,
 			google_id: profile.sub ?? null,
+			...(assignedRole === "admin" ? { role: "admin" } : {}),
 		},
 		create: {
 			email: normalizedEmail,
 			name: profile.name ?? null,
 			avatar: profile.picture ?? null,
 			google_id: profile.sub ?? null,
+			role: assignedRole,
 		},
 	});
+}
+
+export async function setAdminRole(
+	email: string,
+	isAdmin: boolean,
+): Promise<{ userUpdated: boolean; whitelistUpdated: boolean }> {
+	const normalized = email.trim().toLowerCase();
+	const role = isAdmin ? "admin" : "user";
+
+	let whitelistUpdated = false;
+	const existingWhitelist = await prisma.whitelistedEmail.findUnique({
+		where: { email: normalized },
+	});
+	if (existingWhitelist) {
+		await prisma.whitelistedEmail.update({
+			where: { email: normalized },
+			data: { role },
+		});
+		whitelistUpdated = true;
+	} else if (isAdmin) {
+		await prisma.whitelistedEmail.create({
+			data: { email: normalized, role: "admin", note: "Admin" },
+		});
+		whitelistUpdated = true;
+	}
+
+	let userUpdated = false;
+	const existingUser = await prisma.user.findUnique({
+		where: { email: normalized },
+	});
+	if (existingUser) {
+		await prisma.user.update({
+			where: { email: normalized },
+			data: { role },
+		});
+		userUpdated = true;
+	}
+
+	return { userUpdated, whitelistUpdated };
+}
+
+export async function getAdmins() {
+	const users = await prisma.user.findMany({
+		where: { role: "admin" },
+		select: { id: true, email: true, name: true, role: true, created_at: true },
+	});
+	const preapproved = await prisma.whitelistedEmail.findMany({
+		where: { role: "admin" },
+		select: { id: true, email: true, note: true, created_at: true },
+	});
+	return { users, preapproved };
 }
 
 function generateRandomToken(): string {

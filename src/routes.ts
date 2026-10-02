@@ -13,7 +13,7 @@ import {
 	handleLogout,
 	handleRemoveWhitelist,
 } from "@/modules/auth/auth.controller.js";
-import { requireAuth } from "@/modules/auth/auth.middleware.js";
+import { requireAdmin, requireAuth } from "@/modules/auth/auth.middleware.js";
 import {
 	checkEndedListing,
 	getDealsByJsonItems,
@@ -70,10 +70,10 @@ export const routes = {
 	"/api/auth/me": { GET: handleGetMe },
 	"/api/auth/logout": { POST: handleLogout, GET: handleLogout },
 	"/api/auth/whitelist": {
-		GET: requireAuth(handleGetWhitelist),
-		POST: requireAuth(handleAddWhitelist),
+		GET: requireAdmin(handleGetWhitelist),
+		POST: requireAdmin(handleAddWhitelist),
 	},
-	"/api/auth/whitelist/:email": { DELETE: requireAuth(handleRemoveWhitelist) },
+	"/api/auth/whitelist/:email": { DELETE: requireAdmin(handleRemoveWhitelist) },
 
 	// Protected Data & Deals endpoints
 	"/api/deals/locations": { GET: requireAuth(br(getLocations)) },

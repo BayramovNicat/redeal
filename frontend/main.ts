@@ -26,13 +26,6 @@ if (window.location.pathname === "/login") {
 	root.appendChild(loginArea);
 	const { initLogin } = await import("@/features/login");
 	cleanups.push(initLogin(loginArea));
-} else if (window.location.pathname === "/admin") {
-	const adminArea = html`<main></main>`;
-	root.appendChild(
-		html`<div class="w-full px-5 pt-0 pb-20">${adminArea}</div>`,
-	);
-	const { initAdmin } = await import("@/features/admin");
-	cleanups.push(initAdmin(adminArea), initTooltip(root));
 } else {
 	const headerArea = html`<header></header>`;
 	const searchArea = html`<section></section>`;

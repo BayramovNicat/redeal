@@ -16,6 +16,7 @@ CREATE TABLE "User" (
 CREATE TABLE "WhitelistedEmail" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'user',
     "note" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

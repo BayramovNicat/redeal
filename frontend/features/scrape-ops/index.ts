@@ -8,8 +8,6 @@ import { StatBox } from "@/ui/stat-box";
 import {
 	fetchScrapeAdminSession,
 	fetchScrapeRuns,
-	hasScrapeAdminSession,
-	loginScrapeAdmin,
 	runScrapeNow,
 } from "./api";
 import type { ScrapeRun } from "./types";
@@ -115,38 +113,16 @@ async function handleRunNow(): Promise<void> {
 	ui.error.classList.add("hidden");
 
 	try {
-		if (!hasScrapeAdminSession()) await promptScrapeAdminLogin();
 		await runScrapeNow();
 		await loadRuns();
 	} catch (err) {
-		if (
-			err instanceof Error &&
-			(err.message === "Unauthorized" || err.message === "Forbidden")
-		) {
-			try {
-				await promptScrapeAdminLogin();
-				await runScrapeNow();
-				await loadRuns();
-				return;
-			} catch (retryErr) {
-				ui.error.textContent =
-					retryErr instanceof Error ? retryErr.message : t("scrapeRunError");
-			}
-		} else {
-			ui.error.textContent =
-				err instanceof Error ? err.message : t("scrapeRunError");
-		}
+		ui.error.textContent =
+			err instanceof Error ? err.message : t("scrapeRunError");
 		ui.error.classList.remove("hidden");
 	} finally {
 		state.running = false;
 		setRunButtonState();
 	}
-}
-
-async function promptScrapeAdminLogin(): Promise<void> {
-	const password = window.prompt(t("scrapeAdminPasswordPrompt"))?.trim() ?? "";
-	if (!password) throw new Error(t("scrapeAdminPasswordRequired"));
-	await loginScrapeAdmin(password);
 }
 
 function setRunButtonState(): void {

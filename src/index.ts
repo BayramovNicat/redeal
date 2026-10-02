@@ -16,6 +16,9 @@ async function handleFetch(req: Request): Promise<Response> {
 		pathname.includes(".") && !pathname.endsWith(".html");
 
 	if (!hasFileExtension && !pathname.startsWith("/api/")) {
+		if (pathname === "/admin") {
+			return Response.redirect(new URL("/", req.url).toString(), 302);
+		}
 		if (pathname === "/login") {
 			const user = await getUserFromRequest(req);
 			if (user) {

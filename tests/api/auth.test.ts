@@ -4,6 +4,7 @@ import {
 	createSession,
 	isEmailWhitelisted,
 	removeWhitelistedEmail,
+	setAdminRole,
 	upsertGoogleUser,
 	validateSession,
 } from "../../src/modules/auth/auth.service.js";
@@ -20,22 +21,23 @@ describe("Authentication & Whitelist System", () => {
 		// Clean up any old test records
 		await prisma.whitelistedEmail
 			.deleteMany({
-				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local"] } },
+				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local", "regular-user@redeal.local"] } },
 			})
 			.catch(() => {});
 		await prisma.user
 			.deleteMany({
-				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local"] } },
+				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local", "regular-user@redeal.local"] } },
 			})
 			.catch(() => {});
 
-		// Whitelist test user and create account
+		// Whitelist test user as admin and create account
 		await addWhitelistedEmail(testEmail, "Auth Unit Test Suite");
 		const user = await upsertGoogleUser({
 			sub: "google-uid-test-123",
 			email: testEmail,
 			name: "Test Auth User",
 		});
+		await setAdminRole(testEmail, true);
 		testUserId = user.id;
 
 		const session = await createSession(testUserId);
@@ -187,6 +189,64 @@ describe("Authentication & Whitelist System", () => {
 			body: JSON.stringify({ email: "hacker@evil.com" }),
 		});
 		expect(addRes.status).toBe(401);
+	});
+
+	test("regular non-admin user cannot manage whitelist via API (receives 403 Forbidden)", async () => {
+		const regularEmail = "regular-user@redeal.local";
+		await addWhitelistedEmail(regularEmail);
+		const regUser = await upsertGoogleUser({
+			sub: "regular-sub-123",
+			email: regularEmail,
+			name: "Regular Guy",
+		});
+		const { signedCookieValue } = await createSession(regUser.id);
+		const regularCookie = `redeal_session=${signedCookieValue}`;
+
+		const addRes = await fetch(`${baseUrl}/api/auth/whitelist`, {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				cookie: regularCookie,
+			},
+			body: JSON.stringify({ email: "shouldfail@evil.com" }),
+		});
+		expect(addRes.status).toBe(403);
+
+		// Clean up
+		await removeWhitelistedEmail(regularEmail);
+		await prisma.user
+			.deleteMany({ where: { email: regularEmail } })
+			.catch(() => {});
+	});
+
+	test("setAdminRole grants and revokes admin privileges", async () => {
+		const targetEmail = "promoted-user@redeal.local";
+		await addWhitelistedEmail(targetEmail);
+		const user = await upsertGoogleUser({
+			sub: "promo-sub",
+			email: targetEmail,
+		});
+		expect(user.role).toBe("user");
+
+		// Grant admin
+		await setAdminRole(targetEmail, true);
+		const promoted = await prisma.user.findUnique({
+			where: { email: targetEmail },
+		});
+		expect(promoted?.role).toBe("admin");
+
+		// Revoke admin
+		await setAdminRole(targetEmail, false);
+		const demoted = await prisma.user.findUnique({
+			where: { email: targetEmail },
+		});
+		expect(demoted?.role).toBe("user");
+
+		// Clean up
+		await removeWhitelistedEmail(targetEmail);
+		await prisma.user
+			.deleteMany({ where: { email: targetEmail } })
+			.catch(() => {});
 	});
 
 	test("/api/auth/logout clears session", async () => {

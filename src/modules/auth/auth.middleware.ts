@@ -72,3 +72,24 @@ export function requireAuth(
 		return handler(req);
 	};
 }
+
+export function requireAdmin(
+	handler: (req: Request) => Response | Promise<Response>,
+): (req: Request) => Promise<Response> {
+	return async (req: Request): Promise<Response> => {
+		const user = await getUserFromRequest(req);
+		if (!user) {
+			return ResponseHelper.error(
+				"Unauthorized: Please sign in with an authorized Google account",
+				401,
+			);
+		}
+		if (user.role !== "admin") {
+			return ResponseHelper.error(
+				"Forbidden: Admin privileges required",
+				403,
+			);
+		}
+		return handler(req);
+	};
+}

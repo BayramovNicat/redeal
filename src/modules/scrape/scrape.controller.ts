@@ -1,4 +1,5 @@
 import { runAlerts } from "@/modules/alerts/alerts.service.js";
+import { getUserFromRequest } from "@/modules/auth/auth.middleware.js";
 import {
 	adminPasswordConfigured,
 	clearScrapeAdminSessionResponse,
@@ -40,6 +41,14 @@ export function logoutScrapeAdmin(): Response {
 export async function getScrapeAdminSessionStatus(
 	req: Request,
 ): Promise<Response> {
+	const user = await getUserFromRequest(req);
+	if (user?.role === "admin") {
+		return ResponseHelper.privateJson({
+			ok: true,
+			authenticated: true,
+			csrfToken: "admin-user",
+		});
+	}
 	if (!adminPasswordConfigured()) {
 		return ResponseHelper.privateJson({ ok: true, authenticated: false });
 	}
@@ -74,8 +83,11 @@ export async function getScrapeRuns(req: Request): Promise<Response> {
 }
 
 export async function runScrape(req: Request): Promise<Response> {
-	const authError = await requireScrapeAdminMutation(req);
-	if (authError) return authError;
+	const user = await getUserFromRequest(req);
+	if (!user || user.role !== "admin") {
+		const authError = await requireScrapeAdminMutation(req);
+		if (authError) return authError;
+	}
 
 	scrapeRunsService
 		.run("manual", {

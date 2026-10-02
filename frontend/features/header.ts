@@ -1,7 +1,6 @@
 import { getLang, setLang, t } from "@/core/i18n";
 import { cn, html, makeEventManager } from "@/core/utils";
 import { type AuthUser, fetchAuthUser, logoutUser } from "@/features/auth/api";
-import { fetchScrapeAdminSession } from "@/features/scrape-ops/api";
 import { Button } from "@/ui/button";
 import { Icons } from "@/ui/icons";
 import { HealthStatus } from "./health-status";
@@ -125,6 +124,23 @@ function ScrapeOpsButton(): HTMLButtonElement {
 	});
 }
 
+function WhitelistButton(): HTMLButtonElement {
+	return Button({
+		title: "Allowed Accounts",
+		color: "indigo",
+		variant: "square",
+		ariaLabel: "Allowed Accounts",
+		content: Icons.user(14),
+		className: "size-8",
+		onclick: async () => {
+			const { openWhitelistDialog } = await import(
+				"@/features/auth/whitelist-dialog"
+			);
+			openWhitelistDialog();
+		},
+	});
+}
+
 /**
  * Initializes the application header.
  * @param container - The parent element to attach the header to.
@@ -179,14 +195,21 @@ export function initHeader(container: HTMLElement): () => void {
 	`;
 
 	container.appendChild(header);
-	void fetchScrapeAdminSession().then((authenticated) => {
-		if (authenticated) adminActions.replaceChildren(ScrapeOpsButton());
-	});
+
 	void fetchAuthUser().then(({ authenticated, user }) => {
 		if (authenticated && user) {
+			if (user.role === "admin") {
+				adminActions.replaceChildren(WhitelistButton(), ScrapeOpsButton());
+			}
+
 			const avatarEl = user.avatar
 				? html`<img src="${user.avatar}" alt="${user.name || user.email}" class="size-6 rounded-full object-cover border border-(--border)" />`
 				: html`<div class="size-6 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center">${(user.name || user.email || "U")[0].toUpperCase()}</div>`;
+
+			const roleBadge =
+				user.role === "admin"
+					? html`<span class="rounded bg-(--accent-dim) px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-(--accent) border border-(--accent-b)/30 uppercase">admin</span>`
+					: "";
 
 			const logoutBtn = Button({
 				title: "Sign out",
@@ -205,6 +228,7 @@ export function initHeader(container: HTMLElement): () => void {
 						<span class="text-xs font-semibold text-(--text) max-w-[120px] truncate max-[640px]:hidden">
 							${user.name || user.email.split("@")[0]}
 						</span>
+						${roleBadge}
 					</div>
 					${logoutBtn}
 				</div>
