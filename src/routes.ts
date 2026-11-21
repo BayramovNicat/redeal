@@ -6,6 +6,9 @@ import {
 } from "@/modules/alerts/alerts.controller.js";
 import {
 	handleAddWhitelist,
+	handleApproveAccessRequest,
+	handleDismissAccessRequest,
+	handleGetAccessRequests,
 	handleGetMe,
 	handleGetWhitelist,
 	handleGoogleCallback,
@@ -75,6 +78,15 @@ export const routes = {
 		POST: requireAdmin(handleAddWhitelist),
 	},
 	"/api/auth/whitelist/:email": { DELETE: requireAdmin(handleRemoveWhitelist) },
+	"/api/auth/requests": {
+		GET: requireAdmin(handleGetAccessRequests),
+	},
+	"/api/auth/requests/:email/approve": {
+		POST: requireAdmin(handleApproveAccessRequest),
+	},
+	"/api/auth/requests/:email": {
+		DELETE: requireAdmin(handleDismissAccessRequest),
+	},
 
 	// Public Preview & Protected Data / Deals endpoints
 	"/api/deals/locations": { GET: br(getLocations) },

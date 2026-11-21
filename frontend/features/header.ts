@@ -1,6 +1,11 @@
+import { bus, EVENTS } from "@/core/events";
 import { getLang, setLang, t } from "@/core/i18n";
 import { cn, html, makeEventManager } from "@/core/utils";
-import { fetchAuthUser, logoutUser } from "@/features/auth/api";
+import {
+	fetchAccessRequests,
+	fetchAuthUser,
+	logoutUser,
+} from "@/features/auth/api";
 import { openLoginModal } from "@/features/auth/login-modal";
 import { Button } from "@/ui/button";
 import { Icons } from "@/ui/icons";
@@ -134,14 +139,27 @@ function ScrapeOpsButton(): HTMLButtonElement {
 	});
 }
 
-function WhitelistButton(): HTMLButtonElement {
-	return Button({
-		title: "Allowed Accounts",
+function WhitelistButton(): {
+	button: HTMLButtonElement;
+	setPendingCount: (count: number) => void;
+} {
+	const badge = html`
+		<span
+			class="hidden absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-(--yellow) text-[#060709] text-[10px] font-extrabold font-mono-num leading-none items-center justify-center ring-2 ring-(--surface) pointer-events-none"
+		></span>
+	`;
+
+	const button = Button({
+		title: t("accessDialogTitle"),
 		color: "indigo",
 		variant: "square",
-		ariaLabel: "Allowed Accounts",
-		content: Icons.user(13),
-		className: cn("size-7.5", CAPSULE_BTN),
+		ariaLabel: t("accessDialogTitle"),
+		content: html`
+			<span class="relative inline-flex items-center justify-center">
+				${Icons.user(13)}
+			</span>
+		`,
+		className: cn("relative size-7.5", CAPSULE_BTN),
 		onclick: async () => {
 			const { openWhitelistDialog } = await import(
 				"@/features/auth/whitelist-dialog"
@@ -149,6 +167,23 @@ function WhitelistButton(): HTMLButtonElement {
 			openWhitelistDialog();
 		},
 	});
+	button.appendChild(badge);
+
+	const setPendingCount = (count: number) => {
+		if (count > 0) {
+			badge.textContent = count > 99 ? "99+" : String(count);
+			badge.classList.remove("hidden");
+			badge.classList.add("inline-flex");
+			button.title = `${t("accessDialogTitle")} (${t("accessRequestsCount", { n: count })})`;
+		} else {
+			badge.textContent = "";
+			badge.classList.add("hidden");
+			badge.classList.remove("inline-flex");
+			button.title = t("accessDialogTitle");
+		}
+	};
+
+	return { button, setPendingCount };
 }
 
 /**
@@ -209,10 +244,19 @@ export function initHeader(container: HTMLElement): () => void {
 
 	container.appendChild(header);
 
+	let unsubscribeRequests: (() => void) | null = null;
+
 	void fetchAuthUser().then(({ authenticated, user }) => {
 		if (authenticated && user) {
 			if (user.role === "admin") {
-				adminActions.replaceChildren(WhitelistButton(), ScrapeOpsButton());
+				const whitelistBtn = WhitelistButton();
+				adminActions.replaceChildren(whitelistBtn.button, ScrapeOpsButton());
+				unsubscribeRequests = bus.on(EVENTS.ACCESS_REQUESTS_CHANGED, (count) =>
+					whitelistBtn.setPendingCount(count),
+				);
+				void fetchAccessRequests()
+					.then((reqs) => whitelistBtn.setPendingCount(reqs.length))
+					.catch(() => {});
 			}
 
 			const avatarEl = user.avatar
@@ -273,6 +317,7 @@ export function initHeader(container: HTMLElement): () => void {
 	});
 
 	return () => {
+		unsubscribeRequests?.();
 		evm.cleanup();
 		header.remove();
 	};

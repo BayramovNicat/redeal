@@ -1,5 +1,8 @@
 import {
 	addWhitelistedEmail,
+	approveAccessRequest,
+	dismissAccessRequest,
+	getAccessRequests,
 	getWhitelistedEmails,
 	isEmailWhitelisted,
 	removeWhitelistedEmail,
@@ -17,10 +20,15 @@ Usage:
   bun scripts/whitelist.ts add <email> [optional note]
   bun scripts/whitelist.ts remove <email>
   bun scripts/whitelist.ts check <email>
+  bun scripts/whitelist.ts requests
+  bun scripts/whitelist.ts approve <email> [optional note]
+  bun scripts/whitelist.ts dismiss <email>
 
 Examples:
   bun scripts/whitelist.ts add john@gmail.com "Primary Admin"
   bun scripts/whitelist.ts list
+  bun scripts/whitelist.ts requests
+  bun scripts/whitelist.ts approve user@gmail.com
   bun scripts/whitelist.ts remove john@gmail.com
 `);
 }
@@ -85,6 +93,57 @@ async function main() {
 				console.log(`✓ ${email.toLowerCase()} is whitelisted.`);
 			} else {
 				console.log(`✗ ${email.toLowerCase()} is NOT whitelisted.`);
+			}
+			break;
+		}
+
+		case "requests": {
+			const requests = await getAccessRequests();
+			if (requests.length === 0) {
+				console.log("No pending sign-in access requests.");
+			} else {
+				console.log(`Pending access requests (${requests.length}):`);
+				for (const req of requests) {
+					const namePart = req.name ? ` (${req.name})` : "";
+					const lastSeen = new Date(req.last_attempt_at).toISOString();
+					console.log(
+						`  - ${req.email}${namePart} [attempts: ${req.attempts}, last: ${lastSeen}]`,
+					);
+				}
+			}
+			break;
+		}
+
+		case "approve": {
+			if (!email?.includes("@")) {
+				console.error("Error: Please provide a valid email address.");
+				process.exit(1);
+			}
+			const approved = await approveAccessRequest(email, note || undefined);
+			if (approved) {
+				console.log(
+					`✓ Approved and whitelisted: ${approved.email}${approved.note ? ` (${approved.note})` : ""}`,
+				);
+			} else {
+				console.log(
+					`No pending access request found for ${email.toLowerCase()}.`,
+				);
+			}
+			break;
+		}
+
+		case "dismiss": {
+			if (!email) {
+				console.error("Error: Please provide an email to dismiss.");
+				process.exit(1);
+			}
+			const dismissed = await dismissAccessRequest(email);
+			if (dismissed) {
+				console.log(`✓ Dismissed access request: ${email.toLowerCase()}`);
+			} else {
+				console.log(
+					`No pending access request found for ${email.toLowerCase()}.`,
+				);
 			}
 			break;
 		}

@@ -12,14 +12,18 @@ import {
 import { getUserFromRequest } from "@/modules/auth/auth.middleware.js";
 import {
 	addWhitelistedEmail,
+	approveAccessRequest,
 	buildGoogleAuthUrl,
 	createSession,
 	destroySession,
+	dismissAccessRequest,
 	exchangeGoogleCode,
 	fetchGoogleUserProfile,
+	getAccessRequests,
 	getWhitelistedEmails,
 	isEmailWhitelisted,
 	isGoogleConfigured,
+	recordAccessRequest,
 	removeWhitelistedEmail,
 	resolveRedirectUri,
 	upsertGoogleUser,
@@ -139,6 +143,7 @@ export async function handleGoogleCallback(req: Request): Promise<Response> {
 		// Whitelist check
 		const whitelisted = await isEmailWhitelisted(email);
 		if (!whitelisted) {
+			await recordAccessRequest(profile);
 			const headers = new Headers();
 			headers.set(
 				"Location",
@@ -224,7 +229,10 @@ export async function handleGetWhitelist(req: Request): Promise<Response> {
 	}
 
 	const emails = await getWhitelistedEmails();
-	return Response.json({ ok: true, data: emails });
+	return Response.json(
+		{ ok: true, data: emails },
+		{ headers: { "Cache-Control": "no-store" } },
+	);
 }
 
 export async function handleAddWhitelist(req: Request): Promise<Response> {
@@ -249,19 +257,98 @@ export async function handleAddWhitelist(req: Request): Promise<Response> {
 	return Response.json({ ok: true, data: result });
 }
 
+function extractEmailParam(req: Request, fromEndOffset = 1): string | null {
+	const paramEmail = (req as Request & { params?: { email?: string } }).params
+		?.email;
+	let raw = paramEmail;
+	if (!raw) {
+		const segments = new URL(req.url).pathname.split("/").filter(Boolean);
+		raw = segments[segments.length - fromEndOffset] ?? "";
+	}
+	try {
+		const email = decodeURIComponent(raw).trim().toLowerCase();
+		return email.includes("@") ? email : null;
+	} catch {
+		return null;
+	}
+}
+
 export async function handleRemoveWhitelist(req: Request): Promise<Response> {
 	const user = await getUserFromRequest(req);
 	if (!user) {
 		return ResponseHelper.error("Unauthorized", 401);
 	}
 
-	const url = new URL(req.url);
-	const raw = url.pathname.split("/").pop() ?? "";
-	const email = decodeURIComponent(raw).trim().toLowerCase();
-	if (!email?.includes("@")) {
+	const email = extractEmailParam(req, 1);
+	if (!email) {
 		return ResponseHelper.error("Invalid email specified", 400);
 	}
 
 	const removed = await removeWhitelistedEmail(email);
+	return Response.json({ ok: true, removed });
+}
+
+// Pending sign-in access request endpoints
+export async function handleGetAccessRequests(req: Request): Promise<Response> {
+	const user = await getUserFromRequest(req);
+	if (!user) {
+		return ResponseHelper.error("Unauthorized", 401);
+	}
+
+	const requests = await getAccessRequests();
+	return Response.json(
+		{ ok: true, data: requests },
+		{ headers: { "Cache-Control": "no-store" } },
+	);
+}
+
+export async function handleApproveAccessRequest(
+	req: Request,
+): Promise<Response> {
+	const user = await getUserFromRequest(req);
+	if (!user) {
+		return ResponseHelper.error("Unauthorized", 401);
+	}
+
+	const email = extractEmailParam(req, 2);
+	if (!email) {
+		return ResponseHelper.error("Invalid email specified", 400);
+	}
+
+	let note: string | undefined;
+	try {
+		const text = await req.text();
+		if (text.trim()) {
+			const body = JSON.parse(text) as { note?: unknown };
+			if (typeof body.note === "string") {
+				note = body.note;
+			}
+		}
+	} catch {
+		return ResponseHelper.error("Invalid JSON body", 400);
+	}
+
+	const approved = await approveAccessRequest(email, note);
+	if (!approved) {
+		return ResponseHelper.error("Access request not found", 404);
+	}
+
+	return Response.json({ ok: true, data: approved });
+}
+
+export async function handleDismissAccessRequest(
+	req: Request,
+): Promise<Response> {
+	const user = await getUserFromRequest(req);
+	if (!user) {
+		return ResponseHelper.error("Unauthorized", 401);
+	}
+
+	const email = extractEmailParam(req, 1);
+	if (!email) {
+		return ResponseHelper.error("Invalid email specified", 400);
+	}
+
+	const removed = await dismissAccessRequest(email);
 	return Response.json({ ok: true, removed });
 }

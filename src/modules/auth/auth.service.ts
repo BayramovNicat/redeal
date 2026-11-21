@@ -122,14 +122,20 @@ export async function addWhitelistedEmail(
 	note?: string,
 ): Promise<{ email: string; note: string | null; created_at: Date }> {
 	const normalized = email.trim().toLowerCase();
-	return prisma.whitelistedEmail.upsert({
-		where: { email: normalized },
-		update: { note: note ?? null },
-		create: {
-			email: normalized,
-			note: note ?? null,
-		},
-	});
+	const [entry] = await prisma.$transaction([
+		prisma.whitelistedEmail.upsert({
+			where: { email: normalized },
+			update: { note: note ?? null },
+			create: {
+				email: normalized,
+				note: note ?? null,
+			},
+		}),
+		prisma.accessRequest.deleteMany({
+			where: { email: normalized },
+		}),
+	]);
+	return entry;
 }
 
 export async function removeWhitelistedEmail(email: string): Promise<boolean> {
@@ -148,6 +154,70 @@ export async function getWhitelistedEmails() {
 	return prisma.whitelistedEmail.findMany({
 		orderBy: { created_at: "desc" },
 	});
+}
+
+// Pending access requests (non-whitelisted Google sign-in attempts)
+export async function recordAccessRequest(profile: GoogleUserProfile) {
+	const normalized = profile.email.trim().toLowerCase();
+	const now = new Date();
+	return prisma.accessRequest.upsert({
+		where: { email: normalized },
+		update: {
+			...(profile.name ? { name: profile.name } : {}),
+			...(profile.picture ? { avatar: profile.picture } : {}),
+			...(profile.sub ? { google_id: profile.sub } : {}),
+			attempts: { increment: 1 },
+			last_attempt_at: now,
+		},
+		create: {
+			email: normalized,
+			name: profile.name ?? null,
+			avatar: profile.picture ?? null,
+			google_id: profile.sub ?? null,
+			attempts: 1,
+			last_attempt_at: now,
+		},
+	});
+}
+
+export async function getAccessRequests() {
+	return prisma.accessRequest.findMany({
+		orderBy: { last_attempt_at: "desc" },
+	});
+}
+
+export async function approveAccessRequest(email: string, note?: string) {
+	const normalized = email.trim().toLowerCase();
+	const existing = await prisma.accessRequest.findUnique({
+		where: { email: normalized },
+	});
+	if (!existing) return null;
+
+	const trimmedNote = note?.trim();
+	const resolvedNote = trimmedNote || existing.name || null;
+
+	const [entry] = await prisma.$transaction([
+		prisma.whitelistedEmail.upsert({
+			where: { email: normalized },
+			update: resolvedNote !== null ? { note: resolvedNote } : {},
+			create: {
+				email: normalized,
+				note: resolvedNote,
+			},
+		}),
+		prisma.accessRequest.deleteMany({
+			where: { email: normalized },
+		}),
+	]);
+	return entry;
+}
+
+export async function dismissAccessRequest(email: string): Promise<boolean> {
+	const normalized = email.trim().toLowerCase();
+	const { count } = await prisma.accessRequest.deleteMany({
+		where: { email: normalized },
+	});
+	return count > 0;
 }
 
 // User & session management
@@ -194,9 +264,14 @@ export async function setAdminRole(
 		});
 		whitelistUpdated = true;
 	} else if (isAdmin) {
-		await prisma.whitelistedEmail.create({
-			data: { email: normalized, role: "admin", note: "Admin" },
-		});
+		await prisma.$transaction([
+			prisma.whitelistedEmail.create({
+				data: { email: normalized, role: "admin", note: "Admin" },
+			}),
+			prisma.accessRequest.deleteMany({
+				where: { email: normalized },
+			}),
+		]);
 		whitelistUpdated = true;
 	}
 

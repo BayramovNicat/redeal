@@ -13,6 +13,17 @@ export interface WhitelistItem {
 	created_at: string;
 }
 
+export interface AccessRequestItem {
+	id: string;
+	email: string;
+	name?: string | null;
+	avatar?: string | null;
+	google_id?: string | null;
+	attempts: number;
+	created_at: string;
+	last_attempt_at: string;
+}
+
 let cachedUserPromise: Promise<{
 	authenticated: boolean;
 	user: AuthUser | null;
@@ -144,5 +155,48 @@ export async function removeWhitelistEmail(email: string): Promise<void> {
 	});
 	if (!res.ok) {
 		throw new Error(`Failed to remove email (${res.status})`);
+	}
+}
+
+export async function fetchAccessRequests(): Promise<AccessRequestItem[]> {
+	const res = await fetch("/api/auth/requests", {
+		credentials: "same-origin",
+	});
+	if (!res.ok) {
+		throw new Error(`Failed to fetch access requests (${res.status})`);
+	}
+	const json = (await res.json()) as { data: AccessRequestItem[] };
+	return json.data ?? [];
+}
+
+export async function approveAccessRequestApi(
+	email: string,
+	note?: string,
+): Promise<WhitelistItem> {
+	const res = await fetch(
+		`/api/auth/requests/${encodeURIComponent(email)}/approve`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			credentials: "same-origin",
+			body: JSON.stringify(note ? { note } : {}),
+		},
+	);
+	if (!res.ok) {
+		const err = (await res.json()) as { error?: string };
+		throw new Error(err.error || `Failed to approve request (${res.status})`);
+	}
+	const json = (await res.json()) as { data: WhitelistItem };
+	return json.data;
+}
+
+export async function dismissAccessRequestApi(email: string): Promise<void> {
+	const res = await fetch(`/api/auth/requests/${encodeURIComponent(email)}`, {
+		method: "DELETE",
+		credentials: "same-origin",
+	});
+	if (!res.ok) {
+		const err = (await res.json()) as { error?: string };
+		throw new Error(err.error || `Failed to dismiss request (${res.status})`);
 	}
 }

@@ -144,6 +144,19 @@ model WhitelistedEmail {
   @@index([email])
 }
 
+model AccessRequest {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String?
+  avatar          String?
+  google_id       String?
+  attempts        Int      @default(1)
+  created_at      DateTime @default(now())
+  last_attempt_at DateTime @default(now())
+
+  @@index([last_attempt_at])
+}
+
 model Session {
   id         String   @id @default(uuid())
   token      String   @unique

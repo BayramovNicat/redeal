@@ -6,6 +6,7 @@ export const EVENTS = {
 	PROPERTY_OPEN: "property_open",
 	ALERTS_OPEN: "alerts_open",
 	HEATMAP_OPEN: "heatmap_open",
+	ACCESS_REQUESTS_CHANGED: "access_requests_changed",
 } as const;
 
 export type EventPayloads = {
@@ -20,6 +21,7 @@ export type EventPayloads = {
 		onAction: (name: string, isToggle: boolean) => void;
 		onSelectMany?: (names: string[]) => void;
 	};
+	[EVENTS.ACCESS_REQUESTS_CHANGED]: number;
 };
 
 type Callback<T> = (data: T) => void;

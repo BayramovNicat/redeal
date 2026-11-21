@@ -12,12 +12,14 @@ export function initLogin(container: HTMLElement): () => void {
 
 	let errorMessage = "";
 	let errorTitle = "";
+	let isPendingNotice = false;
 
 	if (errorType === "not_whitelisted") {
-		errorTitle = "Access Denied";
+		isPendingNotice = true;
+		errorTitle = t("loginRequestPendingTitle");
 		errorMessage = deniedEmail
-			? `The Google account "${deniedEmail}" is not on the whitelist. Access to redeal is restricted to authorized accounts.`
-			: "Your Google account is not on the whitelist. Please contact the administrator to request access.";
+			? t("loginRequestPendingMsg", { email: deniedEmail })
+			: t("loginRequestPendingMsgGeneric");
 	} else if (errorType === "missing_config") {
 		errorTitle = "Google OAuth Not Configured";
 		errorMessage =
@@ -34,11 +36,16 @@ export function initLogin(container: HTMLElement): () => void {
 		errorMessage = "An error occurred during authentication. Please try again.";
 	}
 
+	const noticeBoxClass = isPendingNotice
+		? "border-(--yellow-b) bg-(--yellow-dim)"
+		: "border-(--red-b) bg-(--red-dim)";
+	const noticeToneClass = isPendingNotice ? "text-(--yellow)" : "text-(--red)";
+
 	const errorBox = errorMessage
 		? html`
-			<div class="w-full rounded-(--r) border border-(--red-b) bg-(--red-dim) p-3.75 text-left animate-[fadeUp_0.2s_ease-out]">
+			<div class="w-full rounded-(--r) border ${noticeBoxClass} p-3.75 text-left animate-[fadeUp_0.2s_ease-out]">
 				<div class="flex items-start gap-3">
-					<div class="mt-0.5 text-(--red) shrink-0">
+					<div class="mt-0.5 ${noticeToneClass} shrink-0">
 						<svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<circle cx="12" cy="12" r="10" />
 							<line x1="12" y1="8" x2="12" y2="12" />
@@ -46,7 +53,7 @@ export function initLogin(container: HTMLElement): () => void {
 						</svg>
 					</div>
 					<div class="flex flex-col gap-0.75 text-sm">
-						<span class="font-bold text-(--red) text-[13px]">${errorTitle}</span>
+						<span class="font-bold ${noticeToneClass} text-[13px]">${errorTitle}</span>
 						<p class="text-(--text)/90 leading-relaxed text-xs">
 							${errorMessage}
 						</p>
@@ -122,7 +129,7 @@ export function initLogin(container: HTMLElement): () => void {
 				<!-- Footer note -->
 				<div class="flex flex-col items-center gap-2.5">
 					<p class="text-[11px] text-(--muted) leading-normal">
-						Accounts not on the whitelist will be denied access automatically.
+						${t("loginFooterRequestNote")}
 					</p>
 					<a
 						href="/"

@@ -299,6 +299,46 @@ const translations = {
 		previewLimitSub:
 			"Sign in with Google to view all {total} deals and unlock advanced filters, sorting, and Telegram alerts.",
 		backToPreview: "Back to public preview",
+
+		// Access management & pending sign-in requests
+		accessDialogTitle: "Access Management",
+		accessDialogDesc:
+			"Approve pending sign-in requests and manage whitelisted Google accounts.",
+		accessRequestsTitle: "Pending Sign-in Requests",
+		accessRequestsSubtitle:
+			"Non-whitelisted Google accounts that tried to sign in.",
+		accessRequestsCount: "{n} pending",
+		accessRequestsEmpty: "No pending sign-in requests.",
+		accessRequestsLoading: "Loading requests…",
+		accessRequestsLoadError: "Failed to load requests",
+		accessApprove: "Approve",
+		accessDismiss: "Dismiss",
+		accessApprovedFeedback: "Approved {email} and added to whitelist",
+		accessDismissedFeedback: "Dismissed request from {email}",
+		accessAttemptCount: "{n} attempts",
+		whitelistTitle: "Allowed Google Accounts",
+		whitelistSubtitle:
+			"Only whitelisted Google emails can access this application.",
+		whitelistCount: "{n} accounts",
+		whitelistEmailPlaceholder: "Google email (e.g. user@gmail.com)",
+		whitelistNotePlaceholder: "Optional note / name",
+		whitelistAddBtn: "Add Email",
+		whitelistLoading: "Loading whitelist…",
+		whitelistEmpty:
+			"No emails on whitelist yet. Add one above to grant access.",
+		whitelistLoadError: "Failed to load whitelist",
+		whitelistAddedFeedback: "Added {email} to whitelist",
+		whitelistRemovedFeedback: "Removed {email}",
+		whitelistConfirmRemove:
+			'Remove "{email}" from whitelist? They will immediately lose access.',
+		whitelistAddedDate: "Added {date}",
+		loginRequestPendingTitle: "Access Request Received",
+		loginRequestPendingMsg:
+			'The Google account "{email}" is not whitelisted yet. Your sign-in request has been saved and is waiting for admin approval.',
+		loginRequestPendingMsgGeneric:
+			"Your Google account is not whitelisted yet. Your sign-in request has been saved for admin approval.",
+		loginFooterRequestNote:
+			"Not whitelisted yet? Sign in with Google to send an access request for admin approval.",
 	},
 
 	az: {
@@ -580,6 +620,46 @@ const translations = {
 		previewLimitSub:
 			"Bütün {total} təklifə baxmaq və ətraflı filtrlər, sıralama və Telegram bildirişlərini açmaq üçün Google ilə daxil olun.",
 		backToPreview: "İctimai önizləməyə qayıt",
+
+		// Access management & pending sign-in requests
+		accessDialogTitle: "Giriş İdarəetməsi",
+		accessDialogDesc:
+			"Gözləyən giriş sorğularını təsdiqləyin və ağ siyahıdakı Google hesablarını idarə edin.",
+		accessRequestsTitle: "Gözləyən Giriş Sorğuları",
+		accessRequestsSubtitle:
+			"Ağ siyahıda olmayan və daxil olmağa çalışan Google hesabları.",
+		accessRequestsCount: "{n} gözləyən",
+		accessRequestsEmpty: "Gözləyən giriş sorğusu yoxdur.",
+		accessRequestsLoading: "Sorğular yüklənir…",
+		accessRequestsLoadError: "Sorğular yüklənmədi",
+		accessApprove: "Təsdiqlə",
+		accessDismiss: "Rədd et",
+		accessApprovedFeedback: "{email} təsdiqləndi və ağ siyahıya əlavə edildi",
+		accessDismissedFeedback: "{email} sorğusu silindi",
+		accessAttemptCount: "{n} cəhd",
+		whitelistTitle: "İcazəli Google Hesabları",
+		whitelistSubtitle:
+			"Yalnız ağ siyahıda olan Google e-poçtları bu tətbiqə daxil ola bilər.",
+		whitelistCount: "{n} hesab",
+		whitelistEmailPlaceholder: "Google e-poçt (məs. user@gmail.com)",
+		whitelistNotePlaceholder: "İsteğe bağlı qeyd / ad",
+		whitelistAddBtn: "Əlavə et",
+		whitelistLoading: "Ağ siyahı yüklənir…",
+		whitelistEmpty:
+			"Ağ siyahıda hələ hesab yoxdur. Giriş vermək üçün yuxarıdan əlavə edin.",
+		whitelistLoadError: "Ağ siyahı yüklənmədi",
+		whitelistAddedFeedback: "{email} ağ siyahıya əlavə edildi",
+		whitelistRemovedFeedback: "{email} silindi",
+		whitelistConfirmRemove:
+			'"{email}" ağ siyahıdan silinsin? Girişi dərhal ləğv ediləcək.',
+		whitelistAddedDate: "Əlavə olunub: {date}",
+		loginRequestPendingTitle: "Giriş Sorğusu Qəbul Edildi",
+		loginRequestPendingMsg:
+			'"{email}" Google hesabı hələ ağ siyahıda deyil. Giriş sorğunuz qeydə alındı və admin təsdiqini gözləyir.',
+		loginRequestPendingMsgGeneric:
+			"Google hesabınız hələ ağ siyahıda deyil. Giriş sorğunuz admin təsdiqi üçün qeydə alındı.",
+		loginFooterRequestNote:
+			"Hələ ağ siyahıda deyilsiniz? Admin təsdiqi üçün giriş sorğusu göndərmək məqsədilə Google ilə daxil olun.",
 	},
 
 	ru: {
@@ -862,6 +942,46 @@ const translations = {
 		previewLimitSub:
 			"Войдите через Google, чтобы открыть все {total} объявлений, расширенные фильтры, сортировку и Telegram-уведомления.",
 		backToPreview: "Вернуться к превью",
+
+		// Access management & pending sign-in requests
+		accessDialogTitle: "Управление доступом",
+		accessDialogDesc:
+			"Одобряйте заявки на вход и управляйте белым списком аккаунтов Google.",
+		accessRequestsTitle: "Заявки на вход",
+		accessRequestsSubtitle:
+			"Аккаунты Google не из белого списка, пытавшиеся войти.",
+		accessRequestsCount: "{n} ожидают",
+		accessRequestsEmpty: "Нет ожидающих заявок на вход.",
+		accessRequestsLoading: "Загрузка заявок…",
+		accessRequestsLoadError: "Не удалось загрузить заявки",
+		accessApprove: "Одобрить",
+		accessDismiss: "Отклонить",
+		accessApprovedFeedback: "{email} одобрен и добавлен в белый список",
+		accessDismissedFeedback: "Заявка от {email} отклонена",
+		accessAttemptCount: "{n} попыток",
+		whitelistTitle: "Разрешённые аккаунты Google",
+		whitelistSubtitle:
+			"Доступ к приложению открыт только для адресов из белого списка.",
+		whitelistCount: "{n} аккаунтов",
+		whitelistEmailPlaceholder: "Google email (напр. user@gmail.com)",
+		whitelistNotePlaceholder: "Заметка / имя (необязательно)",
+		whitelistAddBtn: "Добавить",
+		whitelistLoading: "Загрузка белого списка…",
+		whitelistEmpty:
+			"Белый список пока пуст. Добавьте адрес выше, чтобы выдать доступ.",
+		whitelistLoadError: "Не удалось загрузить белый список",
+		whitelistAddedFeedback: "{email} добавлен в белый список",
+		whitelistRemovedFeedback: "{email} удалён",
+		whitelistConfirmRemove:
+			'Удалить "{email}" из белого списка? Доступ будет немедленно отозван.',
+		whitelistAddedDate: "Добавлен {date}",
+		loginRequestPendingTitle: "Заявка на доступ отправлена",
+		loginRequestPendingMsg:
+			'Аккаунт Google "{email}" ещё не в белом списке. Ваша заявка сохранена и ожидает одобрения администратора.',
+		loginRequestPendingMsgGeneric:
+			"Ваш аккаунт Google ещё не в белом списке. Ваша заявка сохранена для одобрения администратором.",
+		loginFooterRequestNote:
+			"Вас ещё нет в белом списке? Войдите через Google, чтобы отправить заявку администратору.",
 	},
 } as const;
 
