@@ -44,8 +44,7 @@ describe("BinaScraper", () => {
 	test("filters property types by listingType and categoryId", async () => {
 		const fetchedReferers: string[] = [];
 		globalThis.fetch = (async (_url, init) => {
-			const body = JSON.parse(init?.body as string);
-			const referer = (init?.headers as Record<string, string>)["Referer"];
+			const referer = (init?.headers as Record<string, string>).Referer;
 			if (referer) {
 				fetchedReferers.push(referer);
 			}
