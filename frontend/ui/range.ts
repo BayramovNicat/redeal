@@ -11,22 +11,42 @@ const CONTAINER_CLS = `
 
 const INPUT_CLS = `
   appearance-none w-full h-1.5 rounded-full outline-none cursor-pointer m-0
-  bg-[linear-gradient(to_right,var(--accent)_var(--p,0%),rgba(255,255,255,0.1)_var(--p,0%))]
+  bg-[linear-gradient(to_right,var(--range-color,var(--accent))_var(--p,0%),rgba(255,255,255,0.1)_var(--p,0%))]
   [&::-webkit-slider-thumb]:appearance-none
   [&::-webkit-slider-thumb]:w-4.5
   [&::-webkit-slider-thumb]:h-4.5
   [&::-webkit-slider-thumb]:bg-white
   [&::-webkit-slider-thumb]:rounded-full
   [&::-webkit-slider-thumb]:border-[2.5px]
-  [&::-webkit-slider-thumb]:border-(--accent-solid)
-  [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_rgba(130,148,255,0.22),0_2px_8px_rgba(0,0,0,0.45)]
+  [&::-webkit-slider-thumb]:border-[color:var(--range-solid,var(--accent-solid))]
+  [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_var(--range-glow,rgba(130,148,255,0.22)),0_2px_8px_rgba(0,0,0,0.45)]
   [&::-webkit-slider-thumb]:cursor-pointer
-  [&::-webkit-slider-thumb]:transition-[transform,scale,box-shadow]
+  [&::-webkit-slider-thumb]:transition-[transform,scale,box-shadow,border-color]
   [&::-webkit-slider-thumb]:duration-200
   [&::-webkit-slider-thumb]:ease-out
   [&::-webkit-slider-thumb:hover]:scale-[1.15]
   [&::-webkit-slider-thumb:active]:scale-[1.08]
+  [&::-moz-range-thumb]:appearance-none
+  [&::-moz-range-thumb]:w-4.5
+  [&::-moz-range-thumb]:h-4.5
+  [&::-moz-range-thumb]:bg-white
+  [&::-moz-range-thumb]:rounded-full
+  [&::-moz-range-thumb]:border-[2.5px]
+  [&::-moz-range-thumb]:border-[color:var(--range-solid,var(--accent-solid))]
+  [&::-moz-range-thumb]:shadow-[0_0_0_3px_var(--range-glow,rgba(130,148,255,0.22)),0_2px_8px_rgba(0,0,0,0.45)]
+  [&::-moz-range-thumb]:cursor-pointer
+  [&::-moz-range-thumb]:transition-[transform,scale,box-shadow,border-color]
+  [&::-moz-range-thumb]:duration-200
+  [&::-moz-range-thumb]:ease-out
+  [&::-moz-range-thumb:hover]:scale-[1.15]
+  [&::-moz-range-thumb:active]:scale-[1.08]
 `;
+
+export interface RangeColors {
+	track: string;
+	thumb: string;
+	glow: string;
+}
 
 /**
  * Updates the CSS variable --p on a range input to reflect its current progress.
@@ -37,6 +57,18 @@ export function setRangeProgress(input: HTMLInputElement): void {
 	const val = Number(input.value);
 	const p = ((val - min) / (max - min)) * 100;
 	input.style.setProperty("--p", `${p}%`);
+}
+
+/**
+ * Updates the CSS color variables on a range input (track fill, thumb ring, and halo).
+ */
+export function setRangeColor(
+	input: HTMLInputElement,
+	colors: RangeColors,
+): void {
+	input.style.setProperty("--range-color", colors.track);
+	input.style.setProperty("--range-solid", colors.thumb);
+	input.style.setProperty("--range-glow", colors.glow);
 }
 
 /** Props accepted by {@link RawRange}. */

@@ -6,10 +6,32 @@ import { Icons } from "@/ui/icons";
 import { Field, Input, RawInput } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { MultiSelect } from "@/ui/multi-select";
-import { RawRange, setRangeProgress } from "@/ui/range";
+import { RawRange, setRangeColor, setRangeProgress } from "@/ui/range";
 import { Select } from "@/ui/select";
+import { thresholdStyle } from "@/ui/tier";
 import { getBooleanFilters, getNumericFilters } from "./constants";
 import type { SearchCallbacks, SearchUI } from "./types";
+
+/**
+ * Synchronizes the discount slider fill, color theme, and value pill
+ * to reflect the current threshold value.
+ */
+export function syncDiscountThresholdUI(ui: SearchUI): void {
+	const value = Number(ui.discountRange.value);
+	const style = thresholdStyle(value);
+
+	setRangeProgress(ui.discountRange);
+	setRangeColor(ui.discountRange, {
+		track: style.c,
+		thumb: style.solid,
+		glow: style.glow,
+	});
+
+	ui.discountValueDisplay.textContent = value === 0 ? t("all") : `${value}%`;
+	ui.discountValueDisplay.style.color = style.c;
+	ui.discountValueDisplay.style.backgroundColor = style.bg;
+	ui.discountValueDisplay.style.borderColor = style.b;
+}
 
 /**
  * Renders the unified command search bar, quick-filter strip,
@@ -53,7 +75,7 @@ export function renderSearchFilters(
 	});
 
 	ui.discountValueDisplay = html`<span
-		class="text-[11px] font-bold font-mono-num text-(--accent) bg-(--accent-dim) border border-(--accent-b) px-2 py-0.25 rounded-full leading-tight"
+		class="text-[11px] font-bold font-mono-num border px-2 py-0.25 rounded-full leading-tight transition-colors duration-150"
 		>10%</span
 	>`;
 
@@ -63,15 +85,12 @@ export function renderSearchFilters(
 		max: 50,
 		value: 10,
 		ariaLabel: t("discountThreshold"),
-		oninput: (e) => {
-			const input = e.target as HTMLInputElement;
-			setRangeProgress(input);
-			ui.discountValueDisplay.textContent =
-				input.value === "0" ? t("all") : `${input.value}%`;
+		oninput: () => {
+			syncDiscountThresholdUI(ui);
 			onFilterChange();
 		},
 	});
-	setRangeProgress(ui.discountRange);
+	syncDiscountThresholdUI(ui);
 
 	ui.advancedCount = html`<span
 		class="bg-(--accent-solid) text-white rounded-full min-w-4.5 h-4.5 px-1.25 text-[10px] font-bold font-mono-num inline-flex items-center justify-center"

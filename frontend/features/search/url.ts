@@ -1,6 +1,5 @@
-import { t } from "@/core/i18n";
-import { setRangeProgress } from "@/ui/range";
 import { getBooleanFilters, getNumericFilters } from "./constants";
+import { syncDiscountThresholdUI } from "./filters";
 import type { SearchUI } from "./types";
 
 const FILTER_STORAGE_KEY = "re-filters";
@@ -18,9 +17,7 @@ type PersistedFilters = {
 
 function setThreshold(ui: SearchUI, threshold: string): void {
 	ui.discountRange.value = threshold;
-	ui.discountValueDisplay.textContent =
-		threshold === "0" ? t("all") : `${threshold}%`;
-	setRangeProgress(ui.discountRange);
+	syncDiscountThresholdUI(ui);
 }
 
 function getUrlLocations(value: string): string[] {

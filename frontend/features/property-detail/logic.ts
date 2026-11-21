@@ -1,11 +1,10 @@
 import { t } from "@/core/i18n";
 import { state } from "@/core/state";
 import type { Property } from "@/core/types";
-import { fmt, fmtFloor, getLocale, timeAgo, tTier } from "@/core/utils";
+import { fmt, fmtFloor, getLocale, html, timeAgo, tTier } from "@/core/utils";
 import { Tag } from "@/ui/chip";
 import { Icons } from "@/ui/icons";
 import { initLeaflet } from "@/ui/map-base";
-import { StatBox } from "@/ui/stat-box";
 import { ts } from "@/ui/tier";
 import { PriceHistoryChart } from "./chart";
 import type { PropertyDetailUI } from "./types";
@@ -19,12 +18,19 @@ export function bindPropertyData(ui: PropertyDetailUI, p: Property): void {
 	const bookmarked = state.bookmarks.has(p.source_url);
 
 	ui.bmarkBtn.classList.toggle("on", bookmarked);
-	ui.bmarkBtn.replaceChildren(Icons.bookmark({ size: 18, fill: bookmarked }));
+	ui.bmarkBtn.replaceChildren(Icons.bookmark({ size: 15, fill: bookmarked }));
 	ui.gallery.setUrls(p.image_urls ?? []);
 	ui.locationEl.textContent = p.location_name ?? p.district ?? "—";
 	ui.priceEl.textContent = `₼ ${fmt(p.price)}`;
-	ui.tierEl.textContent = tTier(p.tier);
-	ui.tierEl.style.cssText = `color:${tier.c};background:${tier.bg};border-color:${tier.b}`;
+
+	ui.tierEl.replaceChildren(
+		html`<span
+			class="size-1.5 rounded-full shrink-0"
+			style="background:${tier.hex}"
+		></span>`,
+		document.createTextNode(tTier(p.tier)),
+	);
+	ui.tierEl.style.cssText = `color:${tier.c};background:${tier.bg}`;
 	ui.tierEl.title =
 		p.discount_percent >= 0
 			? t("tierTipBelow", {
@@ -39,18 +45,41 @@ export function bindPropertyData(ui: PropertyDetailUI, p: Property): void {
 
 	ui.statsEl.replaceChildren();
 	const statData = [
-		{ label: t("area"), value: fmt(p.area_sqm, 1) },
+		{ label: t("area"), value: `${fmt(p.area_sqm, 1)}`, suffix: "m²" },
 		{ label: t("ppsm"), value: `₼${fmt(p.price_per_sqm, 0)}` },
-		{ label: t("rooms"), value: p.rooms ?? "—" },
+		{ label: t("rooms"), value: String(p.rooms ?? "—") },
 		{ label: t("floor"), value: fmtFloor(p.floor, p.total_floors) },
 	];
-	statData.forEach((s) => {
-		ui.statsEl.appendChild(StatBox(s));
+	statData.forEach((s, idx) => {
+		const padCls =
+			idx === 0 ? "pr-2.5" : idx === statData.length - 1 ? "pl-2.5" : "px-2.5";
+		ui.statsEl.appendChild(
+			html`<div class="${padCls} min-w-0">
+				<div
+					class="text-[10px] font-semibold text-(--muted) uppercase tracking-wider leading-none mb-1.25 truncate"
+				>
+					${s.label}
+				</div>
+				<div
+					class="text-[13.5px] font-bold font-mono-num text-(--text) leading-tight truncate"
+				>
+					${s.value}${
+						s.suffix
+							? html`<span class="text-[10.5px] font-normal text-(--muted) ml-0.5">${s.suffix}</span>`
+							: ""
+					}
+				</div>
+			</div>`,
+		);
 	});
 
 	ui.mktAvgEl.textContent = `₼${fmt(p.location_avg_price_per_sqm, 0)}/m²`;
-	ui.discPctEl.textContent = `${p.discount_percent >= 0 ? "-" : "+"}${Math.abs(p.discount_percent)}%`;
-	ui.discPctEl.style.color = tier.c;
+	const discSign = p.discount_percent >= 0 ? "-" : "+";
+	const discAbs = Math.abs(p.discount_percent);
+	const discRounded =
+		discAbs >= 10 ? Math.round(discAbs) : Math.round(discAbs * 10) / 10;
+	ui.discPctEl.textContent = `${discSign}${discRounded}%`;
+	ui.discPctEl.style.cssText = `color:${tier.c};background:${tier.bg};border:1px solid ${tier.b}`;
 
 	ui.tagsEl.replaceChildren();
 	const features = [
@@ -58,28 +87,28 @@ export function bindPropertyData(ui: PropertyDetailUI, p: Property): void {
 			if: p.is_urgent,
 			icon: "⚡",
 			label: t("tagUrgent"),
-			cls: "text-(--red) border-(--red-b) bg-(--red-dim)",
-		},
-		{
-			if: p.has_document,
-			label: t("tagDocument"),
-			cls: "text-(--blue) border-(--blue-b) bg-(--blue-dim)",
-		},
-		{
-			if: p.has_repair,
-			label: t("tagRepaired"),
-			cls: "text-(--green) border-(--green-b) bg-(--green-dim)",
-		},
-		{
-			if: p.has_mortgage,
-			label: t("tagMortgage"),
-			cls: "text-(--muted) border-(--border)",
+			cls: "text-(--red) border-(--red-b) bg-(--red-dim) font-semibold",
 		},
 		{
 			if: p.has_active_mortgage,
 			icon: "⚠",
 			label: t("tagActiveMortgage"),
-			cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)",
+			cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim) font-medium",
+		},
+		{
+			if: p.has_document,
+			label: t("tagDocument"),
+			cls: "text-(--text-2) border-(--border) bg-white/[0.03]",
+		},
+		{
+			if: p.has_repair,
+			label: t("tagRepaired"),
+			cls: "text-(--text-2) border-(--border) bg-white/[0.03]",
+		},
+		{
+			if: p.has_mortgage,
+			label: t("tagMortgage"),
+			cls: "text-(--muted) border-(--border-subtle) bg-white/[0.02]",
 		},
 	];
 	features
@@ -123,7 +152,6 @@ export async function initMap(ui: PropertyDetailUI): Promise<void> {
 	if (ui.lmap) return;
 
 	// Map requires its container to be in the DOM and visible to size correctly.
-	// We temporarily unhide it, let Leaflet init, then restore visibility.
 	const wasHidden = ui.mapSecEl.classList.contains("hidden");
 	ui.mapSecEl.classList.remove("hidden");
 	ui.mapSecEl.style.visibility = "hidden";
@@ -132,9 +160,9 @@ export async function initMap(ui: PropertyDetailUI): Promise<void> {
 	const { divIcon, marker } = await import("leaflet");
 	const mapIcon = divIcon({
 		className: "",
-		html: /*html*/ `<div class="w-3 h-3 rounded-full bg-(--green) border-2 border-(--bg) animate-[mpulse_2s_ease-out_infinite] cursor-pointer"></div>`,
-		iconSize: [12, 12],
-		iconAnchor: [6, 6],
+		html: /*html*/ `<div class="w-3.5 h-3.5 rounded-full bg-(--green) border-2 border-[#060709] animate-[mpulse_2s_ease-out_infinite] cursor-pointer shadow-md"></div>`,
+		iconSize: [14, 14],
+		iconAnchor: [7, 7],
 	});
 	if (ui.lmap) {
 		ui.lmark = marker([0, 0], { icon: mapIcon }).addTo(ui.lmap);
@@ -149,7 +177,6 @@ export async function initMap(ui: PropertyDetailUI): Promise<void> {
 	ui.mapSecEl.style.visibility = "";
 	if (wasHidden) ui.mapSecEl.classList.add("hidden");
 
-	// If we already have a property, update map immediately
 	if (ui.currentProperty) updateMap(ui, ui.currentProperty);
 }
 
