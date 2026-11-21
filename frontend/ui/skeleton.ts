@@ -55,7 +55,7 @@ function gridCard(): HTMLElement {
 function rowCard(): HTMLElement {
 	return html`
 		<div
-			class="re-skeleton bg-(--surface) border border-(--border) rounded-(--r) px-3.5 py-2.75 grid items-center grid-cols-[92px_minmax(200px,1.5fr)_148px_98px_auto] lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_104px_auto] gap-4"
+			class="re-skeleton bg-(--surface) border border-(--border) rounded-(--r) px-3.5 py-2.75 grid items-center grid-cols-[92px_minmax(200px,1.5fr)_148px_76px_auto] lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_80px_auto] gap-4"
 		>
 			<div class="w-23 h-16.5 rounded-(--r-sm) shimmer"></div>
 			<div class="flex flex-col gap-2">
@@ -83,7 +83,10 @@ function rowCard(): HTMLElement {
 				<div class="h-4 w-24 rounded shimmer"></div>
 				<div class="h-3 w-28 rounded shimmer"></div>
 			</div>
-			<div class="h-12 w-full rounded-(--r-sm) shimmer"></div>
+			<div class="flex flex-col items-end gap-1">
+				<div class="h-5 w-14 rounded-full shimmer"></div>
+				<div class="h-2.5 w-12 rounded shimmer"></div>
+			</div>
 			<div class="flex items-center gap-1.5">
 				<div class="size-7.5 rounded-(--r-sm) shimmer"></div>
 				<div class="size-7.5 rounded-(--r-sm) shimmer"></div>

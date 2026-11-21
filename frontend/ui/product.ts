@@ -475,8 +475,8 @@ export function Product({
       rounded-(--r)
       px-3.5 py-2.75
       grid items-center
-      grid-cols-[92px_minmax(200px,1.5fr)_148px_98px_auto]
-      lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_104px_auto]
+      grid-cols-[92px_minmax(200px,1.5fr)_148px_76px_auto]
+      lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_80px_auto]
       gap-4
       cursor-pointer
       surface-specular
@@ -552,19 +552,21 @@ export function Product({
 				</div>
 			</div>
 
-			<!-- Deal Signal Badge -->
+			<!-- Compact Deal Signal -->
 			<div
-				class="flex flex-col items-center justify-center rounded-(--r-sm) py-1.5 px-2.5 border"
-				style="background:${tier.bg};border-color:${tier.b}"
+				class="flex flex-col items-end justify-center gap-0.75"
 				title="${rowTierTip}"
 			>
-				<div class="inline-flex items-center gap-1.25 text-[15px] font-extrabold font-mono-num leading-tight" style="color:${tier.c}">
-					<span class="size-1.5 rounded-full shrink-0" style="background:${tier.hex};box-shadow:0 0 8px ${tier.hex}"></span>
+				<span
+					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-extrabold font-mono-num leading-tight"
+					style="color:${tier.c};background:${tier.bg}"
+				>
+					<span class="size-1.5 rounded-full shrink-0" style="background:${tier.hex}"></span>
 					${discStr}
-				</div>
-				<div class="text-[10px] font-semibold opacity-90 mt-0.5 truncate max-w-full" style="color:${tier.c}">
+				</span>
+				<span class="text-[10px] font-medium opacity-80 pr-0.5 truncate max-w-full" style="color:${tier.c}">
 					${tTier(property.tier, true)}
-				</div>
+				</span>
 			</div>
 
 			<!-- Unified Action Cluster -->
