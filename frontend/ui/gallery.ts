@@ -21,8 +21,9 @@ export interface GalleryElement extends HTMLDivElement {
 }
 
 /**
- * Reusable gallery component with lazy loading and preloading.
- * Standardized to follow the project's component pattern with property forwarding.
+ * Simple gallery component with button/keyboard navigation and neighbor preloading.
+ * Renders a direct `<img>` with no pointer-blocking overlays so native image actions
+ * (like right-click copy/save) work normally.
  */
 export function Gallery({
 	fullscreen = false,
@@ -34,11 +35,17 @@ export function Gallery({
 	let currentIndex = 0;
 	let count = 0;
 	let imageUrls: string[] = [];
+	const preloaded = new Set<string>();
 	const eventManager = makeEventManager();
 
-	const sliderElm = html`<div
-		class="relative w-full h-full ${fullscreen ? "pointer-events-none" : ""}"
-	></div>`;
+	const imgElm = html`<img
+		referrerpolicy="no-referrer"
+		alt=""
+		class="${cn(
+			"h-full w-full object-contain select-none hidden",
+			fullscreen && "shadow-2xl rounded-sm",
+		)}"
+	/>` as HTMLImageElement;
 
 	const emptyElm = html`
 		<div
@@ -52,11 +59,14 @@ export function Gallery({
 	const prevBtn = RawButton({
 		ariaLabel: t("galleryPrev"),
 		className: cn(
-			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90",
+			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 select-none",
 			fullscreen ? "left-6 w-12 h-12" : "left-3 w-9 h-9",
 			"hidden",
 		),
 		content: Icons.chevronLeft(fullscreen ? 24 : 18),
+		onmousedown: (e) => {
+			if (e.detail > 1) e.preventDefault();
+		},
 		onclick: (e) => {
 			e.stopPropagation();
 			_navigate(-1);
@@ -66,11 +76,14 @@ export function Gallery({
 	const nextBtn = RawButton({
 		ariaLabel: t("galleryNext"),
 		className: cn(
-			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90",
+			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 select-none",
 			fullscreen ? "right-6 w-12 h-12" : "right-3 w-9 h-9",
 			"hidden",
 		),
 		content: Icons.chevronRight(fullscreen ? 24 : 18),
+		onmousedown: (e) => {
+			if (e.detail > 1) e.preventDefault();
+		},
 		onclick: (e) => {
 			e.stopPropagation();
 			_navigate(1);
@@ -105,7 +118,7 @@ export function Gallery({
 		html`
 			<div
 				class="${cn(
-					"relative bg-black overflow-hidden outline-none group/gv",
+					"relative flex items-center justify-center bg-black overflow-hidden outline-none select-none",
 					fullscreen ? "h-full w-full" : "h-full",
 					className,
 				)}"
@@ -113,32 +126,44 @@ export function Gallery({
 				role="region"
 				aria-label="${t("gallery")}"
 			>
-				${sliderElm} ${emptyElm} ${prevBtn} ${nextBtn} ${counterElm}
+				${imgElm} ${emptyElm} ${prevBtn} ${nextBtn} ${counterElm}
 				${expandBtn || ""}
 			</div>
 		`,
 		props,
 	) as GalleryElement;
 
-	rootElm.style.touchAction = fullscreen ? "none" : "pan-y";
+	const _resolveUrl = (idx: number): string => {
+		const raw = imageUrls[(idx + count) % count];
+		if (!raw) return "";
+		return fullscreen ? raw : toThumbUrl(raw);
+	};
 
-	const _loadImage = (idx: number): void => {
-		if (count === 0) return;
-		const i = (idx + count) % count;
-		const slide = sliderElm.children[i] as HTMLElement | undefined;
-		if (!slide) return;
-		const img = slide.querySelector("img");
-		if (img && !img.src && imageUrls[i]) {
-			img.src = fullscreen ? imageUrls[i] : toThumbUrl(imageUrls[i]);
-		}
+	const _preload = (idx: number): void => {
+		if (count <= 1) return;
+		const url = _resolveUrl(idx);
+		if (!url || preloaded.has(url)) return;
+		preloaded.add(url);
+		const pre = new window.Image();
+		pre.referrerPolicy = "no-referrer";
+		pre.src = url;
 	};
 
 	const _sync = (): void => {
-		const slides = Array.from(sliderElm.children) as HTMLElement[];
-		slides.forEach((s, i) => {
-			s.style.opacity = i === currentIndex ? "1" : "0";
-			s.style.visibility = i === currentIndex ? "visible" : "hidden";
-		});
+		if (count > 0) {
+			const url = _resolveUrl(currentIndex);
+			if (imgElm.getAttribute("src") !== url) {
+				imgElm.src = url;
+			}
+			imgElm.alt = t("propPhotoAlt", { n: currentIndex + 1, total: count });
+			imgElm.classList.remove("hidden");
+			_preload(currentIndex + 1);
+			_preload(currentIndex - 1);
+		} else {
+			imgElm.removeAttribute("src");
+			imgElm.alt = "";
+			imgElm.classList.add("hidden");
+		}
 
 		const showNav = count > 1;
 		prevBtn.classList.toggle("hidden", !showNav);
@@ -154,11 +179,6 @@ export function Gallery({
 		emptyElm.classList.toggle("hidden", count > 0);
 		emptyElm.classList.toggle("flex", count === 0);
 		if (expandBtn) expandBtn.classList.toggle("hidden", count === 0);
-
-		// Lazy load current + preload neighbors
-		_loadImage(currentIndex);
-		_loadImage(currentIndex + 1);
-		_loadImage(currentIndex - 1);
 	};
 
 	const _navigate = (dir: 1 | -1): void => {
@@ -168,49 +188,6 @@ export function Gallery({
 		onIndexChange?.(currentIndex);
 	};
 
-	// Events
-	let swipeStartX = 0;
-	let swipeStartY = 0;
-	let activePointerId: number | null = null;
-
-	eventManager.add(rootElm, "pointerdown", (e: PointerEvent) => {
-		if (activePointerId !== null) return;
-		if ((e.target as HTMLElement).closest("button")) return;
-		swipeStartX = e.clientX;
-		swipeStartY = e.clientY;
-		activePointerId = e.pointerId;
-		try {
-			rootElm.setPointerCapture(e.pointerId);
-		} catch {
-			// fallback
-		}
-	});
-
-	eventManager.add(rootElm, "pointerup", (e: PointerEvent) => {
-		if (e.pointerId !== activePointerId) return;
-		activePointerId = null;
-		try {
-			rootElm.releasePointerCapture(e.pointerId);
-		} catch {
-			// ignore
-		}
-		const dx = e.clientX - swipeStartX;
-		const dy = e.clientY - swipeStartY;
-		if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-			_navigate(dx < 0 ? 1 : -1);
-		}
-	});
-
-	eventManager.add(rootElm, "pointercancel", (e: PointerEvent) => {
-		if (e.pointerId === activePointerId) {
-			activePointerId = null;
-			try {
-				rootElm.releasePointerCapture(e.pointerId);
-			} catch {
-				// ignore
-			}
-		}
-	});
 	eventManager.add<KeyboardEvent>(rootElm, "keydown", (e) => {
 		if (e.key === "ArrowLeft") {
 			e.stopPropagation();
@@ -221,33 +198,11 @@ export function Gallery({
 		}
 	});
 
-	const _createSlide = (_: string, i: number): HTMLElement => {
-		return html`
-			<div
-				class="absolute inset-0 flex items-center justify-center transition-opacity ${
-					fullscreen ? "duration-400" : "duration-300"
-				}"
-				style="opacity: 0; visibility: hidden"
-			>
-				<img
-					referrerpolicy="no-referrer"
-					alt="${t("propPhotoAlt", { n: i + 1, total: count })}"
-					draggable="false"
-					class="${cn(
-						"h-full w-full object-contain select-none pointer-events-none",
-						fullscreen && "shadow-2xl rounded-sm",
-					)}"
-				/>
-			</div>
-		`;
-	};
-
 	return Object.assign(rootElm, {
 		setUrls(newUrls: string[], initialIndex = 0) {
 			imageUrls = newUrls;
 			count = imageUrls.length;
-			currentIndex = initialIndex;
-			sliderElm.replaceChildren(...imageUrls.map(_createSlide));
+			currentIndex = count > 0 ? ((initialIndex % count) + count) % count : 0;
 			_sync();
 		},
 		navigate: _navigate,
