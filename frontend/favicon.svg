@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5865f2" stop-opacity="0.30" />
+      <stop offset="50%" stop-color="#8294ff" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.11" />
+    </linearGradient>
+    <linearGradient id="specular-top" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="24%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <clipPath id="badge-clip">
+      <rect x="2" y="2" width="60" height="60" rx="17.5" ry="17.5" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#badge-clip)">
+    <rect x="2" y="2" width="60" height="60" fill="#060709" />
+    <rect x="2" y="2" width="60" height="60" fill="url(#bg-grad)" />
+    <rect
+      x="3.25"
+      y="3.25"
+      width="57.5"
+      height="57.5"
+      rx="16.25"
+      ry="16.25"
+      fill="none"
+      stroke="url(#specular-top)"
+      stroke-width="1.25"
+    />
+  </g>
+
+  <rect
+    x="2"
+    y="2"
+    width="60"
+    height="60"
+    rx="17.5"
+    ry="17.5"
+    fill="none"
+    stroke="#8294ff"
+    stroke-width="2.5"
+  />
+
+  <g
+    transform="translate(17.5 17.5) scale(1.2083333)"
+    fill="none"
+    stroke="#8294ff"
+    stroke-width="2.1"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </g>
+</svg>

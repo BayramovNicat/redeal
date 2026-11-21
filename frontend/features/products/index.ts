@@ -204,18 +204,13 @@ export function initProducts(container: HTMLElement): () => void {
 			{ t: "Overpriced", c: "var(--red)" },
 		];
 
-		const distNodes = TIER_BADGES.filter((b) => tierCounts[b.t]).flatMap(
-			(b, i) => {
-				const badge = frag`<span style="color:${b.c}">${tierCounts[b.t]} ${tTier(b.t, true)}</span>`;
-				return i === 0
-					? [" ", badge]
-					: [" ", frag`<span style="color:var(--border)">·</span>`, " ", badge];
-			},
-		);
+		const distNodes = TIER_BADGES.filter((b) => tierCounts[b.t]).map((b) => {
+			return frag`<span class="inline-flex items-center gap-1.25 text-xs font-medium" style="color:${b.c}"><span class="size-1.5 rounded-full shrink-0" style="background:${b.c}"></span><span class="font-mono-num font-semibold">${tierCounts[b.t]}</span> ${tTier(b.t, true)}</span>`;
+		});
 
 		const totalNode =
 			state.currentTotal > state.allResults.length && !state.showingSaved
-				? frag` <span style="color:var(--muted)">· ${fmt(state.currentTotal)} ${t("total")}</span>`
+				? frag`<span class="text-xs font-mono-num text-(--muted)">/ ${fmt(state.currentTotal)} ${t("total")}</span>`
 				: "";
 
 		const label = state.showingSaved
@@ -227,7 +222,7 @@ export function initProducts(container: HTMLElement): () => void {
 				: t("result");
 
 		ui.resultsMeta.replaceChildren(
-			frag`<strong>${count}</strong> ${label}${totalNode}${distNodes.length ? frag` <span style="color:var(--border)">·</span>` : ""}${distNodes}`,
+			frag`<span class="inline-flex items-baseline gap-1.5"><strong>${count}</strong><span>${label}</span>${totalNode}</span>${distNodes.length ? frag`<span class="w-px h-3.5 bg-(--border) mx-0.5 hidden sm:inline-block"></span><span class="inline-flex items-center gap-2.5 flex-wrap">${distNodes}</span>` : ""}`,
 		);
 	}
 
@@ -483,11 +478,18 @@ export function initProducts(container: HTMLElement): () => void {
 		ui.backToTopBtn.style.pointerEvents = isScrolled ? "auto" : "none";
 		if (ui.resultsBarInner) {
 			const stuck = ui.resultsBarContainer.getBoundingClientRect().top <= 12;
+			ui.resultsBarInner.classList.toggle("glass-panel", stuck);
+			ui.resultsBarInner.classList.toggle("bg-(--surface-glass-strong)", stuck);
+			ui.resultsBarInner.classList.toggle("border-(--border-h)", stuck);
+			ui.resultsBarInner.classList.toggle("border-transparent", !stuck);
 			ui.resultsBarInner.classList.toggle(
 				"shadow-[var(--shadow-float)]",
 				stuck,
 			);
-			ui.resultsBarInner.classList.toggle("border-(--border-h)", stuck);
+			ui.resultsBarInner.classList.toggle("px-4", stuck);
+			ui.resultsBarInner.classList.toggle("py-2", stuck);
+			ui.resultsBarInner.classList.toggle("px-0.5", !stuck);
+			ui.resultsBarInner.classList.toggle("py-1.5", !stuck);
 		}
 	};
 	add(window, "scroll", onScroll);

@@ -19,6 +19,10 @@ export async function copyStaticAssets() {
 		Bun.file(`${dirs.frontend}/robots.txt`),
 	);
 	await Bun.write(
+		`${dirs.public}/favicon.svg`,
+		Bun.file(`${dirs.frontend}/favicon.svg`),
+	);
+	await Bun.write(
 		`${dirs.public}/favicon.png`,
 		Bun.file(`${dirs.frontend}/favicon.png`),
 	);
