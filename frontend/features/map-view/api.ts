@@ -1,3 +1,4 @@
+import { state as globalState } from "@/core/state";
 import type { MapPin } from "@/core/types";
 import { toast } from "@/core/utils";
 import { isUserAuthenticated } from "@/features/auth/api";
@@ -12,7 +13,10 @@ export async function fetchMapPins(
 ): Promise<MapPin[] | null> {
 	const params = isUserAuthenticated()
 		? new URLSearchParams(window.location.search)
-		: new URLSearchParams({ location: "__all__", threshold: "10" });
+		: new URLSearchParams({
+				location: globalState.getFilters().location || "__all__",
+				threshold: String(globalState.getFilters().threshold ?? 10),
+			});
 
 	if (!params.get("location")) {
 		params.set("location", "__all__");

@@ -273,7 +273,7 @@ const translations = {
 		signInWithGoogle: "Continue with Google",
 		loginRequiredTitle: "Sign in to unlock full access",
 		loginRequiredFilter:
-			"Sign in to filter listings by district, price, rooms, discount threshold, and keywords.",
+			"Sign in to filter listings by price, area, rooms, floor, mortgage, and keywords.",
 		loginRequiredSort:
 			"Sign in to sort deals by price, price drops, area, or ₼/m².",
 		loginRequiredAlerts:
@@ -281,21 +281,21 @@ const translations = {
 		loginRequiredMore:
 			"Sign in to explore all {total} deals beyond the {limit}-listing public preview.",
 		loginRequiredGeneral:
-			"Sign in with your approved Google account to unlock filters, sorting, alerts, and full listings.",
+			"Sign in with your approved Google account to unlock advanced filters, sorting, alerts, and full listings.",
 		loginBenefitFilters:
-			"Filter by district, budget, rooms, floor, mortgage, keywords & discount",
+			"Filter by budget, area, rooms, floor, repair, mortgage & keywords",
 		loginBenefitAll:
-			"Browse all listings, custom sorting & district price trends",
+			"Browse all listings beyond the 50-deal preview & custom sorting",
 		loginBenefitAlerts:
 			"Get instant Telegram alerts when undervalued listings drop",
 		loginWhitelistNote: "Private access · Whitelisted Google accounts only",
 		continuePreview: "Continue browsing preview",
 		previewBannerBadge: "Public preview",
 		previewBannerText:
-			"Browsing unfiltered deals — sign in to unlock filters, sorting & Telegram alerts",
+			"Location & discount threshold are free — sign in for price, room & keyword filters, sorting & alerts",
 		previewLimitTitle: "You've reached the end of the {limit}-deal preview",
 		previewLimitSub:
-			"Sign in with Google to view all {total} deals and unlock district & price filters, sorting, and Telegram alerts.",
+			"Sign in with Google to view all {total} deals and unlock advanced filters, sorting, and Telegram alerts.",
 		backToPreview: "Back to public preview",
 	},
 
@@ -552,7 +552,7 @@ const translations = {
 		signInWithGoogle: "Google ilə davam et",
 		loginRequiredTitle: "Tam giriş üçün daxil olun",
 		loginRequiredFilter:
-			"Ərazi, qiymət, otaq, endirim həddi və açar sözlərə görə filtr etmək üçün daxil olun.",
+			"Qiymət, sahə, otaq, mərtəbə, ipoteka və açar sözlərə görə filtr etmək üçün daxil olun.",
 		loginRequiredSort:
 			"Qiymət, qiymət enişi, sahə və ya ₼/m² üzrə sıralamaq üçün daxil olun.",
 		loginRequiredAlerts:
@@ -560,20 +560,21 @@ const translations = {
 		loginRequiredMore:
 			"{limit} elanlıq önizləmədən kənarda bütün {total} təklifə baxmaq üçün daxil olun.",
 		loginRequiredGeneral:
-			"Filtrləri, sıralamanı, bildirişləri və bütün elanları açmaq üçün təsdiqlənmiş Google hesabınızla daxil olun.",
+			"Ətraflı filtrləri, sıralamanı, bildirişləri və bütün elanları açmaq üçün təsdiqlənmiş Google hesabınızla daxil olun.",
 		loginBenefitFilters:
-			"Ərazi, büdcə, otaq, mərtəbə, ipoteka, açar söz və endirim üzrə filtr",
-		loginBenefitAll: "Bütün elanlar, fərdi sıralama və ərazi qiymət trendləri",
+			"Büdcə, sahə, otaq, mərtəbə, təmir, ipoteka və açar sözlər üzrə filtr",
+		loginBenefitAll:
+			"50 elanlıq önizləmədən kənar bütün elanlar və fərdi sıralama",
 		loginBenefitAlerts: "Yeni ucuz elanlar düşəndə ani Telegram bildirişləri",
 		loginWhitelistNote:
 			"Şəxsi giriş · Yalnız ağ siyahıda olan Google hesabları",
 		continuePreview: "Önizləməyə davam et",
 		previewBannerBadge: "İctimai önizləmə",
 		previewBannerText:
-			"Filtrsiz elanlara baxırsınız — filtrlər, sıralama və bildirişlər üçün daxil olun",
+			"Ərazi və endirim həddi açıqdır — qiymət, otaq, açar söz filtrləri, sıralama və bildirişlər üçün daxil olun",
 		previewLimitTitle: "{limit} elanlıq önizləmənin sonuna çatdınız",
 		previewLimitSub:
-			"Bütün {total} təklifə baxmaq və filtrlər, sıralama və Telegram bildirişlərini açmaq üçün Google ilə daxil olun.",
+			"Bütün {total} təklifə baxmaq və ətraflı filtrlər, sıralama və Telegram bildirişlərini açmaq üçün Google ilə daxil olun.",
 		backToPreview: "İctimai önizləməyə qayıt",
 	},
 
@@ -831,7 +832,7 @@ const translations = {
 		signInWithGoogle: "Войти через Google",
 		loginRequiredTitle: "Войдите для полного доступа",
 		loginRequiredFilter:
-			"Войдите, чтобы фильтровать объявления по району, цене, комнатам, скидке и ключевым словам.",
+			"Войдите, чтобы фильтровать объявления по цене, площади, комнатам, этажу, ипотеке и ключевым словам.",
 		loginRequiredSort:
 			"Войдите, чтобы сортировать предложения по цене, снижениям, площади или ₼/м².",
 		loginRequiredAlerts:
@@ -839,20 +840,21 @@ const translations = {
 		loginRequiredMore:
 			"Войдите, чтобы просмотреть все {total} объявлений за пределами превью из {limit} объектов.",
 		loginRequiredGeneral:
-			"Войдите через одобренный аккаунт Google, чтобы открыть фильтры, сортировку, уведомления и весь каталог.",
+			"Войдите через одобренный аккаунт Google, чтобы открыть расширенные фильтры, сортировку, уведомления и весь каталог.",
 		loginBenefitFilters:
-			"Фильтры по району, бюджету, комнатам, этажу, ипотеке, словам и скидке",
-		loginBenefitAll: "Все объявления, сортировка и графики цен по районам",
+			"Фильтры по бюджету, площади, комнатам, этажу, ремонту, ипотеке и словам",
+		loginBenefitAll:
+			"Все объявления за пределами превью из 50 объектов и сортировка",
 		loginBenefitAlerts:
 			"Мгновенные Telegram-уведомления при появлении выгодных вариантов",
 		loginWhitelistNote: "Закрытый доступ · Только одобренные аккаунты Google",
 		continuePreview: "Продолжить просмотр превью",
 		previewBannerBadge: "Публичное превью",
 		previewBannerText:
-			"Показаны объявления без фильтров — войдите для фильтров, сортировки и уведомлений",
+			"Выбор района и порог скидки доступны бесплатно — войдите для остальных фильтров, сортировки и уведомлений",
 		previewLimitTitle: "Вы просмотрели превью из {limit} объявлений",
 		previewLimitSub:
-			"Войдите через Google, чтобы открыть все {total} объявлений, фильтры, сортировку и Telegram-уведомления.",
+			"Войдите через Google, чтобы открыть все {total} объявлений, расширенные фильтры, сортировку и Telegram-уведомления.",
 		backToPreview: "Вернуться к превью",
 	},
 } as const;

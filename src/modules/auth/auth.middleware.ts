@@ -59,7 +59,6 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
 }
 
 export const GUEST_PREVIEW_LIMIT = 50;
-export const DEFAULT_PUBLIC_THRESHOLD = 10;
 export const DEFAULT_PUBLIC_SORT = "disc";
 export const DEFAULT_PUBLIC_LISTING_TYPE = "sale";
 
@@ -87,20 +86,6 @@ const FILTER_QUERY_KEYS = [
 ] as const;
 
 export function hasActiveDealFilters(q: URLSearchParams): boolean {
-	const location = q.get("location");
-	if (location !== null && location !== "__all__") {
-		return true;
-	}
-
-	const threshold = q.get("threshold");
-	if (
-		threshold !== null &&
-		threshold.trim() !== "" &&
-		Number(threshold) !== DEFAULT_PUBLIC_THRESHOLD
-	) {
-		return true;
-	}
-
 	const listingType = q.get("listingType");
 	if (
 		listingType !== null &&

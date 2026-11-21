@@ -78,7 +78,7 @@ export const routes = {
 
 	// Public Preview & Protected Data / Deals endpoints
 	"/api/deals/locations": { GET: br(getLocations) },
-	"/api/deals/trend": { GET: requireAuth(br(getTrend)) },
+	"/api/deals/trend": { GET: br(getTrend) },
 	"/api/deals/undervalued": { GET: br(getUndervaluedDeals) },
 	"/api/deals/undervalued/validate": {
 		POST: requireAdmin(br(validateUndervaluedDeals)),

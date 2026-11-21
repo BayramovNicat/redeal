@@ -42,14 +42,6 @@ function hasFilterParams(params: URLSearchParams): boolean {
 }
 
 export function hasNonDefaultUrlFilters(params: URLSearchParams): boolean {
-	const loc = params.get("location");
-	if (loc && loc !== "__all__") return true;
-
-	const threshold = params.get("threshold");
-	if (threshold !== null && threshold !== "" && Number(threshold) !== 10) {
-		return true;
-	}
-
 	const listingType = params.get("listingType");
 	if (listingType && listingType !== "sale") return true;
 
@@ -70,9 +62,7 @@ export function hasNonDefaultUrlFilters(params: URLSearchParams): boolean {
 	});
 }
 
-export function resetFiltersToDefault(ui: SearchUI): void {
-	ui.locationSelect.setValue(["__all__"]);
-	setThreshold(ui, "10");
+export function resetGatedFiltersToDefault(ui: SearchUI): void {
 	for (const config of getNumericFilters()) {
 		ui.numericInputs[config.id].value = "";
 	}
@@ -83,6 +73,55 @@ export function resetFiltersToDefault(ui: SearchUI): void {
 	ui.listingTypeSelect.value = "sale";
 	ui.mortgageSelect.value = "";
 	ui.descriptionInput.value = "";
+}
+
+export function restorePublicFiltersFromUrl(ui: SearchUI): void {
+	const urlParams = new URLSearchParams(window.location.search);
+
+	const threshold = urlParams.get("threshold");
+	if (threshold !== null && /^\d+$/.test(threshold)) {
+		const n = Math.min(50, Math.max(0, Number(threshold)));
+		setThreshold(ui, String(n));
+	} else {
+		setThreshold(ui, "10");
+	}
+
+	const location = urlParams.get("location");
+	if (location) {
+		const sanitized = getUrlLocations(location);
+		if (sanitized.length > 0) {
+			ui.locationSelect.setValue(sanitized);
+			return;
+		}
+	}
+	ui.locationSelect.setValue(["__all__"]);
+}
+
+export function syncPublicFiltersToUrl(
+	locations: string[],
+	threshold: number,
+): void {
+	const params = new URLSearchParams();
+	const isAll =
+		locations.length === 0 ||
+		(locations.length === 1 && locations[0] === "__all__");
+	if (!isAll) {
+		params.set("location", locations.join(","));
+	}
+	if (threshold !== 10) {
+		params.set("threshold", String(threshold));
+	}
+	const search = params.toString();
+	const url = search
+		? `${window.location.pathname}?${search}`
+		: window.location.pathname;
+	window.history.replaceState(null, "", url);
+}
+
+export function resetFiltersToDefault(ui: SearchUI): void {
+	ui.locationSelect.setValue(["__all__"]);
+	setThreshold(ui, "10");
+	resetGatedFiltersToDefault(ui);
 }
 
 function loadFiltersFromStorage(): PersistedFilters | null {

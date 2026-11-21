@@ -74,17 +74,19 @@ describe("Authentication & Whitelist System", () => {
 	});
 
 	test("unauthenticated requests to protected endpoints return 401", async () => {
-		const trendRes = await fetch(`${baseUrl}/api/deals/trend?location=Yasamal`);
-		expect(trendRes.status).toBe(401);
+		const dropsRes = await fetch(
+			`${baseUrl}/api/deals/price-drops?location=Yasamal`,
+		);
+		expect(dropsRes.status).toBe(401);
 
-		const trendBody = (await trendRes.json()) as { error?: string };
-		expect(trendBody.error).toContain("Unauthorized");
+		const dropsBody = (await dropsRes.json()) as { error?: string };
+		expect(dropsBody.error).toContain("Unauthorized");
 
 		const alertsRes = await fetch(`${baseUrl}/api/alerts?chatId=123456`);
 		expect(alertsRes.status).toBe(401);
 	});
 
-	test("public preview endpoints work without authentication when unfiltered", async () => {
+	test("public preview endpoints work without authentication (including location & discount threshold)", async () => {
 		const locRes = await fetch(`${baseUrl}/api/deals/locations`);
 		expect(locRes.status).toBe(200);
 		const locBody = (await locRes.json()) as { data?: unknown[] };
@@ -95,45 +97,49 @@ describe("Authentication & Whitelist System", () => {
 		const heatBody = (await heatRes.json()) as { data?: unknown[] };
 		expect(Array.isArray(heatBody.data)).toBe(true);
 
-		const dealsRes = await fetch(
-			`${baseUrl}/api/deals/undervalued?location=__all__&threshold=10&limit=200`,
-		);
-		expect(dealsRes.status).toBe(200);
-		const dealsBody = (await dealsRes.json()) as {
-			preview?: boolean;
-			preview_limit?: number;
-			limit?: number;
-			data?: unknown[];
-		};
-		expect(dealsBody.preview).toBe(true);
-		expect(dealsBody.preview_limit).toBe(50);
-		expect(dealsBody.limit).toBe(50);
-		expect(Array.isArray(dealsBody.data)).toBe(true);
+		const trendRes = await fetch(`${baseUrl}/api/deals/trend?location=Yasamal`);
+		expect(trendRes.status).toBe(200);
 
-		const mapRes = await fetch(
-			`${baseUrl}/api/deals/map-pins?location=__all__&threshold=10`,
-		);
-		expect(mapRes.status).toBe(200);
-		const mapBody = (await mapRes.json()) as {
-			preview?: boolean;
-			data?: unknown[];
-		};
-		expect(mapBody.preview).toBe(true);
-		expect(Array.isArray(mapBody.data)).toBe(true);
+		for (const query of [
+			"location=__all__&threshold=10",
+			"location=Yasamal&threshold=25",
+		]) {
+			const dealsRes = await fetch(
+				`${baseUrl}/api/deals/undervalued?${query}&limit=200`,
+			);
+			expect(dealsRes.status).toBe(200);
+			const dealsBody = (await dealsRes.json()) as {
+				preview?: boolean;
+				preview_limit?: number;
+				limit?: number;
+				data?: unknown[];
+			};
+			expect(dealsBody.preview).toBe(true);
+			expect(dealsBody.preview_limit).toBe(50);
+			expect(dealsBody.limit).toBe(50);
+			expect(Array.isArray(dealsBody.data)).toBe(true);
+
+			const mapRes = await fetch(`${baseUrl}/api/deals/map-pins?${query}`);
+			expect(mapRes.status).toBe(200);
+			const mapBody = (await mapRes.json()) as {
+				preview?: boolean;
+				data?: unknown[];
+			};
+			expect(mapBody.preview).toBe(true);
+			expect(Array.isArray(mapBody.data)).toBe(true);
+		}
 	});
 
 	test("unauthenticated filtered, sorted, or paginated deal requests return 401", async () => {
 		const restrictedUrls = [
-			"/api/deals/undervalued?location=Yasamal&threshold=10",
-			"/api/deals/undervalued?location=__all__&threshold=20",
-			"/api/deals/undervalued?location=__all__&threshold=10&minPrice=50000",
+			"/api/deals/undervalued?location=Yasamal&threshold=10&minPrice=50000",
 			"/api/deals/undervalued?location=__all__&threshold=10&hasDocument=true",
 			"/api/deals/undervalued?location=__all__&threshold=10&listingType=rent",
 			"/api/deals/undervalued?location=__all__&threshold=10&sort=price-asc",
 			"/api/deals/undervalued?location=__all__&threshold=10&descriptionSearch=metro",
-			"/api/deals/undervalued?location=__all__&threshold=10&offset=50",
-			"/api/deals/map-pins?location=Yasamal&threshold=10",
-			"/api/deals/map-pins?location=__all__&threshold=10&minRooms=3",
+			"/api/deals/undervalued?location=Yasamal&threshold=20&offset=50",
+			"/api/deals/map-pins?location=Yasamal&threshold=20&minRooms=3",
+			"/api/deals/map-pins?location=__all__&threshold=10&category=new",
 		];
 
 		for (const path of restrictedUrls) {

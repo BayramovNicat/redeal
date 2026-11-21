@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { deal, heatmapData } from "./fixtures";
+import { deal, heatmapData, trendData } from "./fixtures";
 
 async function mockGuestApi(
 	page: import("@playwright/test").Page,
@@ -18,14 +18,19 @@ async function mockGuestApi(
 	});
 	await page.route("**/api/deals/locations", async (route) => {
 		await route.fulfill({
-			json: { data: ["Yasamal", "Nərimanov"] },
+			json: { data: ["baki/yasamal", "baki/nerimanov"] },
+		});
+	});
+	await page.route("**/api/deals/trend**", async (route) => {
+		await route.fulfill({
+			json: { location: "baki/yasamal", data: trendData },
 		});
 	});
 	await page.route("**/api/deals/undervalued**", async (route) => {
 		opts.searchUrls?.push(route.request().url());
 		await route.fulfill({
 			json: {
-				location: "__all__",
+				location: new URL(route.request().url()).searchParams.get("location"),
 				threshold_pct: 10,
 				limit: 50,
 				offset: 0,
@@ -91,7 +96,7 @@ test("guest can browse unfiltered preview, inspect details and stats, and sees p
 	await expect(page.locator("dialog[open]")).toBeVisible();
 });
 
-test("guest attempting to filter, sort, or set alerts is prompted to sign in", async ({
+test("guest can filter by location freely, while advanced filters, sort, and alerts prompt login", async ({
 	page,
 }) => {
 	const searchUrls: string[] = [];
@@ -102,13 +107,25 @@ test("guest attempting to filter, sort, or set alerts is prompted to sign in", a
 
 	const loginModal = page.locator("#login-required-modal");
 
-	// 1. Selecting a district opens login modal and reverts location
+	// 1. Selecting a district & adjusting discount threshold work publicly without login modal
 	await page.locator("#loc-trigger").click();
-	await page.locator('[role="option"][data-value="Yasamal"]').click();
-	await expect(loginModal).toBeVisible();
-	await expect(loginModal.locator('a[href="/api/auth/google"]')).toBeVisible();
-	await page.keyboard.press("Escape");
+	await page.locator('[role="option"][data-value="baki/yasamal"]').click();
+	await expect
+		.poll(() =>
+			searchUrls.some(
+				(u) => new URL(u).searchParams.get("location") === "baki/yasamal",
+			),
+		)
+		.toBe(true);
+	await page.locator("#discount-threshold").fill("25");
+	await expect
+		.poll(() =>
+			searchUrls.some((u) => new URL(u).searchParams.get("threshold") === "25"),
+		)
+		.toBe(true);
 	await expect(loginModal).toBeHidden();
+
+	const countBeforeGated = searchUrls.length;
 
 	// 2. Toggling a boolean filter chip opens login modal and keeps chip unchecked
 	await page.locator("label:has(#hasRepair)").click();
@@ -127,29 +144,31 @@ test("guest attempting to filter, sort, or set alerts is prompted to sign in", a
 	await expect(loginModal).toBeVisible();
 	await page.keyboard.press("Escape");
 
-	// No filtered search API request was ever fired
-	expect(searchUrls).toHaveLength(1);
+	// No gated filter search request was ever fired
+	expect(searchUrls).toHaveLength(countBeforeGated);
 });
 
-test("guest landing on a filtered URL sees unfiltered preview and login prompt with returnTo", async ({
+test("guest landing on a location+filter URL loads that location preview and prompts login with returnTo", async ({
 	page,
 }) => {
 	const searchUrls: string[] = [];
 	await mockGuestApi(page, { total: 120, searchUrls });
 
-	await page.goto("/?location=Yasamal&minPrice=50000");
+	await page.goto("/?location=baki/yasamal&minPrice=50000");
 
 	await expect(page.locator(".product-card")).toHaveCount(1);
 	const loginModal = page.locator("#login-required-modal");
 	await expect(loginModal).toBeVisible();
 	await expect(
 		loginModal.locator(
-			'a[href="/api/auth/google?returnTo=%2F%3Flocation%3DYasamal%26minPrice%3D50000"]',
+			'a[href="/api/auth/google?returnTo=%2F%3Flocation%3Dbaki%2Fyasamal%26minPrice%3D50000"]',
 		),
 	).toBeVisible();
 
-	// Background request stayed unfiltered
+	// Background request kept the public location but stripped gated minPrice
 	expect(searchUrls).toHaveLength(1);
-	expect(new URL(searchUrls[0]).searchParams.get("location")).toBe("__all__");
+	expect(new URL(searchUrls[0]).searchParams.get("location")).toBe(
+		"baki/yasamal",
+	);
 	expect(new URL(searchUrls[0]).searchParams.get("minPrice")).toBeNull();
 });

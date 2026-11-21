@@ -16,9 +16,11 @@ import { renderSearchFilters } from "./filters";
 import type { SearchUI } from "./types";
 import {
 	hasNonDefaultUrlFilters,
-	resetFiltersToDefault,
+	resetGatedFiltersToDefault,
+	restorePublicFiltersFromUrl,
 	restoreStateFromUrl,
 	saveFiltersToStorage,
+	syncPublicFiltersToUrl,
 	syncStateToUrl,
 } from "./url";
 
@@ -174,7 +176,7 @@ export function initSearch(container: HTMLElement): () => void {
 
 			if (response.status === 401 || searchResults.code === "AUTH_REQUIRED") {
 				if (isGuest) {
-					resetFiltersToDefault(ui);
+					resetGatedFiltersToDefault(ui);
 					openLoginModal("filter");
 				} else {
 					toast(searchResults.error ?? "Unauthorized", true);
@@ -197,7 +199,9 @@ export function initSearch(container: HTMLElement): () => void {
 
 			if (!isPagination) {
 				refreshFilterChips(ui, debouncedSearch);
-				if (!isGuest) {
+				if (isGuest) {
+					syncPublicFiltersToUrl(locations, Number(ui.discountRange.value));
+				} else {
 					saveFiltersToStorage(ui);
 					syncStateToUrl(searchParams);
 				}
@@ -225,10 +229,7 @@ export function initSearch(container: HTMLElement): () => void {
 		}
 	}
 
-	function hasAnyCustomFilter(): boolean {
-		const locs = ui.locationSelect.getValue();
-		if (locs.some((l) => l !== "__all__")) return true;
-		if (Number(ui.discountRange.value) !== 10) return true;
+	function hasAnyGatedFilter(): boolean {
 		if (ui.listingTypeSelect.value !== "sale") return true;
 		if (ui.categorySelect.value !== "") return true;
 		if (ui.mortgageSelect.value !== "") return true;
@@ -243,8 +244,7 @@ export function initSearch(container: HTMLElement): () => void {
 	}
 
 	function promptGuestFilterLogin() {
-		resetFiltersToDefault(ui);
-		ui.locationSelect.close();
+		resetGatedFiltersToDefault(ui);
 		if (document.activeElement instanceof HTMLElement) {
 			document.activeElement.blur();
 		}
@@ -253,11 +253,12 @@ export function initSearch(container: HTMLElement): () => void {
 
 	function onFilterChange() {
 		if (!isUserAuthenticated()) {
-			if (hasAnyCustomFilter()) {
+			if (hasAnyGatedFilter()) {
 				promptGuestFilterLogin();
-			} else if (ui.locationSelect.getValue().length === 0) {
-				ui.locationSelect.setValue(["__all__"]);
+				return;
 			}
+			refreshFilterChips(ui, debouncedSearch);
+			debouncedSearch();
 			return;
 		}
 		refreshFilterChips(ui, debouncedSearch);
@@ -267,7 +268,7 @@ export function initSearch(container: HTMLElement): () => void {
 
 	const onClear = () => {
 		if (!isUserAuthenticated()) {
-			resetFiltersToDefault(ui);
+			resetGatedFiltersToDefault(ui);
 			return;
 		}
 		for (const config of getNumericFilters())
@@ -287,14 +288,6 @@ export function initSearch(container: HTMLElement): () => void {
 		bus.emit(EVENTS.HEATMAP_OPEN, {
 			activeLocations,
 			onAction: (locName: string, isToggle: boolean) => {
-				if (!isUserAuthenticated()) {
-					const heatmapDialog = document.getElementById(
-						"heatmap-modal",
-					) as HTMLDialogElement | null;
-					heatmapDialog?.close();
-					openLoginModal("filter");
-					return;
-				}
 				if (isToggle) {
 					const current = ui.locationSelect.getValue();
 					const idx = current.indexOf(locName);
@@ -307,14 +300,6 @@ export function initSearch(container: HTMLElement): () => void {
 				bus.emit(EVENTS.SEARCH_STARTED, { more: false });
 			},
 			onSelectMany: (locNames: string[]) => {
-				if (!isUserAuthenticated()) {
-					const heatmapDialog = document.getElementById(
-						"heatmap-modal",
-					) as HTMLDialogElement | null;
-					heatmapDialog?.close();
-					openLoginModal("filter");
-					return;
-				}
 				ui.locationSelect.setValue(
 					locNames.length > 0 ? locNames : ["__all__"],
 				);
@@ -402,7 +387,8 @@ export function initSearch(container: HTMLElement): () => void {
 	if (isUserAuthenticated()) {
 		restoreStateFromUrl(ui);
 	} else {
-		resetFiltersToDefault(ui);
+		resetGatedFiltersToDefault(ui);
+		restorePublicFiltersFromUrl(ui);
 	}
 	refreshFilterChips(ui, debouncedSearch);
 
@@ -425,7 +411,7 @@ export function initSearch(container: HTMLElement): () => void {
 			if (isUserAuthenticated()) {
 				restoreStateFromUrl(ui);
 			} else {
-				ui.locationSelect.setValue(["__all__"]);
+				restorePublicFiltersFromUrl(ui);
 			}
 			refreshFilterChips(ui, debouncedSearch);
 		} catch {
