@@ -75,7 +75,7 @@ export function renderSearchFilters(
 	});
 
 	ui.discountValueDisplay = html`<span
-		class="text-[11px] font-bold font-mono-num border px-2 py-0.25 rounded-full leading-tight transition-colors duration-150"
+		class="text-[11px] font-bold font-mono-num border px-2 py-px rounded-full leading-tight transition-colors duration-150"
 		>10%</span
 	>`;
 
@@ -260,7 +260,9 @@ export function renderSearchFilters(
 					</div>
 
 					<!-- Keyword Search -->
-					<div class="px-4 py-2.75 flex flex-col justify-center gap-0.75 min-w-0">
+					<div
+						class="px-4 py-2.75 flex flex-col justify-center gap-0.75 min-w-0"
+					>
 						${Label({
 							text: t("descriptionSearch"),
 							htmlFor: "descriptionSearch",

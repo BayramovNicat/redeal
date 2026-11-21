@@ -21,12 +21,28 @@ describe("Authentication & Whitelist System", () => {
 		// Clean up any old test records
 		await prisma.whitelistedEmail
 			.deleteMany({
-				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local", "regular-user@redeal.local"] } },
+				where: {
+					email: {
+						in: [
+							testEmail,
+							"nonwhitelisted@redeal.local",
+							"regular-user@redeal.local",
+						],
+					},
+				},
 			})
 			.catch(() => {});
 		await prisma.user
 			.deleteMany({
-				where: { email: { in: [testEmail, "nonwhitelisted@redeal.local", "regular-user@redeal.local"] } },
+				where: {
+					email: {
+						in: [
+							testEmail,
+							"nonwhitelisted@redeal.local",
+							"regular-user@redeal.local",
+						],
+					},
+				},
 			})
 			.catch(() => {});
 

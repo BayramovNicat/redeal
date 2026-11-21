@@ -1,7 +1,4 @@
-import {
-	getAdmins,
-	setAdminRole,
-} from "../src/modules/auth/auth.service.js";
+import { getAdmins, setAdminRole } from "../src/modules/auth/auth.service.js";
 import { prisma } from "../src/utils/prisma.js";
 
 const [action, email] = process.argv.slice(2);
@@ -53,7 +50,8 @@ async function main() {
 			const result = await setAdminRole(email, false);
 			const details: string[] = [];
 			if (result.userUpdated) details.push("user demoted to regular user");
-			if (result.whitelistUpdated) details.push("whitelist set to regular user");
+			if (result.whitelistUpdated)
+				details.push("whitelist set to regular user");
 			console.log(
 				`✓ Revoked admin access from ${email.toLowerCase().trim()} (${details.join(", ")})`,
 			);

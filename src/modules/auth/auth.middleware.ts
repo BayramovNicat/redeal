@@ -85,10 +85,7 @@ export function requireAdmin(
 			);
 		}
 		if (user.role !== "admin") {
-			return ResponseHelper.error(
-				"Forbidden: Admin privileges required",
-				403,
-			);
+			return ResponseHelper.error("Forbidden: Admin privileges required", 403);
 		}
 		return handler(req);
 	};

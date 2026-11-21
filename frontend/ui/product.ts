@@ -163,12 +163,18 @@ export function Product({
 			</span>
 			${
 				property.is_urgent
-					? html`<span class="inline-flex items-center gap-0.75 px-2 py-0.75 rounded-full bg-(--red-solid)/90 text-white text-[10px] font-bold tracking-wide uppercase backdrop-blur-md shadow-sm max-[520px]:hidden">⚡ ${t("tagUrgent")}</span>`
+					? html`<span
+							class="inline-flex items-center gap-0.75 px-2 py-0.75 rounded-full bg-(--red-solid)/90 text-white text-[10px] font-bold tracking-wide uppercase backdrop-blur-md shadow-sm max-[520px]:hidden"
+							>⚡ ${t("tagUrgent")}</span
+						>`
 					: ""
 			}
 			${
 				isNew
-					? html`<span class="inline-flex items-center px-2 py-0.75 rounded-full bg-(--accent-solid)/90 text-white text-[10px] font-bold tracking-wide uppercase backdrop-blur-md shadow-sm max-[520px]:hidden">${t("tagNew")}</span>`
+					? html`<span
+							class="inline-flex items-center px-2 py-0.75 rounded-full bg-(--accent-solid)/90 text-white text-[10px] font-bold tracking-wide uppercase backdrop-blur-md shadow-sm max-[520px]:hidden"
+							>${t("tagNew")}</span
+						>`
 					: ""
 			}
 		`;
@@ -183,20 +189,22 @@ export function Product({
 								src: toThumbUrl(thumbUrl),
 								className: "w-full h-full object-cover thumb-zoom",
 							})
-						: html`<div class="w-full h-full flex items-center justify-center text-(--muted)/30">${Icons.home(28)}</div>`
+						: html`<div
+							class="w-full h-full flex items-center justify-center text-(--muted)/30"
+						>
+							${Icons.home(28)}
+						</div>`
 				}
 				<div
 					class="absolute inset-0 bg-linear-to-t from-[#0c0e13] via-transparent to-black/35 pointer-events-none"
 				></div>
-				<div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-2 flex-wrap pr-11">
+				<div
+					class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-2 flex-wrap pr-11"
+				>
 					${signalBadges}
 				</div>
-				<div class="absolute top-2.5 right-2.5 z-2">
-					${overlaySaveBtn}
-				</div>
-				<div class="absolute bottom-2.5 right-2.5 z-2">
-					${overlayPhotosBtn}
-				</div>
+				<div class="absolute top-2.5 right-2.5 z-2">${overlaySaveBtn}</div>
+				<div class="absolute bottom-2.5 right-2.5 z-2">${overlayPhotosBtn}</div>
 			</div>
 		`;
 
@@ -223,18 +231,24 @@ export function Product({
       duration-200
       ease-out
       hover:bg-[#0f1218]
-      hover:shadow-[var(--shadow-card-h)]
+      hover:shadow-(--shadow-card-h)
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg)
       relative
       ${isNew ? "new-deal-anim" : ""}"
 		>
 			${photoStage}
 
-			<div class="px-4 pt-3 pb-3.5 max-[520px]:px-2.75 max-[520px]:pt-2 max-[520px]:pb-2.75 flex flex-col flex-1 gap-3 max-[520px]:gap-1.75">
+			<div
+				class="px-4 pt-3 pb-3.5 max-[520px]:px-2.75 max-[520px]:pt-2 max-[520px]:pb-2.75 flex flex-col flex-1 gap-3 max-[520px]:gap-1.75"
+			>
 				<!-- Hero Price + Deal Tier + Inline Market Comparison -->
 				<div class="flex flex-col gap-1">
-					<div class="flex items-center justify-between gap-2 max-[520px]:flex-col max-[520px]:items-start max-[520px]:gap-1">
-						<span class="text-[21px] max-[520px]:text-[15px] font-extrabold font-mono-num tracking-[-0.03em] leading-none text-(--text)">
+					<div
+						class="flex items-center justify-between gap-2 max-[520px]:flex-col max-[520px]:items-start max-[520px]:gap-1"
+					>
+						<span
+							class="text-[21px] max-[520px]:text-[15px] font-extrabold font-mono-num tracking-[-0.03em] leading-none text-(--text)"
+						>
 							₼ ${fmt(property.price)}
 						</span>
 						<span
@@ -246,14 +260,18 @@ export function Product({
 						</span>
 					</div>
 
-					<div class="flex items-center justify-between gap-2 text-xs max-[520px]:hidden mt-0.5">
+					<div
+						class="flex items-center justify-between gap-2 text-xs max-[520px]:hidden mt-0.5"
+					>
 						<div class="flex items-baseline gap-1.5 min-w-0 truncate">
 							<span class="font-mono-num font-semibold text-(--text-2)">
 								₼${fmt(property.price_per_sqm, 0)}/m²
 							</span>
 							<span class="text-(--muted) text-[11px] truncate">
 								· ${t("marketAvg")}
-								<span class="font-mono-num">₼${fmt(property.location_avg_price_per_sqm, 0)}</span>
+								<span class="font-mono-num"
+									>₼${fmt(property.location_avg_price_per_sqm, 0)}</span
+								>
 							</span>
 						</div>
 						${spark ?? ""}
@@ -261,28 +279,45 @@ export function Product({
 				</div>
 
 				<!-- Clean Hairline 3-Column Spec Strip (No Nested Boxes) -->
-				<div class="grid grid-cols-3 divide-x divide-(--border-subtle) py-2 border-y border-(--border-subtle) max-[520px]:hidden">
+				<div
+					class="grid grid-cols-3 divide-x divide-(--border-subtle) py-2 border-y border-(--border-subtle) max-[520px]:hidden"
+				>
 					<div class="pr-2">
-						<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						<div
+							class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+						>
 							${t("area")}
 						</div>
-						<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
-							${fmt(property.area_sqm, 1)}<span class="text-[11px] font-normal text-(--muted) ml-0.5">m²</span>
+						<div
+							class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+						>
+							${fmt(property.area_sqm, 1)}<span
+								class="text-[11px] font-normal text-(--muted) ml-0.5"
+								>m²</span
+							>
 						</div>
 					</div>
 					<div class="px-2.5">
-						<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						<div
+							class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+						>
 							${t("rooms")}
 						</div>
-						<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+						<div
+							class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+						>
 							${property.rooms ?? "—"}
 						</div>
 					</div>
 					<div class="pl-2.5">
-						<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						<div
+							class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+						>
 							${t("floor")}
 						</div>
-						<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+						<div
+							class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+						>
 							${floorStr}
 						</div>
 					</div>
@@ -290,34 +325,52 @@ export function Product({
 
 				<!-- Location & Date + Subtle Feature Chips -->
 				<div class="flex flex-col gap-2">
-					<div class="flex items-center justify-between gap-2 text-xs max-[520px]:text-[11px]">
-						<span class="inline-flex items-center gap-1.25 text-(--text-2) min-w-0 truncate font-medium">
-							<span class="text-(--muted) shrink-0 max-[520px]:hidden">${Icons.map(12)}</span>
-							<span class="truncate">${property.location_name ?? property.district ?? "—"}</span>
+					<div
+						class="flex items-center justify-between gap-2 text-xs max-[520px]:text-[11px]"
+					>
+						<span
+							class="inline-flex items-center gap-1.25 text-(--text-2) min-w-0 truncate font-medium"
+						>
+							<span class="text-(--muted) shrink-0 max-[520px]:hidden"
+								>${Icons.map(12)}</span
+							>
+							<span class="truncate"
+								>${property.location_name ?? property.district ?? "—"}</span
+							>
 						</span>
 						${
 							ago
-								? html`<span class="text-[11px] font-mono-num text-(--muted) shrink-0 max-[520px]:hidden">${ago}</span>`
+								? html`<span
+									class="text-[11px] font-mono-num text-(--muted) shrink-0 max-[520px]:hidden"
+									>${ago}</span
+								>`
 								: ""
 						}
 					</div>
 
 					<!-- Compact Mobile Specs -->
-					<div class="hidden max-[520px]:block text-[10.5px] text-(--muted) font-mono-num truncate leading-tight">
-						${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"} ${t("rooms_")} · ${floorStr}
+					<div
+						class="hidden max-[520px]:block text-[10.5px] text-(--muted) font-mono-num truncate leading-tight"
+					>
+						${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"}
+						${t("rooms_")} · ${floorStr}
 					</div>
 
 					${
 						tags.length
-							? html`<div class="flex flex-wrap gap-1.25 max-[520px]:hidden">${tags}</div>`
+							? html`<div class="flex flex-wrap gap-1.25 max-[520px]:hidden">
+								${tags}
+							</div>`
 							: ""
 					}
 				</div>
 
 				<!-- Minimal Footer -->
-				<div class="flex items-center justify-between pt-2.5 mt-auto border-t border-(--border-subtle) max-[520px]:pt-2 max-[520px]:mt-0.5">
+				<div
+					class="flex items-center justify-between pt-2.5 mt-auto border-t border-(--border-subtle) max-[520px]:pt-2 max-[520px]:mt-0.5"
+				>
 					<a
-						class="inline-flex items-center gap-1.5 text-xs max-[520px]:text-[11px] font-medium text-(--muted) transition-colors duration-150 group-hover:text-(--text-2) hover:!text-(--accent)"
+						class="inline-flex items-center gap-1.5 text-xs max-[520px]:text-[11px] font-medium text-(--muted) transition-colors duration-150 group-hover:text-(--text-2) hover:text-(--accent)!"
 						href="${property.source_url}"
 						target="_blank"
 						rel="noopener noreferrer"
@@ -368,7 +421,11 @@ export function Product({
 								src: toThumbUrl(rowThumbUrl),
 								className: "w-full h-full object-cover thumb-zoom",
 							})
-						: html`<div class="w-full h-full flex items-center justify-center text-(--muted)/35">${Icons.home(18)}</div>`
+						: html`<div
+							class="w-full h-full flex items-center justify-center text-(--muted)/35"
+						>
+							${Icons.home(18)}
+						</div>`
 				}
 				<div class="absolute bottom-1 right-1 z-2">${rowPhotosBtn}</div>
 			</div>
@@ -482,7 +539,7 @@ export function Product({
       surface-specular
       transition-[background-color,border-color,box-shadow] duration-200 ease-out
       hover:bg-[#0f1218]
-      hover:shadow-[var(--shadow-card-h)]
+      hover:shadow-(--shadow-card-h)
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-1 focus-visible:ring-offset-(--bg)
       ${isNewRow ? "new-deal-anim" : ""}"
 		>
@@ -492,48 +549,77 @@ export function Product({
 			<!-- Price, Location, Date & Tags -->
 			<div class="min-w-0 flex flex-col justify-center">
 				<div class="flex items-baseline gap-2.5 flex-wrap">
-					<span class="text-[17px] font-extrabold font-mono-num tracking-[-0.02em] text-(--text) leading-tight">
+					<span
+						class="text-[17px] font-extrabold font-mono-num tracking-[-0.02em] text-(--text) leading-tight"
+					>
 						₼ ${fmt(property.price)}
 					</span>
-					<span class="inline-flex items-center gap-1 text-xs font-medium text-(--text-2) truncate max-w-52">
+					<span
+						class="inline-flex items-center gap-1 text-xs font-medium text-(--text-2) truncate max-w-52"
+					>
 						<span class="text-(--muted) shrink-0">${Icons.map(11)}</span>
-						<span class="truncate">${property.location_name ?? property.district ?? "—"}</span>
+						<span class="truncate"
+							>${property.location_name ?? property.district ?? "—"}</span
+						>
 					</span>
 					${
 						rowAgo
-							? html`<span class="text-[11px] font-mono-num text-(--muted) shrink-0">· ${rowAgo}</span>`
+							? html`<span
+								class="text-[11px] font-mono-num text-(--muted) shrink-0"
+								>· ${rowAgo}</span
+							>`
 							: ""
 					}
 				</div>
-				<div class="lg:hidden mt-1 text-xs text-(--muted) font-mono-num truncate">
-					${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"} ${t("rooms_")} · ${t("floor_")} ${floorStr}
+				<div
+					class="lg:hidden mt-1 text-xs text-(--muted) font-mono-num truncate"
+				>
+					${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"}
+					${t("rooms_")} · ${t("floor_")} ${floorStr}
 				</div>
 				${rowTagsEl}
 			</div>
 
 			<!-- Aligned 3-Column Specs (Desktop) -->
-			<div class="hidden lg:grid grid-cols-3 divide-x divide-(--border-subtle) items-center">
+			<div
+				class="hidden lg:grid grid-cols-3 divide-x divide-(--border-subtle) items-center"
+			>
 				<div class="pr-2.5">
-					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+					<div
+						class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+					>
 						${t("area")}
 					</div>
-					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
-						${fmt(property.area_sqm, 1)}<span class="text-[10.5px] font-normal text-(--muted) ml-0.5">m²</span>
+					<div
+						class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+					>
+						${fmt(property.area_sqm, 1)}<span
+							class="text-[10.5px] font-normal text-(--muted) ml-0.5"
+							>m²</span
+						>
 					</div>
 				</div>
 				<div class="px-2.5">
-					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+					<div
+						class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+					>
 						${t("rooms")}
 					</div>
-					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+					<div
+						class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+					>
 						${property.rooms ?? "—"}
 					</div>
 				</div>
 				<div class="pl-2.5">
-					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+					<div
+						class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1"
+					>
 						${t("floor")}
 					</div>
-					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+					<div
+						class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight"
+					>
 						${floorStr}
 					</div>
 				</div>
@@ -544,7 +630,10 @@ export function Product({
 				<div class="flex items-center gap-2">
 					${rowSpark ?? ""}
 					<span class="text-[13.5px] font-bold font-mono-num text-(--text)">
-						₼${fmt(property.price_per_sqm, 0)}<span class="text-[11px] font-normal text-(--muted)">/m²</span>
+						₼${fmt(property.price_per_sqm, 0)}<span
+							class="text-[11px] font-normal text-(--muted)"
+							>/m²</span
+						>
 					</span>
 				</div>
 				<div class="text-[11px] font-mono-num text-(--muted) truncate">
@@ -561,10 +650,16 @@ export function Product({
 					class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-extrabold font-mono-num leading-tight"
 					style="color:${tier.c};background:${tier.bg}"
 				>
-					<span class="size-1.5 rounded-full shrink-0" style="background:${tier.hex}"></span>
+					<span
+						class="size-1.5 rounded-full shrink-0"
+						style="background:${tier.hex}"
+					></span>
 					${discStr}
 				</span>
-				<span class="text-[10px] font-medium opacity-80 pr-0.5 truncate max-w-full" style="color:${tier.c}">
+				<span
+					class="text-[10px] font-medium opacity-80 pr-0.5 truncate max-w-full"
+					style="color:${tier.c}"
+				>
 					${tTier(property.tier, true)}
 				</span>
 			</div>

@@ -96,7 +96,7 @@ function mountMapHud(container: HTMLElement): void {
 
 	const themeBtn = html`<button
 		type="button"
-		class="h-7 px-2.75 rounded-full text-[11px] font-semibold text-(--text-2) hover:text-(--text) hover:bg-white/[0.08] transition-colors"
+		class="h-7 px-2.75 rounded-full text-[11px] font-semibold text-(--text-2) hover:text-(--text) hover:bg-white/8 transition-colors"
 		title="Toggle map style"
 	>
 		Dark
@@ -111,7 +111,7 @@ function mountMapHud(container: HTMLElement): void {
 
 	const fitBtn = html`<button
 		type="button"
-		class="h-7 px-2.5 rounded-full text-[11px] font-semibold text-(--text-2) hover:text-(--text) hover:bg-white/[0.08] transition-colors"
+		class="h-7 px-2.5 rounded-full text-[11px] font-semibold text-(--text-2) hover:text-(--text) hover:bg-white/8 transition-colors"
 		title="Fit all pins"
 	>
 		⌖ Fit
@@ -124,7 +124,7 @@ function mountMapHud(container: HTMLElement): void {
 
 	const topRightHud = html`
 		<div
-			class="absolute top-3 right-3 z-[450] inline-flex items-center gap-0.5 p-1 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) shadow-[var(--shadow-float)]"
+			class="absolute top-3 right-3 z-450 inline-flex items-center gap-0.5 p-1 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) shadow-(--shadow-float)"
 		>
 			${themeBtn}
 			<div class="w-px h-3.5 bg-(--border) mx-0.5"></div>
@@ -141,11 +141,13 @@ function mountMapHud(container: HTMLElement): void {
 
 	const legendHud = html`
 		<div
-			class="absolute bottom-3 left-3 z-[450] inline-flex items-center gap-3 px-3.25 py-1.75 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) shadow-[var(--shadow-float)] pointer-events-none select-none max-[520px]:hidden"
+			class="absolute bottom-3 left-3 z-450 inline-flex items-center gap-3 px-3.25 py-1.75 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) shadow-(--shadow-float) pointer-events-none select-none max-[520px]:hidden"
 		>
 			${legendItems.map(
 				(item) => html`
-					<span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-(--text-2)">
+					<span
+						class="inline-flex items-center gap-1.5 text-[11px] font-medium text-(--text-2)"
+					>
 						<span
 							class="size-2 rounded-full shrink-0"
 							style="background:${item.color};box-shadow:0 0 6px ${item.color}"

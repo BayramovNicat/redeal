@@ -90,7 +90,7 @@ export function initProducts(container: HTMLElement): () => void {
 	ui.loadMoreContainer = html`<div class="hidden"></div>`;
 	ui.mapViewContainer = html`<div
 		style="display:none;height:calc(100vh - 280px);min-height:460px"
-		class="rounded-(--r-lg) overflow-hidden border border-(--border) shadow-[var(--shadow-card)]"
+		class="rounded-(--r-lg) overflow-hidden border border-(--border) shadow-(--shadow-card)"
 	></div>`;
 
 	const productsBar = renderProductsBar(ui, {
@@ -392,7 +392,7 @@ export function initProducts(container: HTMLElement): () => void {
 	const jumpDelayMs = 550;
 	const maxJumpDigits = 6;
 	const jumpIndicator = html`<div
-		class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1001 min-w-24 h-24 px-6 rounded-(--r-xl) border border-(--border-h) glass-panel bg-(--surface-glass-strong) text-(--text) text-4xl font-bold font-mono-num inline-flex items-center justify-center shadow-[var(--shadow-float)] opacity-0 pointer-events-none transition-opacity duration-120"
+		class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1001 min-w-24 h-24 px-6 rounded-(--r-xl) border border-(--border-h) glass-panel bg-(--surface-glass-strong) text-(--text) text-4xl font-bold font-mono-num inline-flex items-center justify-center shadow-(--shadow-float) opacity-0 pointer-events-none transition-opacity duration-120"
 		style="display:none"
 	></div>`;
 	document.body.appendChild(jumpIndicator);

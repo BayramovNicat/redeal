@@ -900,7 +900,10 @@ describe("public API", () => {
 			body: JSON.stringify({ url: testItemUrl }),
 		});
 		expect(adminDeleteRes.status).toBe(200);
-		const body = (await adminDeleteRes.json()) as { ok: boolean; deleted: number };
+		const body = (await adminDeleteRes.json()) as {
+			ok: boolean;
+			deleted: number;
+		};
 		expect(body.ok).toBe(true);
 		expect(body.deleted).toBe(1);
 

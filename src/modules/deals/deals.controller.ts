@@ -1,9 +1,9 @@
 import type { DealSort, PropertyFilters } from "@/types/index.js";
 import { readJsonBody } from "@/utils/json-body.js";
+import { prisma } from "@/utils/prisma.js";
 import { parseQueryBool, parseQueryNum } from "@/utils/query.js";
 import { ResponseHelper } from "@/utils/response.js";
 import * as dealsService from "./deals.service.js";
-import { prisma } from "@/utils/prisma.js";
 import {
 	checkAndDeleteEndedListing,
 	checkAndDeleteEndedListings,
@@ -11,7 +11,9 @@ import {
 
 export async function deleteDeal(req: Request): Promise<Response> {
 	try {
-		const body = await readJsonBody<{ url?: string; id?: string | number }>(req);
+		const body = await readJsonBody<{ url?: string; id?: string | number }>(
+			req,
+		);
 		if (!body.ok) {
 			return ResponseHelper.error(
 				body.status === 413 ? "Payload too large" : "Invalid JSON",
@@ -26,7 +28,10 @@ export async function deleteDeal(req: Request): Promise<Response> {
 				: undefined;
 
 		if (!url && idNum === undefined) {
-			return ResponseHelper.error('A valid "url" or numeric "id" is required', 400);
+			return ResponseHelper.error(
+				'A valid "url" or numeric "id" is required',
+				400,
+			);
 		}
 
 		const where = url ? { source_url: url } : { id: idNum };

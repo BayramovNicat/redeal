@@ -109,7 +109,7 @@ export function MultiSelect({
 			role="listbox"
 			class="absolute top-full left-0 ${
 				variant === "embedded" ? "min-w-64 right-0 mt-3.5" : "right-0 mt-2"
-			} glass-panel bg-(--surface-glass-strong) border border-(--border-h) rounded-(--r) shadow-[var(--shadow-float)] z-50 overflow-hidden hidden animate-[fadeUp_0.16s_ease-out] pointer-events-auto"
+			} glass-panel bg-(--surface-glass-strong) border border-(--border-h) rounded-(--r) shadow-(--shadow-float) z-50 overflow-hidden hidden animate-[fadeUp_0.16s_ease-out] pointer-events-auto"
 		>
 			<div class="p-2 border-b border-(--border)">
 				<div class="relative">
