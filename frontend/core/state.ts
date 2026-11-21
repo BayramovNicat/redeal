@@ -30,6 +30,8 @@ export const state = {
 	),
 	PAGE: 50,
 	hasSearched: false,
+	isPreviewLimited: false,
+	previewLimit: 50,
 	refs: {
 		cards: null as HTMLElement | null,
 		loading: null as HTMLElement | null,

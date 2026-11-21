@@ -1,5 +1,7 @@
 import type { MapPin } from "@/core/types";
 import { toast } from "@/core/utils";
+import { isUserAuthenticated } from "@/features/auth/api";
+import { openLoginModal } from "@/features/auth/login-modal";
 import type { MapViewState } from "./types";
 
 /**
@@ -8,8 +10,14 @@ import type { MapViewState } from "./types";
 export async function fetchMapPins(
 	state: MapViewState,
 ): Promise<MapPin[] | null> {
-	const params = new URLSearchParams(window.location.search);
-	if (!params.get("location")) return null;
+	const params = isUserAuthenticated()
+		? new URLSearchParams(window.location.search)
+		: new URLSearchParams({ location: "__all__", threshold: "10" });
+
+	if (!params.get("location")) {
+		params.set("location", "__all__");
+		if (!params.get("threshold")) params.set("threshold", "10");
+	}
 
 	if (state.abortController) state.abortController.abort();
 	state.abortController = new AbortController();
@@ -20,8 +28,14 @@ export async function fetchMapPins(
 		});
 		const d = (await res.json()) as {
 			error?: string;
+			code?: string;
 			data?: MapPin[];
 		};
+
+		if (res.status === 401 || d.code === "AUTH_REQUIRED") {
+			openLoginModal("filter");
+			return null;
+		}
 
 		if (d.error) {
 			toast(d.error, true);

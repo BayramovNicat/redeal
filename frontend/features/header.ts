@@ -1,6 +1,7 @@
 import { getLang, setLang, t } from "@/core/i18n";
 import { cn, html, makeEventManager } from "@/core/utils";
 import { fetchAuthUser, logoutUser } from "@/features/auth/api";
+import { openLoginModal } from "@/features/auth/login-modal";
 import { Button } from "@/ui/button";
 import { Icons } from "@/ui/icons";
 import { HealthStatus } from "./health-status";
@@ -250,6 +251,24 @@ export function initHeader(container: HTMLElement): () => void {
 				</div>
 			`;
 			userActions.replaceChildren(userBlock);
+		} else {
+			const signInBtn = Button({
+				id: "header-signin-btn",
+				title: t("signIn"),
+				ariaLabel: t("signIn"),
+				color: "indigo",
+				variant: "padded",
+				content: html`
+					<span class="flex items-center gap-1.5">
+						${Icons.logIn(13)}
+						<span>${t("signIn")}</span>
+					</span>
+				`,
+				className:
+					"h-9.5 px-3.75 rounded-full bg-(--accent-solid) hover:bg-(--accent) border border-(--accent-b) text-white text-xs font-semibold shadow-[0_0_20px_rgba(88,101,242,0.28),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-180",
+				onclick: () => openLoginModal("general"),
+			});
+			userActions.replaceChildren(signInBtn);
 		}
 	});
 

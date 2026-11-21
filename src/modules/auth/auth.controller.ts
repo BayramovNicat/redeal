@@ -26,6 +26,41 @@ import {
 } from "@/modules/auth/auth.service.js";
 import { ResponseHelper } from "@/utils/response.js";
 
+function sanitizeReturnTo(raw: string | null): string {
+	if (!raw) return "/";
+	const trimmed = raw.trim();
+	if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "/";
+	if (trimmed.startsWith("/login") || trimmed.startsWith("/api/")) return "/";
+	return trimmed;
+}
+
+function encodeOAuthStatePayload(nonce: string, returnTo: string): string {
+	const json = JSON.stringify({ n: nonce, r: returnTo });
+	return Buffer.from(json, "utf8").toString("base64url");
+}
+
+function decodeOAuthStatePayload(payload: string): {
+	nonce: string;
+	returnTo: string;
+} {
+	try {
+		const decoded = JSON.parse(
+			Buffer.from(payload, "base64url").toString("utf8"),
+		) as { n?: unknown; r?: unknown };
+		if (typeof decoded.n === "string" && decoded.n.length > 0) {
+			return {
+				nonce: decoded.n,
+				returnTo: sanitizeReturnTo(
+					typeof decoded.r === "string" ? decoded.r : null,
+				),
+			};
+		}
+	} catch {
+		// Backward compatibility for plain UUID nonces
+	}
+	return { nonce: payload, returnTo: "/" };
+}
+
 export async function handleGoogleLogin(req: Request): Promise<Response> {
 	if (!isGoogleConfigured()) {
 		return Response.redirect(
@@ -34,9 +69,12 @@ export async function handleGoogleLogin(req: Request): Promise<Response> {
 		);
 	}
 
+	const url = new URL(req.url);
+	const returnTo = sanitizeReturnTo(url.searchParams.get("returnTo"));
 	const redirectUri = resolveRedirectUri(req);
 	const rawNonce = crypto.randomUUID();
-	const signedState = await signValue(rawNonce);
+	const statePayload = encodeOAuthStatePayload(rawNonce, returnTo);
+	const signedState = await signValue(statePayload);
 
 	const googleUrl = buildGoogleAuthUrl(signedState, redirectUri);
 	const headers = new Headers();
@@ -74,13 +112,14 @@ export async function handleGoogleCallback(req: Request): Promise<Response> {
 		);
 	}
 
-	const validatedNonce = await verifyAndExtractSignedValue(state);
-	if (!validatedNonce) {
+	const validatedPayload = await verifyAndExtractSignedValue(state);
+	if (!validatedPayload) {
 		return Response.redirect(
 			new URL("/login?error=invalid_state", req.url).toString(),
 			302,
 		);
 	}
+	const { returnTo } = decodeOAuthStatePayload(validatedPayload);
 
 	const redirectUri = resolveRedirectUri(req);
 
@@ -117,7 +156,7 @@ export async function handleGoogleCallback(req: Request): Promise<Response> {
 		const { signedCookieValue } = await createSession(user.id);
 
 		const headers = new Headers();
-		headers.set("Location", new URL("/", req.url).toString());
+		headers.set("Location", new URL(returnTo, req.url).toString());
 		headers.append("Set-Cookie", createSessionCookieHeader(signedCookieValue));
 		headers.append("Set-Cookie", createClearOAuthStateCookieHeader());
 
@@ -165,12 +204,12 @@ export async function handleLogout(req: Request): Promise<Response> {
 	const headers = new Headers();
 	headers.append("Set-Cookie", createClearSessionCookieHeader());
 
-	// If request came as standard form or browser GET, redirect to /login
+	// If request came as standard form or browser GET, redirect to public preview
 	if (
 		req.method === "GET" ||
 		req.headers.get("accept")?.includes("text/html")
 	) {
-		headers.set("Location", new URL("/login", req.url).toString());
+		headers.set("Location", new URL("/", req.url).toString());
 		return new Response(null, { status: 302, headers });
 	}
 

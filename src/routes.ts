@@ -76,20 +76,20 @@ export const routes = {
 	},
 	"/api/auth/whitelist/:email": { DELETE: requireAdmin(handleRemoveWhitelist) },
 
-	// Protected Data & Deals endpoints
-	"/api/deals/locations": { GET: requireAuth(br(getLocations)) },
+	// Public Preview & Protected Data / Deals endpoints
+	"/api/deals/locations": { GET: br(getLocations) },
 	"/api/deals/trend": { GET: requireAuth(br(getTrend)) },
-	"/api/deals/undervalued": { GET: requireAuth(br(getUndervaluedDeals)) },
+	"/api/deals/undervalued": { GET: br(getUndervaluedDeals) },
 	"/api/deals/undervalued/validate": {
 		POST: requireAdmin(br(validateUndervaluedDeals)),
 	},
 	"/api/deals/price-drops": { GET: requireAuth(br(getPriceDrops)) },
-	"/api/deals/map-pins": { GET: requireAuth(br(getMapPins)) },
+	"/api/deals/map-pins": { GET: br(getMapPins) },
 	"/api/deals/by-json-items": { POST: requireAuth(br(getDealsByJsonItems)) },
 	"/api/deals/by-urls": { POST: requireAuth(br(getDealsByUrls)) },
 	"/api/deals/item": { DELETE: requireAdmin(br(deleteDeal)) },
 	"/api/deals/check-ended": { POST: requireAuth(br(checkEndedListing)) },
-	"/api/heatmap": { GET: requireAuth(br(getHeatmap)) },
+	"/api/heatmap": { GET: br(getHeatmap) },
 	"/api/scrape/runs": { GET: requireAuth(br(getScrapeRuns)) },
 	"/api/scrape/session": { GET: getScrapeAdminSessionStatus },
 	"/api/scrape/login": { POST: loginScrapeAdmin },

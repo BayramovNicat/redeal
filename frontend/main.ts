@@ -1,6 +1,7 @@
 import { bus, EVENTS } from "@/core/events";
 import { html, renderToastsContainer, trustScriptURL } from "@/core/utils";
 import { initAlerts } from "@/features/alerts/index";
+import { fetchAuthUser } from "@/features/auth/api";
 import { initHeader } from "@/features/header";
 import { initProducts } from "@/features/products/index";
 import { initSearch } from "@/features/search";
@@ -27,6 +28,8 @@ if (window.location.pathname === "/login") {
 	const { initLogin } = await import("@/features/login");
 	cleanups.push(initLogin(loginArea));
 } else {
+	await fetchAuthUser();
+
 	const headerArea = html`<header></header>`;
 	const searchArea = html`<section></section>`;
 	const trendArea = html`<section></section>`;

@@ -41,6 +41,50 @@ function hasFilterParams(params: URLSearchParams): boolean {
 	);
 }
 
+export function hasNonDefaultUrlFilters(params: URLSearchParams): boolean {
+	const loc = params.get("location");
+	if (loc && loc !== "__all__") return true;
+
+	const threshold = params.get("threshold");
+	if (threshold !== null && threshold !== "" && Number(threshold) !== 10) {
+		return true;
+	}
+
+	const listingType = params.get("listingType");
+	if (listingType && listingType !== "sale") return true;
+
+	const sort = params.get("sort");
+	if (sort && sort !== "disc") return true;
+
+	if (
+		params.get("category") ||
+		params.get("hasActiveMortgage") ||
+		params.get("descriptionSearch")
+	) {
+		return true;
+	}
+
+	return [...getNumericFilters(), ...getBooleanFilters()].some((config) => {
+		const val = params.get(config.id);
+		return val !== null && val !== "";
+	});
+}
+
+export function resetFiltersToDefault(ui: SearchUI): void {
+	ui.locationSelect.setValue(["__all__"]);
+	setThreshold(ui, "10");
+	for (const config of getNumericFilters()) {
+		ui.numericInputs[config.id].value = "";
+	}
+	for (const config of getBooleanFilters()) {
+		ui.booleanInputs[config.id].checked = false;
+	}
+	ui.categorySelect.value = "";
+	ui.listingTypeSelect.value = "sale";
+	ui.mortgageSelect.value = "";
+	ui.descriptionInput.value = "";
+}
+
 function loadFiltersFromStorage(): PersistedFilters | null {
 	try {
 		const raw = localStorage.getItem(FILTER_STORAGE_KEY);

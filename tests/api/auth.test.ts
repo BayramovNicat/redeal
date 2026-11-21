@@ -74,20 +74,91 @@ describe("Authentication & Whitelist System", () => {
 	});
 
 	test("unauthenticated requests to protected endpoints return 401", async () => {
-		const res = await fetch(`${baseUrl}/api/deals/locations`);
-		expect(res.status).toBe(401);
+		const trendRes = await fetch(`${baseUrl}/api/deals/trend?location=Yasamal`);
+		expect(trendRes.status).toBe(401);
 
-		const body = (await res.json()) as { error?: string };
-		expect(body.error).toContain("Unauthorized");
+		const trendBody = (await trendRes.json()) as { error?: string };
+		expect(trendBody.error).toContain("Unauthorized");
+
+		const alertsRes = await fetch(`${baseUrl}/api/alerts?chatId=123456`);
+		expect(alertsRes.status).toBe(401);
 	});
 
-	test("authenticated requests with valid session cookie are accepted", async () => {
-		const res = await fetch(`${baseUrl}/api/deals/locations`, {
-			headers: { cookie: validSessionCookie },
-		});
+	test("public preview endpoints work without authentication when unfiltered", async () => {
+		const locRes = await fetch(`${baseUrl}/api/deals/locations`);
+		expect(locRes.status).toBe(200);
+		const locBody = (await locRes.json()) as { data?: unknown[] };
+		expect(Array.isArray(locBody.data)).toBe(true);
+
+		const heatRes = await fetch(`${baseUrl}/api/heatmap`);
+		expect(heatRes.status).toBe(200);
+		const heatBody = (await heatRes.json()) as { data?: unknown[] };
+		expect(Array.isArray(heatBody.data)).toBe(true);
+
+		const dealsRes = await fetch(
+			`${baseUrl}/api/deals/undervalued?location=__all__&threshold=10&limit=200`,
+		);
+		expect(dealsRes.status).toBe(200);
+		const dealsBody = (await dealsRes.json()) as {
+			preview?: boolean;
+			preview_limit?: number;
+			limit?: number;
+			data?: unknown[];
+		};
+		expect(dealsBody.preview).toBe(true);
+		expect(dealsBody.preview_limit).toBe(50);
+		expect(dealsBody.limit).toBe(50);
+		expect(Array.isArray(dealsBody.data)).toBe(true);
+
+		const mapRes = await fetch(
+			`${baseUrl}/api/deals/map-pins?location=__all__&threshold=10`,
+		);
+		expect(mapRes.status).toBe(200);
+		const mapBody = (await mapRes.json()) as {
+			preview?: boolean;
+			data?: unknown[];
+		};
+		expect(mapBody.preview).toBe(true);
+		expect(Array.isArray(mapBody.data)).toBe(true);
+	});
+
+	test("unauthenticated filtered, sorted, or paginated deal requests return 401", async () => {
+		const restrictedUrls = [
+			"/api/deals/undervalued?location=Yasamal&threshold=10",
+			"/api/deals/undervalued?location=__all__&threshold=20",
+			"/api/deals/undervalued?location=__all__&threshold=10&minPrice=50000",
+			"/api/deals/undervalued?location=__all__&threshold=10&hasDocument=true",
+			"/api/deals/undervalued?location=__all__&threshold=10&listingType=rent",
+			"/api/deals/undervalued?location=__all__&threshold=10&sort=price-asc",
+			"/api/deals/undervalued?location=__all__&threshold=10&descriptionSearch=metro",
+			"/api/deals/undervalued?location=__all__&threshold=10&offset=50",
+			"/api/deals/map-pins?location=Yasamal&threshold=10",
+			"/api/deals/map-pins?location=__all__&threshold=10&minRooms=3",
+		];
+
+		for (const path of restrictedUrls) {
+			const res = await fetch(`${baseUrl}${path}`);
+			expect(res.status).toBe(401);
+			const body = (await res.json()) as { code?: string; error?: string };
+			expect(body.code).toBe("AUTH_REQUIRED");
+			expect(body.error).toContain("Unauthorized");
+		}
+	});
+
+	test("authenticated requests with valid session cookie can filter and paginate", async () => {
+		const res = await fetch(
+			`${baseUrl}/api/deals/undervalued?location=Yasamal&threshold=15&minPrice=10000&sort=price-asc`,
+			{
+				headers: { cookie: validSessionCookie },
+			},
+		);
 		expect(res.status).toBe(200);
 
-		const body = (await res.json()) as { data?: unknown[] };
+		const body = (await res.json()) as {
+			preview?: boolean;
+			data?: unknown[];
+		};
+		expect(body.preview).toBeUndefined();
 		expect(Array.isArray(body.data)).toBe(true);
 	});
 

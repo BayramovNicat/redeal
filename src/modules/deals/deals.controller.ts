@@ -1,3 +1,8 @@
+import {
+	GUEST_PREVIEW_LIMIT,
+	getUserFromRequest,
+	hasActiveDealFilters,
+} from "@/modules/auth/auth.middleware.js";
 import type { DealSort, PropertyFilters } from "@/types/index.js";
 import { readJsonBody } from "@/utils/json-body.js";
 import { prisma } from "@/utils/prisma.js";
@@ -292,6 +297,17 @@ export async function validateUndervaluedDeals(
 
 export async function getMapPins(req: Request): Promise<Response> {
 	const q = new URL(req.url).searchParams;
+	const user = await getUserFromRequest(req);
+
+	if (!user && hasActiveDealFilters(q)) {
+		return Response.json(
+			{
+				error: "Unauthorized: Sign in required to filter map pins",
+				code: "AUTH_REQUIRED",
+			},
+			{ status: 401, headers: { "Cache-Control": "no-store" } },
+		);
+	}
 
 	const loc = parseLocationParams(q);
 	if (loc.error) return loc.error;
@@ -313,12 +329,18 @@ export async function getMapPins(req: Request): Promise<Response> {
 	}
 
 	try {
-		const data = await dealsService.getMapPins({
+		const rawData = await dealsService.getMapPins({
 			locations: loc.isAll ? "__all__" : loc.list,
 			thresholdPercent: thresholdPct,
 			filters,
 		});
-		return ResponseHelper.publicJson({ count: data.length, data });
+		const isGuest = !user;
+		const data = isGuest ? rawData.slice(0, GUEST_PREVIEW_LIMIT) : rawData;
+		return ResponseHelper.publicJson({
+			count: data.length,
+			...(isGuest ? { preview: true, preview_limit: GUEST_PREVIEW_LIMIT } : {}),
+			data,
+		});
 	} catch (err) {
 		console.error("[DealsController] getMapPins:", err);
 		return ResponseHelper.error("Failed to fetch map pins");
@@ -366,6 +388,17 @@ export async function getPriceDrops(req: Request): Promise<Response> {
 
 export async function getUndervaluedDeals(req: Request): Promise<Response> {
 	const q = new URL(req.url).searchParams;
+	const user = await getUserFromRequest(req);
+
+	if (!user && hasActiveDealFilters(q)) {
+		return Response.json(
+			{
+				error: "Unauthorized: Sign in required to filter or sort listings",
+				code: "AUTH_REQUIRED",
+			},
+			{ status: 401, headers: { "Cache-Control": "no-store" } },
+		);
+	}
 
 	const loc = parseLocationParams(q);
 	if (loc.error) return loc.error;
@@ -381,6 +414,17 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
 
 	const pg = parsePaginationParams(q);
 	if (pg.error) return pg.error;
+
+	if (!user && pg.offset > 0) {
+		return Response.json(
+			{
+				error: "Unauthorized: Sign in required to browse more listings",
+				code: "AUTH_REQUIRED",
+			},
+			{ status: 401, headers: { "Cache-Control": "no-store" } },
+		);
+	}
+
 	const sort = parseDealSort(q);
 	if (sort.error) return sort.error;
 
@@ -391,7 +435,15 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
 		return ResponseHelper.error((err as Error).message, 400);
 	}
 
-	const pageArgs = { limit: pg.limit, offset: pg.offset, sort: sort.value };
+	const isGuest = !user;
+	const effectiveLimit = isGuest
+		? Math.min(pg.limit, GUEST_PREVIEW_LIMIT)
+		: pg.limit;
+	const pageArgs = {
+		limit: effectiveLimit,
+		offset: pg.offset,
+		sort: sort.value,
+	};
 
 	try {
 		const { total, data } = await dealsService.getUndervalued(
@@ -403,10 +455,11 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
 		return ResponseHelper.publicJson({
 			location: loc.raw,
 			threshold_pct: thresholdPct,
-			limit: pg.limit,
+			limit: effectiveLimit,
 			offset: pg.offset,
 			count: data.length,
 			total,
+			...(isGuest ? { preview: true, preview_limit: GUEST_PREVIEW_LIMIT } : {}),
 			data,
 		});
 	} catch (err) {

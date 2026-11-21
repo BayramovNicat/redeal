@@ -15,6 +15,8 @@ import {
 // Lazy triggered via bus.emit(EVENTS.GALLERY_OPEN)
 // Map View is lazy loaded in setView()
 // Lazy triggered via bus.emit(EVENTS.PROPERTY_OPEN)
+import { isUserAuthenticated } from "@/features/auth/api";
+import { openLoginModal } from "@/features/auth/login-modal";
 import { RawButton } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
 import { Icons } from "@/ui/icons";
@@ -95,6 +97,13 @@ export function initProducts(container: HTMLElement): () => void {
 
 	const productsBar = renderProductsBar(ui, {
 		onSortChange: () => {
+			if (!isUserAuthenticated()) {
+				if (ui.sortSelect.value !== "disc") {
+					ui.sortSelect.value = "disc";
+					openLoginModal("sort");
+				}
+				return;
+			}
 			localStorage.setItem("re-sort", ui.sortSelect.value);
 			state.renderedSet.clear();
 			if (state.showingSaved) {
@@ -109,7 +118,13 @@ export function initProducts(container: HTMLElement): () => void {
 		},
 		onValidate: (button) => void handleValidate(button),
 		onSavedClick: (e) => void handleSavedClick(e),
-		onAlertsOpen: () => bus.emit(EVENTS.ALERTS_OPEN),
+		onAlertsOpen: () => {
+			if (!isUserAuthenticated()) {
+				openLoginModal("alerts");
+				return;
+			}
+			bus.emit(EVENTS.ALERTS_OPEN);
+		},
 		onBackToTop: () => window.scrollTo({ top: 0, behavior: "instant" }),
 	});
 
@@ -283,6 +298,8 @@ export function initProducts(container: HTMLElement): () => void {
 		);
 		state.savedOnlyResults = cached;
 		render();
+
+		if (!isUserAuthenticated()) return;
 
 		try {
 			const res = await fetch("/api/deals/by-urls", {
@@ -655,9 +672,13 @@ export function initProducts(container: HTMLElement): () => void {
 	state.refs.savedBtn = ui.savedBtn;
 	state.refs.sortSelect = ui.sortSelect;
 
-	// Restore persisted sort
-	const savedSort = localStorage.getItem("re-sort");
-	if (savedSort) ui.sortSelect.value = savedSort;
+	// Restore persisted sort only for authenticated users
+	if (isUserAuthenticated()) {
+		const savedSort = localStorage.getItem("re-sort");
+		if (savedSort) ui.sortSelect.value = savedSort;
+	} else {
+		ui.sortSelect.value = "disc";
+	}
 
 	return () => {
 		cleanupHandlers();

@@ -2,6 +2,7 @@ import { bus, EVENTS } from "@/core/events";
 import { t } from "@/core/i18n";
 import type { Property } from "@/core/types";
 import { makeEventManager, toast } from "@/core/utils";
+import { isUserAuthenticated } from "@/features/auth/api";
 import { bindPropertyData, initMap } from "@/features/property-detail/logic";
 import type { PropertyDetailUI } from "@/features/property-detail/types";
 import { renderPropertyDetailLayout } from "@/features/property-detail/ui";
@@ -132,7 +133,9 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		ui.endedBannerEl.classList.add("hidden");
 		bindPropertyData(ui, p);
 		ui.modal.showModal();
-		void checkEnded(ui, p, ui.statusAbort.signal);
+		if (isUserAuthenticated()) {
+			void checkEnded(ui, p, ui.statusAbort.signal);
+		}
 		// Reset scroll position after showModal
 		const body = ui.modal.querySelector(".overflow-y-auto");
 		if (body) setTimeout(() => (body.scrollTop = 0), 0);

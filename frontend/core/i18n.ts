@@ -267,6 +267,36 @@ const translations = {
 		priceHistory: "Price history",
 		tierTipBelow: "{n}% below market avg",
 		tierTipAbove: "{n}% above market avg",
+
+		// Public preview & auth prompt
+		signIn: "Sign in",
+		signInWithGoogle: "Continue with Google",
+		loginRequiredTitle: "Sign in to unlock full access",
+		loginRequiredFilter:
+			"Sign in to filter listings by district, price, rooms, discount threshold, and keywords.",
+		loginRequiredSort:
+			"Sign in to sort deals by price, price drops, area, or ₼/m².",
+		loginRequiredAlerts:
+			"Sign in to set up instant Telegram alerts when matching deals appear.",
+		loginRequiredMore:
+			"Sign in to explore all {total} deals beyond the {limit}-listing public preview.",
+		loginRequiredGeneral:
+			"Sign in with your approved Google account to unlock filters, sorting, alerts, and full listings.",
+		loginBenefitFilters:
+			"Filter by district, budget, rooms, floor, mortgage, keywords & discount",
+		loginBenefitAll:
+			"Browse all listings, custom sorting & district price trends",
+		loginBenefitAlerts:
+			"Get instant Telegram alerts when undervalued listings drop",
+		loginWhitelistNote: "Private access · Whitelisted Google accounts only",
+		continuePreview: "Continue browsing preview",
+		previewBannerBadge: "Public preview",
+		previewBannerText:
+			"Browsing unfiltered deals — sign in to unlock filters, sorting & Telegram alerts",
+		previewLimitTitle: "You've reached the end of the {limit}-deal preview",
+		previewLimitSub:
+			"Sign in with Google to view all {total} deals and unlock district & price filters, sorting, and Telegram alerts.",
+		backToPreview: "Back to public preview",
 	},
 
 	az: {
@@ -516,6 +546,35 @@ const translations = {
 		priceHistory: "Qiymət tarixi",
 		tierTipBelow: "Bazar ortalamasından {n}% aşağı",
 		tierTipAbove: "Bazar ortalamasından {n}% yuxarı",
+
+		// Public preview & auth prompt
+		signIn: "Daxil ol",
+		signInWithGoogle: "Google ilə davam et",
+		loginRequiredTitle: "Tam giriş üçün daxil olun",
+		loginRequiredFilter:
+			"Ərazi, qiymət, otaq, endirim həddi və açar sözlərə görə filtr etmək üçün daxil olun.",
+		loginRequiredSort:
+			"Qiymət, qiymət enişi, sahə və ya ₼/m² üzrə sıralamaq üçün daxil olun.",
+		loginRequiredAlerts:
+			"Uyğun elanlar çıxanda ani Telegram bildirişləri almaq üçün daxil olun.",
+		loginRequiredMore:
+			"{limit} elanlıq önizləmədən kənarda bütün {total} təklifə baxmaq üçün daxil olun.",
+		loginRequiredGeneral:
+			"Filtrləri, sıralamanı, bildirişləri və bütün elanları açmaq üçün təsdiqlənmiş Google hesabınızla daxil olun.",
+		loginBenefitFilters:
+			"Ərazi, büdcə, otaq, mərtəbə, ipoteka, açar söz və endirim üzrə filtr",
+		loginBenefitAll: "Bütün elanlar, fərdi sıralama və ərazi qiymət trendləri",
+		loginBenefitAlerts: "Yeni ucuz elanlar düşəndə ani Telegram bildirişləri",
+		loginWhitelistNote:
+			"Şəxsi giriş · Yalnız ağ siyahıda olan Google hesabları",
+		continuePreview: "Önizləməyə davam et",
+		previewBannerBadge: "İctimai önizləmə",
+		previewBannerText:
+			"Filtrsiz elanlara baxırsınız — filtrlər, sıralama və bildirişlər üçün daxil olun",
+		previewLimitTitle: "{limit} elanlıq önizləmənin sonuna çatdınız",
+		previewLimitSub:
+			"Bütün {total} təklifə baxmaq və filtrlər, sıralama və Telegram bildirişlərini açmaq üçün Google ilə daxil olun.",
+		backToPreview: "İctimai önizləməyə qayıt",
 	},
 
 	ru: {
@@ -766,6 +825,35 @@ const translations = {
 		priceHistory: "История цен",
 		tierTipBelow: "На {n}% ниже среднего",
 		tierTipAbove: "На {n}% выше среднего",
+
+		// Public preview & auth prompt
+		signIn: "Войти",
+		signInWithGoogle: "Войти через Google",
+		loginRequiredTitle: "Войдите для полного доступа",
+		loginRequiredFilter:
+			"Войдите, чтобы фильтровать объявления по району, цене, комнатам, скидке и ключевым словам.",
+		loginRequiredSort:
+			"Войдите, чтобы сортировать предложения по цене, снижениям, площади или ₼/м².",
+		loginRequiredAlerts:
+			"Войдите, чтобы настроить мгновенные Telegram-уведомления о новых сделках.",
+		loginRequiredMore:
+			"Войдите, чтобы просмотреть все {total} объявлений за пределами превью из {limit} объектов.",
+		loginRequiredGeneral:
+			"Войдите через одобренный аккаунт Google, чтобы открыть фильтры, сортировку, уведомления и весь каталог.",
+		loginBenefitFilters:
+			"Фильтры по району, бюджету, комнатам, этажу, ипотеке, словам и скидке",
+		loginBenefitAll: "Все объявления, сортировка и графики цен по районам",
+		loginBenefitAlerts:
+			"Мгновенные Telegram-уведомления при появлении выгодных вариантов",
+		loginWhitelistNote: "Закрытый доступ · Только одобренные аккаунты Google",
+		continuePreview: "Продолжить просмотр превью",
+		previewBannerBadge: "Публичное превью",
+		previewBannerText:
+			"Показаны объявления без фильтров — войдите для фильтров, сортировки и уведомлений",
+		previewLimitTitle: "Вы просмотрели превью из {limit} объявлений",
+		previewLimitSub:
+			"Войдите через Google, чтобы открыть все {total} объявлений, фильтры, сортировку и Telegram-уведомления.",
+		backToPreview: "Вернуться к превью",
 	},
 } as const;
 

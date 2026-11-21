@@ -1,4 +1,4 @@
-import { AUTH_ENABLED, IS_DEV, PORT } from "@/config.js";
+import { IS_DEV, PORT } from "@/config.js";
 import { initStatic, serveStatic } from "@/middleware/static.js";
 import { getUserFromRequest } from "@/modules/auth/auth.middleware.js";
 import { startCron } from "@/plugins/cron.js";
@@ -23,18 +23,6 @@ async function handleFetch(req: Request): Promise<Response> {
 			const user = await getUserFromRequest(req);
 			if (user) {
 				return Response.redirect(new URL("/", req.url).toString(), 302);
-			}
-		} else if (AUTH_ENABLED) {
-			const user = await getUserFromRequest(req);
-			if (!user) {
-				const returnTo =
-					pathname === "/"
-						? ""
-						: `?returnTo=${encodeURIComponent(pathname + url.search)}`;
-				return Response.redirect(
-					new URL(`/login${returnTo}`, req.url).toString(),
-					302,
-				);
 			}
 		}
 	}

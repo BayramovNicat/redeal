@@ -12,6 +12,7 @@ export interface MultiSelectElement extends HTMLElement {
 	getValue: () => string[];
 	setValue: (vals: string[]) => void;
 	setOptions: (options: MultiSelectOption[]) => void;
+	close: () => void;
 	focus: (options?: FocusOptions) => void;
 }
 
@@ -247,6 +248,7 @@ export function MultiSelect({
 		options = newOptions;
 		updateUI();
 	};
+	multiEl.close = () => setOpen(false);
 	multiEl.focus = (options?: FocusOptions) => trigger.focus(options);
 
 	updateUI();

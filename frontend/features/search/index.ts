@@ -2,7 +2,11 @@ import { bus, EVENTS } from "@/core/events";
 import { t } from "@/core/i18n";
 import { state } from "@/core/state";
 import type { Property } from "@/core/types";
-import { hide, makeEventManager, show, toast } from "@/core/utils";
+import { hide, html, makeEventManager, show, toast } from "@/core/utils";
+import { isUserAuthenticated } from "@/features/auth/api";
+import { openLoginModal } from "@/features/auth/login-modal";
+import { Button } from "@/ui/button";
+import { Icons } from "@/ui/icons";
 import type { MultiSelectElement } from "@/ui/multi-select";
 import { SkeletonList } from "@/ui/skeleton";
 // Lazy triggered via bus.emit(EVENTS.HEATMAP_OPEN)
@@ -11,6 +15,8 @@ import { getBooleanFilters, getNumericFilters } from "./constants";
 import { renderSearchFilters } from "./filters";
 import type { SearchUI } from "./types";
 import {
+	hasNonDefaultUrlFilters,
+	resetFiltersToDefault,
 	restoreStateFromUrl,
 	saveFiltersToStorage,
 	syncStateToUrl,
@@ -134,6 +140,15 @@ export function initSearch(container: HTMLElement): () => void {
 	async function executeSearch(isPagination = false): Promise<void> {
 		if (state.loading) return;
 
+		const isGuest = !isUserAuthenticated();
+		if (isGuest && isPagination) {
+			openLoginModal("more", {
+				total: state.currentTotal,
+				limit: state.previewLimit,
+			});
+			return;
+		}
+
 		const locations = ui.locationSelect.getValue();
 		if (locations.length === 0) {
 			ui.locationSelect.focus({ preventScroll: true });
@@ -148,25 +163,44 @@ export function initSearch(container: HTMLElement): () => void {
 			const response = await fetch(`/api/deals/undervalued?${searchParams}`);
 			const searchResults = (await response.json()) as {
 				error?: string;
+				code?: string;
+				preview?: boolean;
+				preview_limit?: number;
 				data: Property[];
 				total: number;
 			};
 
 			hide(globalElements.loadingIndicator);
 
+			if (response.status === 401 || searchResults.code === "AUTH_REQUIRED") {
+				if (isGuest) {
+					resetFiltersToDefault(ui);
+					openLoginModal("filter");
+				} else {
+					toast(searchResults.error ?? "Unauthorized", true);
+				}
+				return;
+			}
+
 			if (searchResults.error) {
 				toast(searchResults.error, true);
 				return;
 			}
 
+			state.isPreviewLimited = Boolean(searchResults.preview);
+			if (searchResults.preview_limit) {
+				state.previewLimit = searchResults.preview_limit;
+			}
 			state.allResults = [...state.allResults, ...searchResults.data];
 			state.currentTotal = searchResults.total;
 			state.currentOffset += searchResults.data.length;
 
 			if (!isPagination) {
 				refreshFilterChips(ui, debouncedSearch);
-				saveFiltersToStorage(ui);
-				syncStateToUrl(searchParams);
+				if (!isGuest) {
+					saveFiltersToStorage(ui);
+					syncStateToUrl(searchParams);
+				}
 
 				// Location broadcast
 				if (locations.length === 1 && locations[0] !== "__all__") {
@@ -191,13 +225,51 @@ export function initSearch(container: HTMLElement): () => void {
 		}
 	}
 
+	function hasAnyCustomFilter(): boolean {
+		const locs = ui.locationSelect.getValue();
+		if (locs.some((l) => l !== "__all__")) return true;
+		if (Number(ui.discountRange.value) !== 10) return true;
+		if (ui.listingTypeSelect.value !== "sale") return true;
+		if (ui.categorySelect.value !== "") return true;
+		if (ui.mortgageSelect.value !== "") return true;
+		if (ui.descriptionInput.value.trim() !== "") return true;
+		for (const config of getNumericFilters()) {
+			if (ui.numericInputs[config.id].value.trim() !== "") return true;
+		}
+		for (const config of getBooleanFilters()) {
+			if (ui.booleanInputs[config.id].checked) return true;
+		}
+		return false;
+	}
+
+	function promptGuestFilterLogin() {
+		resetFiltersToDefault(ui);
+		ui.locationSelect.close();
+		if (document.activeElement instanceof HTMLElement) {
+			document.activeElement.blur();
+		}
+		openLoginModal("filter");
+	}
+
 	function onFilterChange() {
+		if (!isUserAuthenticated()) {
+			if (hasAnyCustomFilter()) {
+				promptGuestFilterLogin();
+			} else if (ui.locationSelect.getValue().length === 0) {
+				ui.locationSelect.setValue(["__all__"]);
+			}
+			return;
+		}
 		refreshFilterChips(ui, debouncedSearch);
 		saveFiltersToStorage(ui);
 		debouncedSearch();
 	}
 
 	const onClear = () => {
+		if (!isUserAuthenticated()) {
+			resetFiltersToDefault(ui);
+			return;
+		}
 		for (const config of getNumericFilters())
 			ui.numericInputs[config.id].value = "";
 		for (const config of getBooleanFilters())
@@ -215,6 +287,14 @@ export function initSearch(container: HTMLElement): () => void {
 		bus.emit(EVENTS.HEATMAP_OPEN, {
 			activeLocations,
 			onAction: (locName: string, isToggle: boolean) => {
+				if (!isUserAuthenticated()) {
+					const heatmapDialog = document.getElementById(
+						"heatmap-modal",
+					) as HTMLDialogElement | null;
+					heatmapDialog?.close();
+					openLoginModal("filter");
+					return;
+				}
 				if (isToggle) {
 					const current = ui.locationSelect.getValue();
 					const idx = current.indexOf(locName);
@@ -227,6 +307,14 @@ export function initSearch(container: HTMLElement): () => void {
 				bus.emit(EVENTS.SEARCH_STARTED, { more: false });
 			},
 			onSelectMany: (locNames: string[]) => {
+				if (!isUserAuthenticated()) {
+					const heatmapDialog = document.getElementById(
+						"heatmap-modal",
+					) as HTMLDialogElement | null;
+					heatmapDialog?.close();
+					openLoginModal("filter");
+					return;
+				}
 				ui.locationSelect.setValue(
 					locNames.length > 0 ? locNames : ["__all__"],
 				);
@@ -240,7 +328,41 @@ export function initSearch(container: HTMLElement): () => void {
 		onPriceMap,
 		onClear,
 	});
-	container.append(searchLayout, ui.activeChipsContainer);
+
+	const guestBanner = !isUserAuthenticated()
+		? html`
+			<div
+				id="guest-preview-banner"
+				class="flex items-center justify-between gap-3 flex-wrap rounded-(--r) border border-(--accent-b)/60 bg-(--accent-dim)/45 px-3.5 py-2 mb-3.5 text-xs"
+			>
+				<div class="flex items-center gap-2 min-w-0">
+					<span class="inline-flex items-center gap-1 rounded-full bg-(--accent-dim) border border-(--accent-b) px-2 py-0.5 text-[10.5px] font-semibold text-(--accent) shrink-0">
+						${Icons.lock(10)}
+						<span>${t("previewBannerBadge")}</span>
+					</span>
+					<span class="text-(--text-2) leading-snug">
+						${t("previewBannerText")}
+					</span>
+				</div>
+				${Button({
+					title: t("signIn"),
+					ariaLabel: t("signIn"),
+					color: "indigo",
+					variant: "padded",
+					content: html`<span class="flex items-center gap-1.5">${Icons.logIn(12)}<span>${t("signIn")}</span></span>`,
+					className:
+						"h-7 px-3 rounded-full bg-(--accent-solid) hover:bg-(--accent) border-(--accent-b) text-white text-[11.5px] font-semibold shrink-0",
+					onclick: () => openLoginModal("general"),
+				})}
+			</div>
+		`
+		: null;
+
+	if (guestBanner) {
+		container.append(searchLayout, guestBanner, ui.activeChipsContainer);
+	} else {
+		container.append(searchLayout, ui.activeChipsContainer);
+	}
 
 	const { add, cleanup: cleanupHandlers } = makeEventManager();
 
@@ -250,6 +372,15 @@ export function initSearch(container: HTMLElement): () => void {
 			!e.defaultPrevented &&
 			!["BUTTON", "A", "SELECT"].includes((e.target as Element).tagName)
 		) {
+			if (!isUserAuthenticated()) {
+				if (
+					(e.target as Element).tagName === "INPUT" &&
+					!document.body.hasAttribute("data-dialog-open")
+				) {
+					openLoginModal("filter");
+				}
+				return;
+			}
 			void executeSearch(false);
 		}
 	});
@@ -261,8 +392,23 @@ export function initSearch(container: HTMLElement): () => void {
 		},
 	);
 
-	restoreStateFromUrl(ui);
+	const initialUrlParams = new URLSearchParams(window.location.search);
+	const guestLandedWithFilters =
+		!isUserAuthenticated() && hasNonDefaultUrlFilters(initialUrlParams);
+	const intendedReturnTo = guestLandedWithFilters
+		? window.location.pathname + window.location.search
+		: undefined;
+
+	if (isUserAuthenticated()) {
+		restoreStateFromUrl(ui);
+	} else {
+		resetFiltersToDefault(ui);
+	}
 	refreshFilterChips(ui, debouncedSearch);
+
+	if (guestLandedWithFilters) {
+		openLoginModal("filter", { returnTo: intendedReturnTo });
+	}
 
 	async function loadInitialData() {
 		const searchPromise = executeSearch(false);
@@ -276,7 +422,11 @@ export function initSearch(container: HTMLElement): () => void {
 			];
 
 			ui.locationSelect.setOptions(locationOptions);
-			restoreStateFromUrl(ui);
+			if (isUserAuthenticated()) {
+				restoreStateFromUrl(ui);
+			} else {
+				ui.locationSelect.setValue(["__all__"]);
+			}
 			refreshFilterChips(ui, debouncedSearch);
 		} catch {
 			ui.locationSelect.setOptions([{ value: "", label: t("failedLocs") }]);

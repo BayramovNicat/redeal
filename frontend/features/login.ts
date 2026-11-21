@@ -1,10 +1,14 @@
+import { t } from "@/core/i18n";
 import { html } from "@/core/utils";
+import { buildGoogleLoginHref } from "@/features/auth/login-modal";
 import { Icons } from "@/ui/icons";
 
 export function initLogin(container: HTMLElement): () => void {
 	const params = new URLSearchParams(window.location.search);
 	const errorType = params.get("error");
 	const deniedEmail = params.get("email");
+	const returnTo = params.get("returnTo") ?? undefined;
+	const googleHref = buildGoogleLoginHref(returnTo);
 
 	let errorMessage = "";
 	let errorTitle = "";
@@ -108,17 +112,26 @@ export function initLogin(container: HTMLElement): () => void {
 
 				<!-- Sign in Button -->
 				<a
-					href="/api/auth/google"
+					href="${googleHref}"
 					class="w-full h-12 flex items-center justify-center gap-3 rounded-(--r) bg-(--text) text-[#060709] hover:bg-white px-5 text-sm font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.4),0_8px_24px_-6px_rgba(255,255,255,0.2)] transition-all duration-180 active:scale-[0.98]"
 				>
 					${googleIcon}
-					<span>Continue with Google</span>
+					<span>${t("signInWithGoogle")}</span>
 				</a>
 
 				<!-- Footer note -->
-				<p class="text-[11px] text-(--muted) leading-normal">
-					Accounts not on the whitelist will be denied access automatically.
-				</p>
+				<div class="flex flex-col items-center gap-2.5">
+					<p class="text-[11px] text-(--muted) leading-normal">
+						Accounts not on the whitelist will be denied access automatically.
+					</p>
+					<a
+						href="/"
+						class="inline-flex items-center gap-1.5 text-xs font-medium text-(--text-2) hover:text-(--text) transition-colors"
+					>
+						${Icons.chevronLeft(13)}
+						<span>${t("backToPreview")}</span>
+					</a>
+				</div>
 			</div>
 		</div>
 	`;

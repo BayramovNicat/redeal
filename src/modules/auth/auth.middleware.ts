@@ -58,6 +58,73 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
 	return null;
 }
 
+export const GUEST_PREVIEW_LIMIT = 50;
+export const DEFAULT_PUBLIC_THRESHOLD = 10;
+export const DEFAULT_PUBLIC_SORT = "disc";
+export const DEFAULT_PUBLIC_LISTING_TYPE = "sale";
+
+const FILTER_QUERY_KEYS = [
+	"minPrice",
+	"maxPrice",
+	"minPriceSqm",
+	"maxPriceSqm",
+	"minArea",
+	"maxArea",
+	"minRooms",
+	"maxRooms",
+	"minFloor",
+	"maxFloor",
+	"minTotalFloors",
+	"maxTotalFloors",
+	"hasDocument",
+	"hasMortgage",
+	"hasRepair",
+	"isUrgent",
+	"notLastFloor",
+	"hasActiveMortgage",
+	"category",
+	"descriptionSearch",
+] as const;
+
+export function hasActiveDealFilters(q: URLSearchParams): boolean {
+	const location = q.get("location");
+	if (location !== null && location !== "__all__") {
+		return true;
+	}
+
+	const threshold = q.get("threshold");
+	if (
+		threshold !== null &&
+		threshold.trim() !== "" &&
+		Number(threshold) !== DEFAULT_PUBLIC_THRESHOLD
+	) {
+		return true;
+	}
+
+	const listingType = q.get("listingType");
+	if (
+		listingType !== null &&
+		listingType.trim() !== "" &&
+		listingType !== DEFAULT_PUBLIC_LISTING_TYPE
+	) {
+		return true;
+	}
+
+	const sort = q.get("sort");
+	if (sort !== null && sort.trim() !== "" && sort !== DEFAULT_PUBLIC_SORT) {
+		return true;
+	}
+
+	for (const key of FILTER_QUERY_KEYS) {
+		const val = q.get(key);
+		if (val !== null && val.trim() !== "") {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 export function requireAuth(
 	handler: (req: Request) => Response | Promise<Response>,
 ): (req: Request) => Promise<Response> {

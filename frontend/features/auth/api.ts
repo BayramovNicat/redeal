@@ -17,6 +17,23 @@ let cachedUserPromise: Promise<{
 	authenticated: boolean;
 	user: AuthUser | null;
 }> | null = null;
+let cachedAuthState: {
+	resolved: boolean;
+	authenticated: boolean;
+	user: AuthUser | null;
+} = {
+	resolved: false,
+	authenticated: false,
+	user: null,
+};
+
+export function isUserAuthenticated(): boolean {
+	return cachedAuthState.authenticated;
+}
+
+export function getCachedAuthUser(): AuthUser | null {
+	return cachedAuthState.user;
+}
 
 export async function fetchAuthUser(forceRefresh = false): Promise<{
 	authenticated: boolean;
@@ -29,16 +46,30 @@ export async function fetchAuthUser(forceRefresh = false): Promise<{
 					headers: { Accept: "application/json" },
 					credentials: "same-origin",
 				});
-				if (!res.ok) return { authenticated: false, user: null };
+				if (!res.ok) {
+					cachedAuthState = {
+						resolved: true,
+						authenticated: false,
+						user: null,
+					};
+					return { authenticated: false, user: null };
+				}
 				const data = (await res.json()) as {
 					authenticated: boolean;
 					user: AuthUser | null;
 				};
-				return {
+				const result = {
 					authenticated: Boolean(data.authenticated),
 					user: data.user ?? null,
 				};
+				cachedAuthState = { resolved: true, ...result };
+				return result;
 			} catch {
+				cachedAuthState = {
+					resolved: true,
+					authenticated: false,
+					user: null,
+				};
 				return { authenticated: false, user: null };
 			}
 		})();
@@ -71,7 +102,9 @@ export async function logoutUser(): Promise<void> {
 			credentials: "same-origin",
 		});
 	} finally {
-		window.location.href = "/login";
+		cachedUserPromise = null;
+		cachedAuthState = { resolved: false, authenticated: false, user: null };
+		window.location.href = "/";
 	}
 }
 

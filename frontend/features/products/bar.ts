@@ -106,6 +106,26 @@ export function renderProductsBar(
 		</div>
 	`;
 
+	ui.validateBtn = Button({
+		title: t("validateBtn"),
+		content: frag`${Icons.refresh(12)} ${t("validateBtn")}`,
+		color: "green",
+		className: cn("hidden lg:inline-flex", GHOST_UTIL_CLS),
+		onclick: (e) => onValidate(e.currentTarget as HTMLButtonElement),
+	}) as HTMLButtonElement;
+
+	ui.exportBtn = Button({
+		title: t("exportBtn"),
+		content: frag`${Icons.download(12)} ${t("exportBtn")}`,
+		color: "blue",
+		className: cn("hidden md:inline-flex", GHOST_UTIL_CLS),
+		onclick: onExport,
+	}) as HTMLButtonElement;
+
+	ui.adminActions = html`<div
+		class="hidden md:inline-flex items-center gap-0.5 empty:hidden"
+	></div>`;
+
 	ui.resultsBarInner = html`
 		<div
 			class="flex items-center justify-between gap-3 flex-wrap rounded-(--r-lg) sm:rounded-full border border-transparent px-0.5 py-1.5 mb-3 transition-[background-color,border-color,box-shadow,padding] duration-200 ease-out"
@@ -113,22 +133,7 @@ export function renderProductsBar(
 		>
 			${ui.resultsMeta}
 			<div class="flex items-center gap-1.5 flex-wrap">
-				<div class="hidden md:inline-flex items-center gap-0.5">
-					${Button({
-						title: t("validateBtn"),
-						content: frag`${Icons.refresh(12)} ${t("validateBtn")}`,
-						color: "green",
-						className: cn("hidden lg:inline-flex", GHOST_UTIL_CLS),
-						onclick: (e) => onValidate(e.currentTarget as HTMLButtonElement),
-					})}
-					${Button({
-						title: t("exportBtn"),
-						content: frag`${Icons.download(12)} ${t("exportBtn")}`,
-						color: "blue",
-						className: cn("hidden md:inline-flex", GHOST_UTIL_CLS),
-						onclick: onExport,
-					})}
-				</div>
+				${ui.adminActions}
 				${Button({
 					title: t("telegramAlerts"),
 					content: frag`${Icons.bell(12)} ${t("alertMe")}`,
