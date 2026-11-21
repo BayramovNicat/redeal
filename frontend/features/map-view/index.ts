@@ -77,6 +77,7 @@ export async function showMapView(): Promise<void> {
 		state.sharedTooltip = leafletTooltip({
 			sticky: false,
 			direction: "top",
+			offset: [0, -8],
 			opacity: 1,
 			className:
 				"!bg-(--surface-3) !border-(--border-h) !rounded-(--r-sm) !shadow-[0_8px_24px_rgba(0,0,0,0.5)] !p-0 [&::before]:!hidden",
