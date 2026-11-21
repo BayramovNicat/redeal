@@ -19,6 +19,7 @@ export type MultiSelectProps = {
 	options: MultiSelectOption[];
 	placeholder?: string;
 	exclusiveValue?: string;
+	variant?: "default" | "embedded";
 	onChange?: (values: string[]) => void;
 } & Partial<HTMLElement>;
 
@@ -30,6 +31,7 @@ export function MultiSelect({
 	placeholder = "Select options...",
 	className = "",
 	exclusiveValue,
+	variant = "default",
 	onChange,
 	...props
 }: MultiSelectProps): MultiSelectElement {
@@ -74,7 +76,9 @@ export function MultiSelect({
 		ariaExpanded: "false",
 		ariaHasPopup: "listbox",
 		className:
-			"w-full h-10 flex items-center justify-between gap-2.5 px-3.5 bg-(--surface-2)/90 border border-(--border) rounded-(--r) text-[13px] text-(--text) text-left transition-all duration-150 hover:border-(--border-h) hover:bg-(--surface-2) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
+			variant === "embedded"
+				? "w-full h-7 flex items-center justify-between gap-2 bg-transparent border-none text-[13.5px] text-(--text) text-left transition-colors duration-150 focus:outline-none p-0"
+				: "w-full h-10 flex items-center justify-between gap-2.5 px-3.5 bg-(--surface-2)/90 border border-(--border) rounded-(--r) text-[13px] text-(--text) text-left transition-all duration-150 hover:border-(--border-h) hover:bg-(--surface-2) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
 		content: html`
 			<span class="flex items-center gap-2 min-w-0 flex-1">
 				<span class="text-(--muted) shrink-0">${Icons.map(14)}</span>
@@ -103,7 +107,9 @@ export function MultiSelect({
 	const dropdown = html`
 		<div
 			role="listbox"
-			class="absolute top-full left-0 right-0 mt-2 glass-panel bg-(--surface-glass-strong) border border-(--border-h) rounded-(--r) shadow-[var(--shadow-float)] z-50 overflow-hidden hidden animate-[fadeUp_0.16s_ease-out] pointer-events-auto"
+			class="absolute top-full left-0 ${
+				variant === "embedded" ? "min-w-64 right-0 mt-3.5" : "right-0 mt-2"
+			} glass-panel bg-(--surface-glass-strong) border border-(--border-h) rounded-(--r) shadow-[var(--shadow-float)] z-50 overflow-hidden hidden animate-[fadeUp_0.16s_ease-out] pointer-events-auto"
 		>
 			<div class="p-2 border-b border-(--border)">
 				<div class="relative">
