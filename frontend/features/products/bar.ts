@@ -96,6 +96,24 @@ export function renderProductsBar(
 		</div>
 	`;
 
+	ui.validateBtn = Button({
+		title: t("validateBtn"),
+		content: frag`${Icons.refresh(12)} ${t("validateBtn")}`,
+		color: "green",
+		className: "hidden lg:inline-flex h-8",
+		onclick: (e) => onValidate(e.currentTarget as HTMLButtonElement),
+	}) as HTMLButtonElement;
+
+	ui.exportBtn = Button({
+		title: t("exportBtn"),
+		content: frag`${Icons.download(12)} ${t("exportBtn")}`,
+		color: "blue",
+		className: "hidden md:inline-flex h-8",
+		onclick: onExport,
+	}) as HTMLButtonElement;
+
+	ui.adminActions = html`<div class="contents"></div>`;
+
 	ui.resultsBarInner = html`
 		<div
 			class="flex items-center justify-between gap-3 flex-wrap glass-panel bg-(--surface-glass) border border-(--border) rounded-(--r-lg) px-3.5 py-2.5 mb-4 surface-specular transition-shadow duration-200"
@@ -103,20 +121,7 @@ export function renderProductsBar(
 		>
 			${ui.resultsMeta}
 			<div class="flex items-center gap-1.5 flex-wrap">
-				${Button({
-					title: t("validateBtn"),
-					content: frag`${Icons.refresh(12)} ${t("validateBtn")}`,
-					color: "green",
-					className: "hidden lg:inline-flex h-8",
-					onclick: (e) => onValidate(e.currentTarget as HTMLButtonElement),
-				})}
-				${Button({
-					title: t("exportBtn"),
-					content: frag`${Icons.download(12)} ${t("exportBtn")}`,
-					color: "blue",
-					className: "hidden md:inline-flex h-8",
-					onclick: onExport,
-				})}
+				${ui.adminActions}
 				${Button({
 					title: t("telegramAlerts"),
 					content: frag`${Icons.bell(12)} ${t("alertMe")}`,

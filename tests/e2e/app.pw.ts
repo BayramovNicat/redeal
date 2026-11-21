@@ -87,3 +87,28 @@ test("language switcher persists selected language", async ({ page }) => {
 		page.getByRole("button", { name: /ətraflı filtrlər/i }),
 	).toBeVisible();
 });
+
+test("shows validate and export buttons only for admins", async ({ page }) => {
+	await expect(page.getByRole("button", { name: "Validate" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Export" })).toBeVisible();
+
+	await page.unroute("**/api/auth/me");
+	await page.route("**/api/auth/me", async (route) => {
+		await route.fulfill({
+			json: {
+				authenticated: true,
+				user: {
+					id: "e2e-regular-user",
+					email: "regular@redeal.local",
+					name: "Regular User",
+					role: "user",
+				},
+			},
+		});
+	});
+
+	await page.reload();
+	await expect(page.locator(".product-card")).toHaveCount(1);
+	await expect(page.getByRole("button", { name: "Validate" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Export" })).toHaveCount(0);
+});

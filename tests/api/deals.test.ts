@@ -929,6 +929,44 @@ describe("public API", () => {
 			where: { email: { in: [regularEmail, adminEmail] } },
 		});
 	});
+
+	test("POST /api/deals/undervalued/validate requires admin role", async () => {
+		if (skipIfNoServer()) return;
+
+		const unauthRes = await fetch(
+			`${baseUrl}/api/deals/undervalued/validate?location=__all__&threshold=10`,
+			{ method: "POST" },
+		);
+		expect(unauthRes.status).toBe(401);
+
+		const regularEmail = "reg-user-validate-test@redeal.local";
+		await addWhitelistedEmail(regularEmail, "Regular User");
+		const regularUser = await upsertGoogleUser({
+			sub: "google-sub-regular-validate",
+			email: regularEmail,
+			name: "Regular User",
+		});
+		const regularSession = await createSession(regularUser.id);
+		const regularCookie = `redeal_session=${regularSession.signedCookieValue}`;
+
+		try {
+			const regularRes = await fetch(
+				`${baseUrl}/api/deals/undervalued/validate?location=__all__&threshold=10`,
+				{
+					method: "POST",
+					headers: { cookie: regularCookie },
+				},
+			);
+			expect(regularRes.status).toBe(403);
+		} finally {
+			await prisma.whitelistedEmail.deleteMany({
+				where: { email: regularEmail },
+			});
+			await prisma.user.deleteMany({
+				where: { email: regularEmail },
+			});
+		}
+	});
 });
 
 describe("XSS escaping — formatListing", () => {

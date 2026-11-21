@@ -1,6 +1,9 @@
 export interface ProductsUI {
 	container: HTMLElement;
 	resultsMeta: HTMLElement;
+	adminActions: HTMLElement;
+	validateBtn: HTMLButtonElement;
+	exportBtn: HTMLButtonElement;
 	savedBtn: HTMLButtonElement;
 	savedBadge: HTMLElement;
 	sortSelect: HTMLSelectElement;

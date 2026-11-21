@@ -34,6 +34,9 @@ export function initProducts(container: HTMLElement): () => void {
 	const ui: ProductsUI = {
 		container,
 		resultsMeta: null as unknown as HTMLElement,
+		adminActions: null as unknown as HTMLElement,
+		validateBtn: null as unknown as HTMLButtonElement,
+		exportBtn: null as unknown as HTMLButtonElement,
 		savedBtn: null as unknown as HTMLButtonElement,
 		savedBadge: null as unknown as HTMLElement,
 		sortSelect: null as unknown as HTMLSelectElement,
@@ -101,7 +104,9 @@ export function initProducts(container: HTMLElement): () => void {
 			bus.emit(EVENTS.SEARCH_STARTED, { more: false });
 		},
 		onViewChange: (view) => setView(view),
-		onExport: () => handleExport(ui.sortSelect.value),
+		onExport: () => {
+			if (isAdminUser) handleExport(ui.sortSelect.value);
+		},
 		onValidate: (button) => void handleValidate(button),
 		onSavedClick: (e) => void handleSavedClick(e),
 		onAlertsOpen: () => bus.emit(EVENTS.ALERTS_OPEN),
@@ -126,6 +131,7 @@ export function initProducts(container: HTMLElement): () => void {
 		void isCurrentUserAdmin().then((isAdmin) => {
 			if (isAdmin) {
 				isAdminUser = true;
+				ui.adminActions.replaceChildren(ui.validateBtn, ui.exportBtn);
 				cardCallbacks.onDelete = (p) => {
 					void deleteItem(p).then((deleted) => {
 						if (deleted) updateSavedBadge();
@@ -305,7 +311,13 @@ export function initProducts(container: HTMLElement): () => void {
 	}
 
 	async function handleValidate(button: HTMLButtonElement): Promise<void> {
-		if (state.loading || !state.hasSearched || state.showingSaved) return;
+		if (
+			!isAdminUser ||
+			state.loading ||
+			!state.hasSearched ||
+			state.showingSaved
+		)
+			return;
 
 		state.loading = true;
 		button.disabled = true;

@@ -81,7 +81,7 @@ export const routes = {
 	"/api/deals/trend": { GET: requireAuth(br(getTrend)) },
 	"/api/deals/undervalued": { GET: requireAuth(br(getUndervaluedDeals)) },
 	"/api/deals/undervalued/validate": {
-		POST: requireAuth(br(validateUndervaluedDeals)),
+		POST: requireAdmin(br(validateUndervaluedDeals)),
 	},
 	"/api/deals/price-drops": { GET: requireAuth(br(getPriceDrops)) },
 	"/api/deals/map-pins": { GET: requireAuth(br(getMapPins)) },
