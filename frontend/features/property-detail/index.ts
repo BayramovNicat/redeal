@@ -115,6 +115,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		void isCurrentUserAdmin().then((isAdmin) => {
 			if (isAdmin) {
 				ui.deleteBtn.classList.remove("hidden");
+				ui.deleteBtn.classList.add("flex");
 			}
 		});
 	});

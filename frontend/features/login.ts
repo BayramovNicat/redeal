@@ -32,18 +32,18 @@ export function initLogin(container: HTMLElement): () => void {
 
 	const errorBox = errorMessage
 		? html`
-			<div class="w-full rounded-(--r) border border-(--red-b) bg-(--red-dim) p-4 text-left animate-in fade-in zoom-in-95 duration-200">
+			<div class="w-full rounded-(--r) border border-(--red-b) bg-(--red-dim) p-3.75 text-left animate-[fadeUp_0.2s_ease-out]">
 				<div class="flex items-start gap-3">
 					<div class="mt-0.5 text-(--red) shrink-0">
-						<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<circle cx="12" cy="12" r="10" />
 							<line x1="12" y1="8" x2="12" y2="12" />
 							<line x1="12" y1="16" x2="12.01" y2="16" />
 						</svg>
 					</div>
-					<div class="flex flex-col gap-1 text-sm">
-						<span class="font-bold text-(--red)">${errorTitle}</span>
-						<p class="text-(--text) opacity-90 leading-relaxed text-xs">
+					<div class="flex flex-col gap-0.75 text-sm">
+						<span class="font-bold text-(--red) text-[13px]">${errorTitle}</span>
+						<p class="text-(--text)/90 leading-relaxed text-xs">
 							${errorMessage}
 						</p>
 					</div>
@@ -53,7 +53,7 @@ export function initLogin(container: HTMLElement): () => void {
 		: "";
 
 	const googleIcon = html`
-		<svg class="size-5 shrink-0" viewBox="0 0 24 24">
+		<svg class="size-4.5 shrink-0" viewBox="0 0 24 24">
 			<path
 				fill="#4285F4"
 				d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
@@ -74,34 +74,34 @@ export function initLogin(container: HTMLElement): () => void {
 	`;
 
 	const loginCard = html`
-		<div class="mx-auto flex min-h-[80vh] max-w-md flex-col items-center justify-center px-4 py-12">
-			<div class="w-full rounded-2xl border border-(--border) bg-(--surface) p-8 shadow-2xl flex flex-col items-center text-center gap-6 backdrop-blur-md">
+		<div class="mx-auto flex min-h-screen max-w-[430px] flex-col items-center justify-center px-5 py-12">
+			<div class="w-full rounded-(--r-xl) border border-(--border-h) glass-panel bg-(--surface-glass-strong) p-8 sm:p-9 shadow-[var(--shadow-float)] flex flex-col items-center text-center gap-6">
 				<!-- Brand Header -->
-				<div class="flex flex-col items-center gap-3">
+				<div class="flex flex-col items-center gap-3.5">
 					<div
-						class="w-14 h-14 rounded-2xl bg-(--accent-dim) border border-(--accent-b)/40 flex items-center justify-center text-(--accent) shadow-[0_0_25px_rgba(99,102,241,0.2)]"
+						class="size-14 rounded-2xl bg-linear-to-br from-(--accent-solid)/30 via-(--accent-dim) to-(--blue-dim) border border-(--accent-b) flex items-center justify-center text-(--accent) shadow-[0_0_32px_rgba(88,101,242,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]"
 					>
-						${Icons.home(28)}
+						${Icons.home(26)}
 					</div>
 					<div>
-						<h1 class="text-2xl font-extrabold tracking-tight text-(--text)">
-							redeal
+						<h1 class="text-2xl font-extrabold tracking-[-0.03em] text-(--text)">
+							Redeal
 						</h1>
-						<p class="text-xs font-semibold text-(--muted) uppercase tracking-widest mt-0.5">
-							Baku Real Estate Aggregator
+						<p class="text-[11px] font-semibold text-(--muted) uppercase tracking-[0.14em] mt-1">
+							Baku Real Estate Intelligence
 						</p>
 					</div>
 				</div>
 
 				<!-- Whitelist Notice -->
-				<div class="rounded-lg border border-(--border)/60 bg-(--surface-2)/60 px-3.5 py-2 text-xs text-(--muted)">
-					<span class="inline-block size-1.5 rounded-full bg-(--accent) mr-1.5 align-middle"></span>
-					Private Preview • Whitelist Only
+				<div class="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--surface-2)/80 px-3.5 py-1.5 text-[11px] font-medium text-(--text-2)">
+					<span class="size-1.5 rounded-full bg-(--accent) shadow-[0_0_8px_var(--accent)]"></span>
+					Private Access • Whitelist Only
 				</div>
 
 				<!-- Description -->
-				<p class="text-sm text-(--muted) leading-relaxed">
-					Sign in with your approved Google account to analyze undervalued real estate deals and trends.
+				<p class="text-[13.5px] text-(--text-2) leading-relaxed max-w-xs">
+					Sign in with your approved Google account to track undervalued listings and district price trends.
 				</p>
 
 				${errorBox}
@@ -109,14 +109,14 @@ export function initLogin(container: HTMLElement): () => void {
 				<!-- Sign in Button -->
 				<a
 					href="/api/auth/google"
-					class="w-full flex items-center justify-center gap-3 rounded-(--r) border border-(--border) bg-(--surface-2) hover:bg-(--surface-3) px-5 py-3.5 text-sm font-semibold text-(--text) transition-all duration-200 hover:border-(--accent-b)/60 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] active:scale-[0.98]"
+					class="w-full h-12 flex items-center justify-center gap-3 rounded-(--r) bg-(--text) text-[#060709] hover:bg-white px-5 text-sm font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.4),0_8px_24px_-6px_rgba(255,255,255,0.2)] transition-all duration-180 active:scale-[0.98]"
 				>
 					${googleIcon}
 					<span>Continue with Google</span>
 				</a>
 
 				<!-- Footer note -->
-				<p class="text-[11px] text-(--muted)/80 leading-normal">
+				<p class="text-[11px] text-(--muted) leading-normal">
 					Accounts not on the whitelist will be denied access automatically.
 				</p>
 			</div>

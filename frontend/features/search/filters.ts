@@ -12,7 +12,7 @@ import { getBooleanFilters, getNumericFilters } from "./constants";
 import type { SearchCallbacks, SearchUI } from "./types";
 
 /**
- * Renders the search filter UI and populates the UI references.
+ * Renders the search filter command dock and populates the UI references.
  */
 export function renderSearchFilters(
 	ui: SearchUI,
@@ -35,12 +35,13 @@ export function renderSearchFilters(
 		color: "indigo",
 		variant: "base",
 		ariaLabel: t("priceMap"),
-		content: frag`${Icons.globe(14)} ${t("priceMap")}`,
+		className: "h-10 px-3.75 rounded-(--r) font-semibold w-full md:w-auto",
+		content: frag`${Icons.globe(14)} <span>${t("priceMap")}</span>`,
 		onclick: onPriceMap,
 	}) as HTMLButtonElement;
 
 	ui.discountValueDisplay = html`<span
-		class="text-xs font-bold text-(--accent) bg-(--accent-dim) px-2 py-0.5 rounded-full tracking-[0.02em]"
+		class="text-[11px] font-bold font-mono-num text-(--accent) bg-(--accent-dim) border border-(--accent-b) px-2 py-0.5 rounded-full leading-tight"
 		>10%</span
 	>`;
 
@@ -60,7 +61,7 @@ export function renderSearchFilters(
 	ui.discountRange = rangeWrapper.inputElement;
 
 	ui.advancedCount = html`<span
-		class="bg-(--accent-solid) text-white rounded-full px-1.5 py-px text-xs font-semibold"
+		class="bg-(--accent-solid) text-white rounded-full min-w-4.5 h-4.5 px-1.25 text-[10px] font-bold font-mono-num inline-flex items-center justify-center"
 	></span>`;
 	hide(ui.advancedCount);
 
@@ -68,13 +69,14 @@ export function renderSearchFilters(
 		<button
 			type="button"
 			aria-expanded="false"
-			class="group inline-flex items-center gap-1.25 bg-transparent border border-(--border) rounded-(--r-sm) px-3 py-1.5 text-(--text-2) text-xs font-medium mt-3.5 transition-all hover:border-(--border-h) hover:text-(--text) hover:bg-(--surface-2) aria-expanded:text-(--accent) aria-expanded:border-[rgba(99,102,241,0.4)] aria-expanded:bg-(--accent-dim)"
+			class="group inline-flex items-center gap-2 bg-(--surface-2)/70 border border-(--border) rounded-full px-3.5 py-1.5 text-(--text-2) text-xs font-semibold transition-all duration-150 hover:border-(--border-h) hover:text-(--text) hover:bg-(--surface-3)/70 aria-expanded:text-(--accent) aria-expanded:border-(--accent-b) aria-expanded:bg-(--accent-dim)"
 		>
 			${Icons.chevron(
 				12,
 				"transition-transform duration-200 group-aria-expanded:rotate-180",
 			)}
-			${t("advancedFilters")} ${ui.advancedCount}
+			<span>${t("advancedFilters")}</span>
+			${ui.advancedCount}
 		</button>
 	` as HTMLButtonElement;
 
@@ -126,102 +128,109 @@ export function renderSearchFilters(
 
 	ui.clearAllBtn = RawButton({
 		className:
-			"inline-flex items-center gap-1 text-xs text-(--muted) hover:text-(--text) transition-colors border border-(--border) hover:border-(--border-h) rounded-(--r-sm) px-2.5 py-1.25",
-		content: t("clearFilters"),
+			"inline-flex items-center gap-1.5 text-xs font-medium text-(--text-2) hover:text-(--red) transition-colors border border-(--border) hover:border-(--red-b) hover:bg-(--red-dim) rounded-full px-3.25 py-1.5",
+		content: frag`${Icons.close(11)} ${t("clearFilters")}`,
 		onclick: onClear,
 	});
 
 	ui.advancedPanel = html`
-		<div
-			class="overflow-hidden max-h-0 opacity-0 transition-all ease-in-out duration-300 [&.open]:max-h-150 [&.open]:opacity-100"
-		>
-			<div
-				class="grid grid-cols-4 gap-2.5 pt-4 border-t border-(--border) mt-3.5 max-[680px]:grid-cols-2"
-			>
-				${getNumericFilters().map((config) => {
-					ui.numericInputs[config.id] = Input({
-						id: config.id,
-						type: "number",
-						placeholder: config.placeholder,
-						className: "w-full",
-						min: "0",
-						oninput: (e) => {
-							const input = e.target as HTMLInputElement;
-							if (input.value && parseFloat(input.value) < 0) {
-								input.value = "";
-							}
-							onFilterChange();
-						},
-					});
-					return Field({
-						label: config.label,
-						htmlFor: config.id,
-						input: ui.numericInputs[config.id],
-					});
-				})}
-				${Field({
-					label: t("listingType"),
-					htmlFor: "listingType",
-					input: ui.listingTypeSelect,
-				})}
-				${Field({
-					label: t("category"),
-					htmlFor: "category",
-					input: ui.categorySelect,
-				})}
-				${Field({
-					label: t("activeMortgage"),
-					htmlFor: "hasActiveMortgage",
-					input: ui.mortgageSelect,
-				})}
-				${Field({
-					label: t("descriptionSearch"),
-					htmlFor: "descriptionSearch",
-					input: ui.descriptionInput,
-				})}
+		<div class="filter-drawer">
+			<div>
+				<div class="pt-4 mt-4 border-t border-(--border) space-y-4">
+					<div
+						class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"
+					>
+						${getNumericFilters().map((config) => {
+							ui.numericInputs[config.id] = Input({
+								id: config.id,
+								type: "number",
+								placeholder: config.placeholder,
+								className: "w-full font-mono-num",
+								min: "0",
+								oninput: (e) => {
+									const input = e.target as HTMLInputElement;
+									if (input.value && parseFloat(input.value) < 0) {
+										input.value = "";
+									}
+									onFilterChange();
+								},
+							});
+							return Field({
+								label: config.label,
+								htmlFor: config.id,
+								input: ui.numericInputs[config.id],
+							});
+						})}
+					</div>
+
+					<div
+						class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-3 border-t border-(--border-subtle)"
+					>
+						${Field({
+							label: t("listingType"),
+							htmlFor: "listingType",
+							input: ui.listingTypeSelect,
+						})}
+						${Field({
+							label: t("category"),
+							htmlFor: "category",
+							input: ui.categorySelect,
+						})}
+						${Field({
+							label: t("activeMortgage"),
+							htmlFor: "hasActiveMortgage",
+							input: ui.mortgageSelect,
+						})}
+						${Field({
+							label: t("descriptionSearch"),
+							htmlFor: "descriptionSearch",
+							input: ui.descriptionInput,
+						})}
+					</div>
+
+					<div
+						class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-(--border-subtle)"
+					>
+						<div class="flex flex-wrap gap-2">
+							${getBooleanFilters().map((config) => {
+								const chipWrapper = Chip({
+									id: config.id,
+									label: config.label,
+									onchange: onFilterChange,
+								});
+								ui.booleanInputs[config.id] = chipWrapper.inputElement;
+								return chipWrapper;
+							})}
+						</div>
+						${ui.clearAllBtn}
+					</div>
+				</div>
 			</div>
-			<div class="flex flex-wrap gap-1.75 pt-3.5">
-				${getBooleanFilters().map((config) => {
-					const chipWrapper = Chip({
-						id: config.id,
-						label: config.label,
-						onchange: onFilterChange,
-					});
-					ui.booleanInputs[config.id] = chipWrapper.inputElement;
-					return chipWrapper;
-				})}
-			</div>
-			<div class="flex justify-end pt-2.5">${ui.clearAllBtn}</div>
 		</div>
 	`;
 
 	ui.activeChipsContainer = html`<div
-		class="flex flex-wrap gap-1.5 mb-3.5"
+		class="flex flex-wrap gap-1.75 mb-4"
 	></div>`;
 	hide(ui.activeChipsContainer);
 
 	return html`
 		<div
-			class="bg-(--surface) border border-(--border) rounded-(--r-lg) p-5 mb-3.5"
+			class="bg-(--surface) border border-(--border) rounded-(--r-lg) p-4 sm:p-5 mb-4 surface-specular"
 		>
 			<div
-				class="grid grid-cols-[1fr_auto_260px] gap-3 items-end max-[680px]:grid-cols-1"
+				class="grid grid-cols-1 md:grid-cols-[1fr_auto_280px] gap-3.5 items-end"
 			>
 				${Field({
 					label: t("location"),
 					htmlFor: "loc-trigger",
 					input: ui.locationSelect,
 				})}
-				<div class="flex flex-col gap-1.5">
-					<span
-						class="text-xs font-medium text-(--muted) tracking-[0.06em] uppercase invisible"
-						aria-hidden="true"
-						>Map</span
-					>
+				<div class="flex items-end">
 					${ui.priceMapActionBtn}
 				</div>
 				<div class="flex flex-col gap-1.5">
-					<div class="flex items-center justify-between">
+					<div class="flex items-center justify-between gap-2">
 						${Label({
 							text: t("discountThreshold"),
 							htmlFor: "discount-threshold",
@@ -231,7 +240,10 @@ export function renderSearchFilters(
 					${rangeWrapper}
 				</div>
 			</div>
-			${ui.advancedToggle} ${ui.advancedPanel}
+			<div class="flex items-center justify-between mt-3.5">
+				${ui.advancedToggle}
+			</div>
+			${ui.advancedPanel}
 		</div>
 	`;
 }

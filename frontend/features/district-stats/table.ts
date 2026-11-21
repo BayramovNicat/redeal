@@ -19,7 +19,7 @@ export function renderSortHeader(
 
 	const th = html`
 		<th
-			class="px-4 py-2.5 font-semibold text-[11px] uppercase tracking-wider text-(--muted) cursor-pointer select-none hover:text-(--text) transition-colors ${
+			class="px-5 py-3 font-semibold text-[10.5px] uppercase tracking-wider text-(--muted) cursor-pointer select-none hover:text-(--text) transition-colors ${
 				align === "right"
 					? "text-right"
 					: align === "center"
@@ -52,22 +52,22 @@ export function renderSortHeader(
 export function TrendBadge(row: LocationRow): HTMLElement {
 	const { trend, recent_avg, prior_avg } = row;
 	if (trend === "flat" || !recent_avg || !prior_avg) {
-		return html`<span class="text-(--muted) text-[11px]">···</span>`;
+		return html`<span class="text-(--muted) text-[11px] font-mono-num">···</span>`;
 	}
 
 	const isUp = trend === "up";
 	const diff = Math.abs(((recent_avg - prior_avg) / prior_avg) * 100);
 	const colorClass = isUp
-		? "bg-(--red)/10 text-(--red)"
-		: "bg-(--green)/10 text-(--green)";
+		? "bg-(--red-dim) border-(--red-b) text-(--red)"
+		: "bg-(--green-dim) border-(--green-b) text-(--green)";
 
 	return html`
 		<div
-			class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${colorClass} text-[11px] font-bold"
+			class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${colorClass} text-[11px] font-bold font-mono-num"
 		>
 			${Icons.chevron({
 				size: 10,
-				strokeWidth: 3,
+				strokeWidth: 2.8,
 				className: isUp ? "rotate-180" : "",
 			})}
 			${diff.toFixed(1)}%
@@ -81,21 +81,21 @@ export function TrendBadge(row: LocationRow): HTMLElement {
 export function DataRow(row: LocationRow): HTMLElement {
 	return html`
 		<tr
-			class="group hover:bg-(--surface-2) border-b border-(--border)/50 transition-colors"
+			class="group hover:bg-(--surface-2)/80 border-b border-(--border-subtle) transition-colors"
 		>
 			<td
-				class="px-5 py-3 font-medium text-(--text) max-w-50 truncate"
+				class="px-5 py-3.25 font-medium text-[13.5px] text-(--text) max-w-52 truncate"
 				title="${row.location_name}"
 			>
 				${row.location_name}
 			</td>
-			<td class="px-4 py-3 text-right font-mono text-[13px]">
+			<td class="px-5 py-3.25 text-right font-mono-num text-[13px] font-semibold text-(--text)">
 				₼ ${fmt(row.avg_price_per_sqm, 0)}
 			</td>
-			<td class="px-4 py-3 text-right text-(--muted) tabular-nums">
+			<td class="px-5 py-3.25 text-right text-(--text-2) font-mono-num text-xs">
 				${row.count}
 			</td>
-			<td class="px-4 pr-5 py-3 text-center">${TrendBadge(row)}</td>
+			<td class="px-5 py-3.25 text-center">${TrendBadge(row)}</td>
 		</tr>
 	`;
 }

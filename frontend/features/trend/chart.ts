@@ -14,8 +14,8 @@ export function renderTrendChart(
 ): SVGElement | null {
 	const vals = data.map((v) => Number(v.avg_ppsm));
 	const W = ui.chartEl.clientWidth || 600;
-	const H = 68;
-	const PAD_Y = 6;
+	const H = 80;
+	const PAD_Y = 8;
 
 	if (W === 0) return null;
 
@@ -39,13 +39,14 @@ export function renderTrendChart(
 		return d;
 	};
 
-	const color = isUp ? "#ef4444" : isDown ? "#22c55e" : "#6366f1";
+	const color = isUp ? "#fb7185" : isDown ? "#34d399" : "#8294ff";
 	const lineD = buildPath(pts);
 	const lastPt = pts[pts.length - 1];
 	const firstPt = pts[0];
 	if (!lastPt || !firstPt) return null;
 
 	const areaD = `${lineD} L ${lastPt[0]},${H} L ${firstPt[0]},${H} Z`;
+	const midY = (H / 2).toFixed(1);
 
 	const svg = html`<svg
 		viewBox="0 0 ${W} ${H}"
@@ -55,10 +56,28 @@ export function renderTrendChart(
 	>
 		<defs>
 			<linearGradient id="spark-g" x1="0" y1="0" x2="0" y2="1">
-				<stop offset="0%" stop-color="${color}" stop-opacity="0.28" />
+				<stop offset="0%" stop-color="${color}" stop-opacity="0.26" />
 				<stop offset="100%" stop-color="${color}" stop-opacity="0" />
 			</linearGradient>
 		</defs>
+		<line
+			x1="0"
+			y1="${PAD_Y}"
+			x2="${W}"
+			y2="${PAD_Y}"
+			stroke="rgba(255,255,255,0.05)"
+			stroke-dasharray="3 4"
+			vector-effect="non-scaling-stroke"
+		/>
+		<line
+			x1="0"
+			y1="${midY}"
+			x2="${W}"
+			y2="${midY}"
+			stroke="rgba(255,255,255,0.05)"
+			stroke-dasharray="3 4"
+			vector-effect="non-scaling-stroke"
+		/>
 		<path
 			d="${areaD}"
 			fill="url(#spark-g)"
@@ -68,7 +87,7 @@ export function renderTrendChart(
 			d="${lineD}"
 			fill="none"
 			stroke="${color}"
-			stroke-width="1.5"
+			stroke-width="2"
 			stroke-linecap="round"
 			stroke-linejoin="round"
 			vector-effect="non-scaling-stroke"
@@ -76,11 +95,18 @@ export function renderTrendChart(
 		<circle
 			cx="${lastPt[0]}"
 			cy="${lastPt[1]}"
-			r="6"
+			r="7"
 			fill="${color}"
-			opacity="0.2"
+			opacity="0.22"
 		/>
-		<circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="3.5" fill="${color}" />
+		<circle
+			cx="${lastPt[0]}"
+			cy="${lastPt[1]}"
+			r="3.5"
+			fill="${color}"
+			stroke="#0c0e13"
+			stroke-width="1.5"
+		/>
 	</svg>` as unknown as SVGElement;
 
 	svg.onmousemove = (evt: MouseEvent) => {
@@ -94,7 +120,7 @@ export function renderTrendChart(
 		if (!p) return;
 
 		ui.tipEl.replaceChildren(
-			frag`<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:1px">${dfmt(p.week)}</span><strong>₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:5px">${p.listing_count} ${t(p.listing_count !== 1 ? "listings" : "listing")}</span>`,
+			frag`<span style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px">${dfmt(p.week)}</span><strong class="font-mono-num">₼ ${fmt(Number(p.avg_ppsm), 0)}/m²</strong><span style="font-size:10px;color:var(--muted);margin-left:6px">${p.listing_count} ${t(p.listing_count !== 1 ? "listings" : "listing")}</span>`,
 		);
 
 		ui.tipEl.style.display = "block";

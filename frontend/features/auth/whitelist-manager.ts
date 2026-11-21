@@ -10,15 +10,15 @@ import { Icons } from "@/ui/icons";
 
 export function WhitelistManager(): HTMLElement {
 	const container = html`
-		<div class="w-full flex flex-col gap-5 rounded-xl border border-(--border) bg-(--surface) p-6 shadow-sm mt-6">
+		<div class="w-full flex flex-col gap-5 p-6">
 			<div class="flex items-center justify-between border-b border-(--border) pb-4">
 				<div>
-					<h2 class="text-lg font-bold text-(--text)">Allowed Google Accounts</h2>
+					<h2 class="text-base font-bold text-(--text)">Allowed Google Accounts</h2>
 					<p class="text-xs text-(--muted) mt-0.5">
 						Only whitelisted Google emails can access this application.
 					</p>
 				</div>
-				<span class="rounded-full bg-(--accent-dim) px-2.5 py-1 text-xs font-semibold text-(--accent)" id="whitelist-count">
+				<span class="rounded-full bg-(--accent-dim) border border-(--accent-b) px-2.5 py-1 text-[11px] font-semibold font-mono-num text-(--accent)" id="whitelist-count">
 					Loading…
 				</span>
 			</div>
@@ -30,18 +30,18 @@ export function WhitelistManager(): HTMLElement {
 					required
 					placeholder="Google email (e.g. user@gmail.com)"
 					id="new-email-input"
-					class="flex-1 rounded-(--r) border border-(--border) bg-(--surface-2) px-3.5 py-2 text-xs text-(--text) outline-none transition-colors focus:border-(--accent-b)"
+					class="flex-1 h-9.5 rounded-(--r-sm) border border-(--border) bg-(--surface-2) px-3 text-xs text-(--text) placeholder:text-(--muted) outline-none transition-all focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]"
 				/>
 				<input
 					type="text"
 					placeholder="Optional note / name"
 					id="new-note-input"
-					class="sm:w-44 rounded-(--r) border border-(--border) bg-(--surface-2) px-3.5 py-2 text-xs text-(--text) outline-none transition-colors focus:border-(--accent-b)"
+					class="sm:w-44 h-9.5 rounded-(--r-sm) border border-(--border) bg-(--surface-2) px-3 text-xs text-(--text) placeholder:text-(--muted) outline-none transition-all focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]"
 				/>
 				<button
 					type="submit"
 					id="add-email-btn"
-					class="flex items-center justify-center gap-1.5 rounded-(--r) bg-(--accent) hover:bg-(--accent-hover) px-4 py-2 text-xs font-semibold text-white transition-colors disabled:opacity-50"
+					class="flex items-center justify-center gap-1.5 h-9.5 rounded-(--r-sm) bg-(--accent-solid) hover:bg-(--accent-hover) px-4 text-xs font-semibold text-white transition-all disabled:opacity-50"
 				>
 					Add Email
 				</button>

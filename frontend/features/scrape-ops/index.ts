@@ -5,11 +5,7 @@ import { Dialog } from "@/ui/dialog";
 import { EmptyState } from "@/ui/empty-state";
 import { Icons } from "@/ui/icons";
 import { StatBox } from "@/ui/stat-box";
-import {
-	fetchScrapeAdminSession,
-	fetchScrapeRuns,
-	runScrapeNow,
-} from "./api";
+import { fetchScrapeAdminSession, fetchScrapeRuns, runScrapeNow } from "./api";
 import type { ScrapeRun } from "./types";
 
 const state = {
@@ -177,11 +173,11 @@ function renderRun(run: ScrapeRun): HTMLElement {
 	);
 
 	const card = html`
-		<div class="rounded-(--r) border border-(--border) bg-(--surface) px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition-colors hover:border-(--border-h)">
+		<div class="rounded-(--r) border border-(--border) bg-(--surface) px-4 py-3.5 surface-specular transition-colors hover:border-(--border-h)">
 			<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 				<div class="flex flex-col gap-2 min-w-0">
 					${meta}
-					<div class="text-sm font-semibold text-(--text) truncate">${fmtDuration(run.duration_ms)}</div>
+					<div class="text-sm font-semibold font-mono-num text-(--text) truncate">${fmtDuration(run.duration_ms)}</div>
 				</div>
 				<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs shrink-0 lg:min-w-105">
 					${StatBox({ label: t("scrapeRunFetched"), value: run.total_fetched })}
@@ -198,7 +194,7 @@ function renderRun(run: ScrapeRun): HTMLElement {
 			textEl(
 				"div",
 				platformText,
-				"mt-3 border-t border-(--border)/50 pt-3 text-[11px] text-(--muted)",
+				"mt-3 border-t border-(--border-subtle) pt-3 text-[11px] font-mono-num text-(--muted)",
 			),
 		);
 	}
@@ -216,7 +212,7 @@ function renderRun(run: ScrapeRun): HTMLElement {
 }
 
 function statusPill(status: string): HTMLElement {
-	const isSuccess = status === "success";
+	const isSuccess = status === "success" || status === "completed";
 	const isRunning = status === "running";
 	const classes = isSuccess
 		? "border-(--green-b) bg-(--green-dim) text-(--green)"

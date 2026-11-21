@@ -1,29 +1,30 @@
 import { ce, cn, html } from "@/core/utils";
 
 const SHARED =
-	"transition-all duration-150 rounded-(--r) font-medium active:scale-[0.97] disabled:opacity-[0.45] disabled:cursor-not-allowed disabled:transform-none select-none";
+	"transition-all duration-180 ease-out rounded-(--r-sm) font-medium active:scale-[0.97] disabled:opacity-[0.42] disabled:cursor-not-allowed disabled:transform-none select-none";
 
 const VARIANTS = {
-	base: "inline-flex items-center justify-center gap-1.5 px-4 py-2.25 text-sm h-10 whitespace-nowrap",
+	base: "inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] h-10 rounded-(--r) whitespace-nowrap",
 	padded:
-		"inline-flex items-center gap-1.25 px-2.5 py-1.25 text-xs border whitespace-nowrap",
-	square: "size-7.5 flex items-center justify-center border",
-	ghost: "inline-flex items-center gap-1.25 border-none p-0 text-xs",
+		"inline-flex items-center gap-1.5 px-2.75 py-1.5 text-xs border whitespace-nowrap",
+	square: "size-8 flex items-center justify-center border",
+	ghost: "inline-flex items-center gap-1.5 border-none p-0 text-xs",
 };
 
 const COLORS = {
-	solid: "bg-(--text) text-(--bg) border-none font-semibold hover:bg-[#d7dbdc]",
+	solid:
+		"bg-(--text) text-[#060709] border-none font-semibold hover:bg-white shadow-[0_1px_2px_rgba(0,0,0,0.4),0_0_20px_rgba(255,255,255,0.08)]",
 	yellow:
-		"text-(--muted) border-(--border) bg-transparent hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) [&.on]:text-(--yellow) [&.on]:border-(--yellow-b) [&.on]:bg-(--yellow-dim)",
-	red: "text-(--muted) border-(--border) bg-transparent hover:text-(--red) hover:border-(--red-b) hover:bg-(--red-dim) [&.on]:text-(--red) [&.on]:border-(--red-b) [&.on]:bg-(--red-dim)",
+		"text-(--text-2) border-(--border) bg-(--surface-2)/70 hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) [&.on]:text-(--yellow) [&.on]:border-(--yellow-b) [&.on]:bg-(--yellow-dim)",
+	red: "text-(--text-2) border-(--border) bg-(--surface-2)/70 hover:text-(--red) hover:border-(--red-b) hover:bg-(--red-dim) [&.on]:text-(--red) [&.on]:border-(--red-b) [&.on]:bg-(--red-dim)",
 	indigo:
-		"text-(--muted) border-(--border) bg-(--surface-2) hover:text-(--text) hover:border-(--border-h) [&.on]:text-(--accent) [&.on]:border-(--accent-b) [&.on]:bg-(--accent-dim)",
+		"text-(--text-2) border-(--border) bg-(--surface-2)/80 hover:text-(--text) hover:border-(--border-h) hover:bg-(--surface-3) [&.on]:text-(--accent) [&.on]:border-(--accent-b) [&.on]:bg-(--accent-dim)",
 	green:
-		"text-(--muted) border-(--border) bg-transparent hover:text-(--green) hover:border-(--green-b) hover:bg-(--green-dim)",
-	blue: "text-(--muted) border-(--border) bg-transparent hover:text-(--blue) hover:border-(--blue-b) hover:bg-(--blue-dim)",
+		"text-(--text-2) border-(--border) bg-(--surface-2)/70 hover:text-(--green) hover:border-(--green-b) hover:bg-(--green-dim) [&.on]:text-(--green) [&.on]:border-(--green-b) [&.on]:bg-(--green-dim)",
+	blue: "text-(--text-2) border-(--border) bg-(--surface-2)/70 hover:text-(--blue) hover:border-(--blue-b) hover:bg-(--blue-dim) [&.on]:text-(--blue) [&.on]:border-(--blue-b) [&.on]:bg-(--blue-dim)",
 	muted: "text-(--muted) border-none bg-transparent hover:text-(--text)",
 	accent:
-		"bg-(--accent-solid) text-white border-none font-semibold hover:bg-(--accent-h) hover:shadow-[0_4px_12px_rgba(79,70,229,0.3)]",
+		"bg-(--accent-solid) text-white border border-white/10 font-semibold hover:bg-(--accent-hover) shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_6px_18px_-4px_rgba(88,101,242,0.5)] hover:shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_10px_24px_-4px_rgba(88,101,242,0.6)]",
 };
 
 /** Props accepted by {@link RawButton}. */
@@ -54,18 +55,6 @@ export type ButtonProps = {
 
 /**
  * A stylized button component with standardized branding and variations.
- *
- * Renders a stylized `<button>` using standardized typographic and surface tokens.
- * Supports full property forwarding to the underlying {@link HTMLButtonElement},
- * allowing for standard attributes like `id`, `title`, and event listeners to be passed directly.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button MDN <button> element}
- *
- * @example
- * ```ts
- * const btn = Button({ content: "Click Me", variant: "base", color: "indigo", onclick: () => console.log("clicked") });
- * container.appendChild(btn);
- * ```
  */
 export function Button({
 	content,

@@ -14,7 +14,7 @@ export function Label({ text, content, className = "", ...props }: LabelProps) {
 		html`
 			<label
 				class="${cn(
-					"text-xs font-medium text-(--muted) tracking-[0.06em] uppercase",
+					"text-[11px] font-semibold text-(--muted) tracking-[0.06em] uppercase",
 					className,
 				)}"
 			>

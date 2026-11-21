@@ -24,7 +24,6 @@ export type MultiSelectProps = {
 
 /**
  * A stylized multi-select component with search and standardized branding.
- * Supports full property forwarding to the underlying {@link HTMLElement} (div).
  */
 export function MultiSelect({
 	options: initialOptions,
@@ -42,12 +41,15 @@ export function MultiSelect({
 	const label = html`<span class="truncate text-(--text-2)"
 		>${placeholder}</span
 	>`;
-	const chevron = Icons.chevron(12, "transition-transform duration-200");
+	const chevron = Icons.chevron(
+		13,
+		"text-(--muted) transition-transform duration-200 shrink-0",
+	);
 	const optionsList = html`<div
-		class="max-h-55 overflow-y-auto p-1 custom-scrollbar"
+		class="max-h-60 overflow-y-auto p-1.5 space-y-0.5"
 	></div>`;
 	const countBadge = html`<span
-		class="px-2 py-0.5 text-[10px] font-bold bg-(--accent-dim) text-(--accent) rounded-full"
+		class="px-2 py-0.5 text-[10px] font-semibold font-mono-num bg-(--accent-dim) text-(--accent) border border-(--accent-b) rounded-full"
 		>0 selected</span
 	>`;
 
@@ -57,7 +59,7 @@ export function MultiSelect({
 		placeholder: "Search...",
 		ariaLabel: "Search locations",
 		className:
-			"w-full pl-8 pr-3 py-1.5 bg-(--surface-2) border border-(--border) rounded-(--r-xs) text-xs text-(--text) focus:outline-none focus:border-(--accent)",
+			"w-full pl-8 pr-3 py-1.75 bg-(--surface-2) border border-(--border) rounded-(--r-sm) text-xs text-(--text) placeholder:text-(--muted) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_2px_var(--accent-dim)] transition-all",
 		oninput: (e) => {
 			searchQuery = (e.target as HTMLInputElement).value;
 			updateUI();
@@ -72,8 +74,14 @@ export function MultiSelect({
 		ariaExpanded: "false",
 		ariaHasPopup: "listbox",
 		className:
-			"w-full flex items-center justify-between gap-2 px-3 py-2 bg-(--surface-2) border border-(--border) rounded-(--r-sm) text-sm text-(--text) text-left transition-all hover:border-(--border-h) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
-		content: html`${label} ${chevron}`,
+			"w-full h-10 flex items-center justify-between gap-2.5 px-3.5 bg-(--surface-2)/90 border border-(--border) rounded-(--r) text-[13px] text-(--text) text-left transition-all duration-150 hover:border-(--border-h) hover:bg-(--surface-2) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
+		content: html`
+			<span class="flex items-center gap-2 min-w-0 flex-1">
+				<span class="text-(--muted) shrink-0">${Icons.map(14)}</span>
+				${label}
+			</span>
+			${chevron}
+		`,
 		onclick: (e) => {
 			e.stopPropagation();
 			setOpen(!isOpen);
@@ -82,7 +90,7 @@ export function MultiSelect({
 
 	const clearBtn = RawButton({
 		className:
-			"px-2 py-1 text-[11px] font-medium text-(--muted) hover:text-(--text) transition-colors",
+			"px-2 py-1 text-[11px] font-medium text-(--muted) hover:text-(--text) transition-colors rounded-(--r-xs) hover:bg-(--surface-3)",
 		content: "Clear all",
 		onclick: (e) => {
 			e.stopPropagation();
@@ -95,21 +103,21 @@ export function MultiSelect({
 	const dropdown = html`
 		<div
 			role="listbox"
-			class="absolute top-full left-0 right-0 mt-1.5 bg-(--surface) border border-(--border) rounded-(--r-sm) shadow-[0_8px_24px_rgba(0,0,0,0.3)] z-50 overflow-hidden hidden animate-[fadeUp_0.2s_ease] pointer-events-auto"
+			class="absolute top-full left-0 right-0 mt-2 glass-panel bg-(--surface-glass-strong) border border-(--border-h) rounded-(--r) shadow-[var(--shadow-float)] z-50 overflow-hidden hidden animate-[fadeUp_0.16s_ease-out] pointer-events-auto"
 		>
 			<div class="p-2 border-b border-(--border)">
 				<div class="relative">
 					<span
 						class="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--muted) pointer-events-none"
 					>
-						${Icons.search(12)}
+						${Icons.search(13)}
 					</span>
 					${search}
 				</div>
 			</div>
 			${optionsList}
 			<div
-				class="p-1.5 border-t border-(--border) bg-(--surface-2) flex items-center justify-between"
+				class="px-2.5 py-2 border-t border-(--border) bg-(--surface)/80 flex items-center justify-between"
 			>
 				${clearBtn} ${countBadge}
 			</div>
@@ -124,7 +132,6 @@ export function MultiSelect({
 	);
 
 	function updateUI() {
-		// Update options list
 		const filtered = options.filter((o) =>
 			o.label.toLowerCase().includes(searchQuery.toLowerCase()),
 		);
@@ -132,7 +139,7 @@ export function MultiSelect({
 		optionsList.replaceChildren();
 		if (filtered.length === 0) {
 			optionsList.replaceChildren(
-				frag`<div class="p-4 text-center text-xs text-(--muted)">No results found</div>`,
+				frag`<div class="p-5 text-center text-xs text-(--muted)">No results found</div>`,
 			);
 		} else {
 			for (const opt of filtered) {
@@ -141,15 +148,15 @@ export function MultiSelect({
 					<div
 						role="option"
 						aria-selected="${isSelected}"
-						class="flex items-center justify-between gap-2 px-2.5 py-2 rounded-(--r-xs) cursor-pointer transition-colors ${
+						class="flex items-center justify-between gap-2 px-2.75 py-2 rounded-(--r-sm) cursor-pointer transition-colors ${
 							isSelected
-								? "bg-(--accent-dim) text-(--accent)"
-								: "hover:bg-(--surface-2)"
+								? "bg-(--accent-dim) text-(--accent) font-semibold"
+								: "text-(--text-2) hover:bg-(--surface-3)/70 hover:text-(--text)"
 						}"
 						data-value="${opt.value}"
 					>
-						<span class="text-xs font-medium truncate">${opt.label}</span>
-						${isSelected ? Icons.check(12) : ""}
+						<span class="text-xs truncate">${opt.label}</span>
+						${isSelected ? Icons.check(13) : ""}
 					</div>
 				`;
 				item.onclick = (e) => {
@@ -160,7 +167,6 @@ export function MultiSelect({
 			}
 		}
 
-		// Update trigger label
 		if (selectedValues.length === 0) {
 			label.textContent = placeholder;
 			label.className = "truncate text-(--text-2)";
@@ -180,7 +186,6 @@ export function MultiSelect({
 			countBadge.style.display = "inline-block";
 		}
 
-		// Update clear button
 		clearBtn.style.visibility =
 			selectedValues.length > 0 ? "visible" : "hidden";
 	}
@@ -215,7 +220,6 @@ export function MultiSelect({
 		}
 	}
 
-	// Close on click outside and auto-cleanup
 	const handleOutside = (e: MouseEvent) => {
 		if (!document.body.contains(el)) {
 			document.removeEventListener("click", handleOutside);
@@ -227,7 +231,6 @@ export function MultiSelect({
 	};
 	document.addEventListener("click", handleOutside);
 
-	// Expose methods via property on element
 	const multiEl = el as MultiSelectElement;
 	multiEl.getValue = () => selectedValues;
 	multiEl.setValue = (vals: string[]) => {

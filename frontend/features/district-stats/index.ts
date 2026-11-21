@@ -73,7 +73,7 @@ export function initDistrictStats(root: HTMLElement): () => void {
 	ui.table = html`
 		<table class="w-full border-collapse text-sm">
 			<thead>
-				<tr class="border-b border-(--border) sticky top-0 bg-(--surface) z-10">
+				<tr class="border-b border-(--border) sticky top-0 bg-(--surface)/95 backdrop-blur-md z-10">
 					${renderSortHeader(ui, "district", t("districtCol"), "left", () =>
 						onSort("district"),
 					)}
@@ -102,13 +102,13 @@ export function initDistrictStats(root: HTMLElement): () => void {
 
 	ui.dialogEl = Dialog({
 		id: "district-stats-modal",
-		maxWidth: "600px",
+		maxWidth: "640px",
 		className: "text-(--text)",
 		title: t("districtStats"),
 		description: ui.subtitle,
 		content: html`
-			<div class="flex flex-col h-150 max-h-[85vh]">
-				<div class="px-5 pt-1.5 pb-3.5 border-b border-(--border) shrink-0">
+			<div class="flex flex-col h-150 max-h-[82vh]">
+				<div class="px-6 py-3.5 border-b border-(--border) bg-(--surface) shrink-0">
 					${renderSearchBar(
 						ui,
 						(val) => {

@@ -33,7 +33,7 @@ if (window.location.pathname === "/login") {
 	const productsArea = html`<main id="products-area"></main>`;
 
 	root.appendChild(html`
-		<div class="w-full px-5 pt-0 pb-20">
+		<div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-24">
 			${headerArea}
 			${searchArea}
 			${trendArea}

@@ -1,11 +1,11 @@
 import { ce, cn, html } from "@/core/utils";
 
 const SHARED =
-	"bg-(--surface-2) border border-(--border) rounded-(--r-sm) font-inherit appearance-none cursor-pointer transition-[border-color] duration-150";
+	"select-chevron bg-(--surface-2)/90 border border-(--border) rounded-(--r-sm) font-inherit appearance-none cursor-pointer transition-all duration-150 hover:border-(--border-h) hover:text-(--text) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]";
 
 const VARIANTS = {
-	xs: "px-2.5 py-1.5 text-(--text-2) text-xs hover:border-(--border-h)",
-	sm: "px-2.5 py-1.75 text-(--text) text-sm focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
+	xs: "pl-3 pr-7.5 py-1.5 h-8 text-(--text-2) text-xs font-medium",
+	sm: "pl-3 pr-8 py-2 h-9.5 text-(--text) text-[13px]",
 };
 
 export interface SelectOption {

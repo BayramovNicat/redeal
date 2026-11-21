@@ -104,7 +104,7 @@ export function refreshFilterChips(ui: SearchUI, onSearch: () => void): void {
 
 	if (activeChips.length) {
 		ui.advancedCount.textContent = String(activeChips.length);
-		show(ui.advancedCount, "inline-block");
+		show(ui.advancedCount, "inline-flex");
 	} else {
 		hide(ui.advancedCount);
 	}

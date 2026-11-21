@@ -20,7 +20,7 @@ export function initTooltip(root: HTMLElement = document.body): () => void {
 	el = html`
 		<div
 			id="tooltip"
-			class="fixed top-0 left-0 z-10001 px-2.5 py-1.5 bg-(--surface-3) text-(--text) border border-(--border-h) rounded-(--r-sm) text-xs font-medium pointer-events-none shadow-xl backdrop-blur-md opacity-0 transition-opacity duration-150"
+			class="fixed top-0 left-0 z-10001 px-2.75 py-1.5 bg-(--surface-glass-strong) text-(--text) border border-(--border-h) rounded-(--r-sm) text-[11px] font-medium pointer-events-none shadow-[var(--shadow-float)] backdrop-blur-md opacity-0 transition-opacity duration-150"
 			role="tooltip"
 			aria-hidden="true"
 		></div>

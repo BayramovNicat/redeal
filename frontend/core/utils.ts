@@ -135,8 +135,10 @@ function getToastHost(): HTMLElement {
 
 export function toast(msg: string, err = false): void {
 	const el = html`<div
-		class="bg-(--surface-3) border border-(--border) rounded-(--r) px-4 py-2.5 text-[13px] text-(--text-2) shadow-[0_4px_20px_rgba(0,0,0,0.5)] pointer-events-auto animate-[fadeUp_0.2s_ease] ${
-			err ? "border-(--red-b) text-(--red)" : ""
+		class="glass-panel bg-(--surface-glass-strong) border rounded-(--r) px-4 py-2.5 text-[13px] font-medium shadow-[var(--shadow-float)] pointer-events-auto animate-[fadeUp_0.2s_ease-out] ${
+			err
+				? "border-(--red-b) text-(--red)"
+				: "border-(--border-h) text-(--text)"
 		}"
 	>
 		${msg}

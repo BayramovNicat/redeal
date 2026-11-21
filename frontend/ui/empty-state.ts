@@ -25,15 +25,21 @@ export function EmptyState({
 			<div class="${cn(hidden && "hidden", className)}">
 				<div
 					class="${cn(
-						"flex flex-col items-center justify-center py-20 px-5 gap-2.5 text-center",
-						padTop && "pt-25",
+						"flex flex-col items-center justify-center py-20 px-6 gap-3.5 text-center",
+						padTop && "pt-24",
 					)}"
 				>
-					${icon}
-					<p class="text-base font-medium text-(--text-2)">${title}</p>
+					<div
+						class="size-16 rounded-2xl bg-(--surface) border border-(--border) flex items-center justify-center shadow-[var(--shadow-card)] text-(--muted)"
+					>
+						${icon}
+					</div>
+					<p class="text-base font-semibold text-(--text) tracking-tight">
+						${title}
+					</p>
 					${
 						subtitle
-							? html`<p class="text-sm text-(--muted) max-w-75 leading-[1.6]">
+							? html`<p class="text-[13px] text-(--muted) max-w-88 leading-relaxed">
 								${subtitle}
 							</p>`
 							: ""

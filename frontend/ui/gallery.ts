@@ -42,7 +42,7 @@ export function Gallery({
 		referrerpolicy="no-referrer"
 		alt=""
 		class="${cn(
-			"h-full w-full object-contain select-none hidden",
+			"h-full w-full object-contain select-none hidden transition-[opacity,transform,scale] duration-250 ease-out",
 			fullscreen && "shadow-2xl rounded-sm",
 		)}"
 	/>` as HTMLImageElement;
@@ -59,11 +59,11 @@ export function Gallery({
 	const prevBtn = RawButton({
 		ariaLabel: t("galleryPrev"),
 		className: cn(
-			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 select-none",
+			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/55 hover:bg-black/80 text-white border border-white/15 backdrop-blur-md shadow-lg transition-all active:scale-90 select-none",
 			fullscreen ? "left-6 w-12 h-12" : "left-3 w-9 h-9",
 			"hidden",
 		),
-		content: Icons.chevronLeft(fullscreen ? 24 : 18),
+		content: Icons.chevronLeft(fullscreen ? 22 : 17),
 		onmousedown: (e) => {
 			if (e.detail > 1) e.preventDefault();
 		},
@@ -76,11 +76,11 @@ export function Gallery({
 	const nextBtn = RawButton({
 		ariaLabel: t("galleryNext"),
 		className: cn(
-			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-90 select-none",
+			"absolute top-1/2 -translate-y-1/2 z-10 items-center justify-center rounded-full bg-black/55 hover:bg-black/80 text-white border border-white/15 backdrop-blur-md shadow-lg transition-all active:scale-90 select-none",
 			fullscreen ? "right-6 w-12 h-12" : "right-3 w-9 h-9",
 			"hidden",
 		),
-		content: Icons.chevronRight(fullscreen ? 24 : 18),
+		content: Icons.chevronRight(fullscreen ? 22 : 17),
 		onmousedown: (e) => {
 			if (e.detail > 1) e.preventDefault();
 		},
@@ -94,7 +94,7 @@ export function Gallery({
 		<span
 			aria-live="polite"
 			class="${cn(
-				"absolute left-1/2 -translate-x-1/2 z-10 text-white/80 text-xs font-medium tabular-nums bg-black/50 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md select-none",
+				"absolute left-1/2 -translate-x-1/2 z-10 text-white/90 text-[11px] font-semibold font-mono-num bg-black/60 px-3 py-1 rounded-full border border-white/15 backdrop-blur-md select-none",
 				fullscreen ? "bottom-10" : "bottom-3",
 				"hidden",
 			)}"
@@ -105,7 +105,7 @@ export function Gallery({
 		? RawButton({
 				ariaLabel: t("galleryExpand"),
 				className:
-					"absolute bottom-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white border border-white/10 backdrop-blur-sm transition-all active:scale-95",
+					"absolute bottom-3 right-3 z-10 flex items-center justify-center w-8.5 h-8.5 rounded-full bg-black/55 hover:bg-black/80 text-white border border-white/15 backdrop-blur-md shadow-lg transition-all active:scale-95",
 				content: Icons.expand(14),
 				onclick: (e) => {
 					e.stopPropagation();
@@ -153,7 +153,14 @@ export function Gallery({
 		if (count > 0) {
 			const url = _resolveUrl(currentIndex);
 			if (imgElm.getAttribute("src") !== url) {
+				imgElm.classList.remove(
+					"animate-[galleryZoomIn_220ms_cubic-bezier(0.22,1,0.36,1)_both]",
+				);
+				void imgElm.offsetWidth;
 				imgElm.src = url;
+				imgElm.classList.add(
+					"animate-[galleryZoomIn_220ms_cubic-bezier(0.22,1,0.36,1)_both]",
+				);
 			}
 			imgElm.alt = t("propPhotoAlt", { n: currentIndex + 1, total: count });
 			imgElm.classList.remove("hidden");

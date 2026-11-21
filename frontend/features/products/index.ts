@@ -88,8 +88,8 @@ export function initProducts(container: HTMLElement): () => void {
 	ui.sentinel = html`<div></div>`;
 	ui.loadMoreContainer = html`<div class="hidden"></div>`;
 	ui.mapViewContainer = html`<div
-		style="display:none;height:calc(100vh - 280px);min-height:420px"
-		class="rounded-(--r-lg) overflow-hidden border border-(--border)"
+		style="display:none;height:calc(100vh - 280px);min-height:460px"
+		class="rounded-(--r-lg) overflow-hidden border border-(--border) shadow-[var(--shadow-card)]"
 	></div>`;
 
 	const productsBar = renderProductsBar(ui, {
@@ -114,9 +114,9 @@ export function initProducts(container: HTMLElement): () => void {
 	ui.backToTopBtn = RawButton({
 		ariaLabel: t("backToTop"),
 		className:
-			"fixed bottom-5 right-5 z-40 w-9 h-9 rounded-full bg-(--surface-3) border border-(--border) text-(--muted) flex items-center justify-center shadow-lg transition-all duration-200 hover:text-(--text) hover:border-(--border-h) opacity-0 pointer-events-none text-[14px]",
+			"fixed bottom-6 right-6 z-40 size-10 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) text-(--text-2) flex items-center justify-center shadow-[var(--shadow-float)] transition-[opacity,color,border-color,background-color] duration-200 hover:text-(--text) hover:border-(--accent-b) hover:bg-(--surface-3) opacity-0 pointer-events-none text-sm font-semibold",
 		content: "↑",
-		onclick: () => window.scrollTo({ top: 0, behavior: "instant" }),
+		onclick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
 	});
 
 	container.appendChild(
@@ -522,7 +522,7 @@ export function initProducts(container: HTMLElement): () => void {
 	const jumpDelayMs = 550;
 	const maxJumpDigits = 6;
 	const jumpIndicator = html`<div
-		class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1001 min-w-24 h-24 px-5 rounded-(--r-lg) border border-(--border) bg-(--surface-3) text-(--text) text-4xl font-bold tabular-nums inline-flex items-center justify-center shadow-[0_14px_40px_rgba(0,0,0,0.45)] opacity-0 pointer-events-none transition-opacity duration-120"
+		class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1001 min-w-24 h-24 px-6 rounded-(--r-xl) border border-(--border-h) glass-panel bg-(--surface-glass-strong) text-(--text) text-4xl font-bold font-mono-num inline-flex items-center justify-center shadow-[var(--shadow-float)] opacity-0 pointer-events-none transition-opacity duration-120"
 		style="display:none"
 	></div>`;
 	document.body.appendChild(jumpIndicator);
@@ -607,8 +607,12 @@ export function initProducts(container: HTMLElement): () => void {
 		ui.backToTopBtn.style.opacity = isScrolled ? "1" : "0";
 		ui.backToTopBtn.style.pointerEvents = isScrolled ? "auto" : "none";
 		if (ui.resultsBarInner) {
-			const stuck = ui.resultsBarContainer.getBoundingClientRect().top <= 0;
-			ui.resultsBarInner.classList.toggle("mb-2", !stuck);
+			const stuck = ui.resultsBarContainer.getBoundingClientRect().top <= 12;
+			ui.resultsBarInner.classList.toggle(
+				"shadow-[var(--shadow-float)]",
+				stuck,
+			);
+			ui.resultsBarInner.classList.toggle("border-(--border-h)", stuck);
 		}
 	};
 	add(window, "scroll", onScroll);

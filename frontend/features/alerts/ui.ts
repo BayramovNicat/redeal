@@ -16,7 +16,7 @@ export function renderAlertsUI(
 	ui.chatIdInput = Input({
 		id: "alert-chat-id",
 		placeholder: t("chatIdPlaceholder"),
-		className: "w-full",
+		className: "w-full font-mono-num",
 		inputMode: "numeric",
 		onchange: handlers.onChatIdChange,
 	}) as HTMLInputElement;
@@ -30,24 +30,22 @@ export function renderAlertsUI(
 
 	ui.previewEl = html`
 		<div
-			class="text-[11px] text-(--muted) bg-(--surface-2) border border-(--border) rounded-md px-3 py-2.5 leading-relaxed italic"
+			class="text-xs text-(--text-2) bg-(--surface-2)/80 border border-(--border) rounded-(--r-sm) px-3.5 py-2.75 leading-relaxed"
 		></div>
 	`;
 
 	ui.itemsEl = html`<div class="flex flex-col gap-2"></div>`;
 	ui.listEl = html`
 		<div
-			class="mb-6 hidden animate-in fade-in slide-in-from-top-2 duration-300"
+			class="mb-5 hidden animate-[fadeUp_0.2s_ease-out]"
 		>
 			<div
-				class="text-[10px] font-bold text-(--muted) uppercase tracking-widest mb-3 opacity-70"
+				class="text-[10px] font-bold text-(--muted) uppercase tracking-widest mb-2.5"
 			>
 				${t("activeAlerts")}
 			</div>
 			${ui.itemsEl}
-			<div
-				class="h-px bg-linear-to-r from-(--border) to-transparent my-6"
-			></div>
+			<div class="h-px bg-(--border) my-5"></div>
 		</div>
 	`;
 
@@ -55,27 +53,27 @@ export function renderAlertsUI(
 		content: t("cancel"),
 		variant: "base",
 		color: "indigo",
-		className: "px-5",
+		className: "px-4.5",
 		onclick: handlers.onCancel,
 	}) as HTMLButtonElement;
 
 	ui.saveBtn = Button({
 		content: t("saveAlert"),
 		variant: "base",
-		color: "solid",
-		className: "px-6",
+		color: "accent",
+		className: "px-5.5",
 		onclick: handlers.onSave,
 	}) as HTMLButtonElement;
 
 	ui.modal = Dialog({
-		maxWidth: "440px",
+		maxWidth: "460px",
 		className: "p-0 overflow-hidden",
 		title: t("telegramAlerts"),
 		description: trust(
 			t("botInstruction", {
 				bot: '<a href="https://t.me/BakuDealsBot" target="_blank" rel="noopener" class="text-(--blue) font-semibold hover:underline">@BakuDealsBot</a>',
 				start:
-					'<code class="bg-(--surface-3) px-1.5 py-0.5 rounded text-[10px] font-mono">/start</code>',
+					'<code class="bg-(--surface-3) border border-(--border) px-1.5 py-0.5 rounded text-[10px] font-mono text-(--text)">/start</code>',
 			}),
 		),
 		content: html`
@@ -92,9 +90,9 @@ export function renderAlertsUI(
 						input: ui.labelInput,
 					})}
 
-					<div class="space-y-2 mt-1">
+					<div class="space-y-1.5 mt-1">
 						<div
-							class="text-[10px] font-bold text-(--muted) uppercase tracking-widest opacity-70"
+							class="text-[10px] font-bold text-(--muted) uppercase tracking-widest"
 						>
 							${t("matchingFilters")}
 						</div>
@@ -102,7 +100,7 @@ export function renderAlertsUI(
 					</div>
 
 					<div
-						class="flex gap-2 justify-end mt-4 pt-4 border-t border-(--border)/50"
+						class="flex gap-2 justify-end mt-3 pt-4 border-t border-(--border)"
 					>
 						${ui.cancelBtn} ${ui.saveBtn}
 					</div>

@@ -2,7 +2,7 @@
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE_NAME = "re-finder-v1";
+const CACHE_NAME = "re-finder-v2";
 const ASSETS_TO_CACHE = [
 	"/",
 	"/index.html",

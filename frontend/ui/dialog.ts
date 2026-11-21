@@ -3,17 +3,18 @@ import { Button } from "./button";
 import { Icons } from "./icons";
 
 const BACKDROP = `
-	bg-transparent border-none p-0 
-	max-w-screen max-h-screen w-full h-full 
-	backdrop:bg-black/78 backdrop:backdrop-blur-sm
+	bg-transparent border-none p-0
+	max-w-screen max-h-screen w-full h-full
+	backdrop:bg-[#040508]/80 backdrop:backdrop-blur-md
 `;
 
 const INNER = `
+	dialog-panel
 	fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
 	flex flex-col overflow-hidden
-	bg-(--surface) text-(--text) border border-(--border) rounded-(--r-lg)
+	bg-(--surface) text-(--text) border border-(--border-h) rounded-(--r-xl)
 	max-h-[calc(100vh-2rem)]
-	shadow-[0_24px_80px_rgba(0,0,0,0.6)]
+	shadow-[var(--shadow-float)]
 `;
 
 /** Props accepted by {@link Dialog}. */
@@ -36,11 +37,6 @@ let openDialogsCount = 0;
 
 /**
  * A stylized dialog component with standardized branding and backdrop logic.
- *
- * Renders a stylized `<dialog>` using standardized typographic and surface tokens.
- * If a `title` is provided, it automatically includes a standardized header with a close button.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog MDN <dialog> element}
  */
 export function Dialog({
 	maxWidth,
@@ -56,12 +52,12 @@ export function Dialog({
 
 	const closeBtn = displayClose
 		? Button({
-				content: Icons.close(18),
+				content: Icons.close(16),
 				variant: "ghost",
 				color: "muted",
 				ariaLabel: "Close dialog",
 				className: cn(
-					"absolute top-5 right-5 size-8 flex items-center justify-center rounded-full hover:bg-(--surface-3) transition-colors z-[1001]",
+					"absolute top-4.5 right-4.5 size-8.5 flex items-center justify-center rounded-full border border-(--border) bg-(--surface-2)/80 text-(--text-2) hover:text-(--text) hover:bg-(--surface-3) hover:border-(--border-h) transition-all z-[1001]",
 					closeClassName,
 				),
 				onclick: (e) => {
@@ -76,15 +72,15 @@ export function Dialog({
 	const header = title
 		? html`
 				<div
-					class="relative p-6 pb-4 border-b border-(--border) bg-linear-to-br from-(--surface) to-(--surface-2)"
+					class="relative px-6 pt-5.5 pb-4.5 border-b border-(--border) bg-(--surface-2)/55"
 				>
 					${closeBtn}
-					<div class="text-lg font-bold text-(--text) tracking-tight mb-1">
+					<div class="text-[17px] font-bold text-(--text) tracking-tight pr-10">
 						${title}
 					</div>
 					${
 						description
-							? html`<p class="text-xs text-(--muted) leading-relaxed pr-8">
+							? html`<p class="text-xs text-(--text-2) leading-relaxed pr-10 mt-1">
 								${description}
 							</p>`
 							: ""

@@ -2,18 +2,19 @@ import { ce, cn, frag, html } from "@/core/utils";
 import { Label } from "./label";
 
 const SHARED_CLS = `
-	bg-(--surface-2) border border-(--border) rounded-(--r-sm)
+	bg-(--surface-2)/90 border border-(--border) rounded-(--r-sm)
 	font-inherit text-(--text)
 	transition-all duration-150
-	placeholder:text-(--muted)
-	focus:outline-none focus:border-(--accent)
+	placeholder:text-(--muted)/80
+	hover:border-(--border-h)
+	focus:outline-none focus:border-(--accent) focus:bg-(--surface-2)
 	focus:shadow-[0_0_0_3px_var(--accent-dim)]
 	box-border
 `;
 
 const VARIANTS = {
-	sm: "px-2.5 py-1.75 text-sm",
-	xs: "px-2.5 py-1.5 text-xs hover:border-(--border-h)",
+	sm: "px-3 py-2 text-[13px] h-9.5",
+	xs: "px-2.5 py-1.5 text-xs h-8",
 };
 
 /** Props accepted by {@link RawInput}. */
@@ -47,18 +48,6 @@ export type InputProps = {
 
 /**
  * A stylized text input with standardized branding.
- *
- * Renders a stylized `<input>` using standardized typographic and surface tokens.
- * Supports full property forwarding to the underlying {@link HTMLInputElement},
- * allowing for standard attributes like `type`, `placeholder`, and `value` to be passed directly.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input MDN <input> element}
- *
- * @example
- * ```ts
- * const input = Input({ type: "number", placeholder: "0.00", variant: "sm" });
- * container.appendChild(input);
- * ```
  */
 export function Input({
 	variant = "sm",
@@ -80,9 +69,6 @@ export type FieldProps = {
 
 /**
  * A layout wrapper for form fields that stacks a label above an input or select element.
- *
- * Supports both explicit ID-based linking (via `htmlFor`) and implicit nesting.
- * If `htmlFor` is omitted, the input is nested inside the label for accessibility.
  */
 export function Field({
 	htmlFor,

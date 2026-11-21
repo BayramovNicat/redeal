@@ -103,7 +103,7 @@ export function Image({
 			loading="lazy"
 			decoding="async"
 			referrerpolicy="no-referrer"
-			class="${cn("opacity-0 transition-opacity duration-400", className)}"
+			class="${cn("opacity-0 transition-[opacity,transform,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]", className)}"
 		/>`,
 		props,
 	);

@@ -3,37 +3,38 @@ import { RawButton } from "./button";
 import { Icons } from "./icons";
 
 const CHIP_SHARED = cn(
-	"inline-flex items-center gap-1.5",
-	"px-3 py-1.25 rounded-full",
-	"border border-(--border)",
+	"inline-flex items-center gap-2",
+	"px-3 py-1.5 rounded-full",
+	"bg-(--surface-2)/70 border border-(--border)",
 	"text-(--text-2) text-xs font-medium",
 	"transition-all duration-150",
-	"group-hover:border-(--border-h) group-hover:text-(--text)",
-	"peer-checked:border-[rgba(99,102,241,0.5)]",
+	"group-hover:border-(--border-h) group-hover:text-(--text) group-hover:bg-(--surface-3)/70",
+	"peer-checked:border-(--accent-b)",
 	"peer-checked:text-(--accent) peer-checked:bg-(--accent-dim)",
-	"before:content-[''] before:w-1.25 before:h-1.25 before:rounded-full before:bg-(--muted)",
-	"before:transition-[background] before:duration-150",
-	"peer-checked:before:bg-(--accent)",
+	"before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-(--muted)/60",
+	"before:transition-all before:duration-150",
+	"peer-checked:before:bg-(--accent) peer-checked:before:shadow-[0_0_8px_var(--accent)]",
 );
 
 const TAG_SHARED = cn(
 	"inline-flex items-center gap-1",
-	"text-[11px] font-medium px-2 py-0.75",
-	"rounded-full border border-current",
-	"whitespace-nowrap",
+	"text-[11px] font-medium px-2 py-0.5",
+	"rounded-md border border-transparent",
+	"whitespace-nowrap leading-tight",
 );
 
 const CLOSEABLE_SHARED = cn(
-	"inline-flex items-center gap-1",
-	"bg-(--surface) border border-(--border) rounded-full",
-	"pt-0.75 pb-0.75 pr-1.5 pl-2.5",
-	"text-[11px] text-(--text-2)",
+	"inline-flex items-center gap-1.5",
+	"bg-(--accent-dim) border border-(--accent-b) rounded-full",
+	"py-1 pr-1.5 pl-3",
+	"text-xs font-medium text-(--text)",
+	"animate-[fadeUp_0.16s_ease-out]",
 );
 
 const CLOSEABLE_BTN_SHARED = cn(
-	"bg-none border-none text-(--muted)",
-	"flex items-center transition-[color] duration-100 px-0.5",
-	"hover:text-(--text) cursor-pointer",
+	"bg-none border-none text-(--accent)/80 rounded-full",
+	"size-4.5 flex items-center justify-center transition-colors duration-100",
+	"hover:text-(--text) hover:bg-white/10 cursor-pointer",
 );
 
 /** Props accepted by {@link Chip}. */
@@ -47,9 +48,6 @@ export interface ChipElement extends HTMLLabelElement {
 
 /**
  * An interactive filter pill with a checkbox state.
- *
- * Renders a stylized checkbox wrapped in a label.
- * Properties are forwarded to the underlying {@link HTMLInputElement}.
  */
 export function Chip({
 	label,
