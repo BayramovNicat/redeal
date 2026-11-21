@@ -2,13 +2,15 @@
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE_NAME = "re-finder-v2";
+const CACHE_NAME = "re-finder-v3";
 const ASSETS_TO_CACHE = [
 	"/",
 	"/index.html",
 	"/main.js",
 	"/styles.css",
 	"/manifest.json",
+	"/favicon.svg",
+	"/favicon.png",
 	"/icons/icon-192.png",
 	"/icons/icon-512.png",
 ];
