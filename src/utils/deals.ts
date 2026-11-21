@@ -1,3 +1,10 @@
+/**
+ * Maximum plausible discount percentage for a deal.
+ * Listings with >90% discount are mostly wrongly declared (e.g. price/area typos)
+ * and are excluded from deal results.
+ */
+export const MAX_DEAL_DISCOUNT_PERCENT = 90;
+
 export const DEAL_TIERS = {
 	HIGH_VALUE: "High Value Deal",
 	GOOD: "Good Deal",

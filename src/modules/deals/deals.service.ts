@@ -7,6 +7,10 @@
  *   structurally cheaper (noise, dampness, heat) and would drag the baseline
  *   down, making floor-penalised properties look like false "deals".
  *
+ *   Listings with > 90% discount (MAX_DEAL_DISCOUNT_PERCENT) are excluded
+ *   because they are mostly wrongly declared (e.g. price/area typos or daily
+ *   rent listed as monthly).
+ *
  * Tier thresholds:
  *   ≥ 20% below average  →  "High Value Deal"
  *   10–19% below average →  "Good Deal"
@@ -28,7 +32,11 @@ import type {
 	PropertyRowWithHistory,
 	TrendPoint,
 } from "@/types/index.js";
-import { classifyDeal, type DealTier } from "@/utils/deals.js";
+import {
+	classifyDeal,
+	type DealTier,
+	MAX_DEAL_DISCOUNT_PERCENT,
+} from "@/utils/deals.js";
 import { queryRaw } from "@/utils/prisma.js";
 
 const LOCATIONS_CACHE_TTL = 10 * 60_000;
@@ -328,6 +336,7 @@ export async function getMapPins(options: {
 		Prisma.sql`p.price_per_sqm > 0`,
 		listingTypeCondition(listingType),
 		categoryCondition(category),
+		maxDiscountCondition(),
 		...(thresholdPercent > 0
 			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
 			: []),
@@ -404,6 +413,7 @@ export async function getUndervalued(
 		Prisma.sql`p.price_per_sqm > 0`,
 		listingTypeCondition(listingType),
 		categoryCondition(category),
+		maxDiscountCondition(),
 		...(thresholdPercent > 0
 			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
 			: []),
@@ -476,6 +486,7 @@ export async function getUndervaluedUrlTiers(
 		Prisma.sql`p.price_per_sqm > 0`,
 		listingTypeCondition(listingType),
 		categoryCondition(category),
+		maxDiscountCondition(),
 		...(thresholdPercent > 0
 			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
 			: []),
@@ -551,6 +562,7 @@ export async function getPriceDropDeals(
 			AND ${listingTypeCondition(listingType)}
 			AND ${categoryCondition(category)}
 			AND p.price_drop_count >= ${minDropCount}
+			AND (la.avg_ppsm IS NULL OR ${maxDiscountCondition("la.avg_ppsm")})
 	`;
 
 	const [totalRows, dataRows] = await Promise.all([
@@ -589,6 +601,10 @@ export async function getPriceDropDeals(
 }
 
 // --- Internal helpers (not exported) ---
+
+function maxDiscountCondition(avgRef = "loc_avg.avg_ppsm"): Prisma.Sql {
+	return Prisma.sql`p.price_per_sqm >= ${Prisma.raw(avgRef)} * ((100 - ${MAX_DEAL_DISCOUNT_PERCENT})::numeric / 100)`;
+}
 
 function locAvgBaseConditions() {
 	return Prisma.sql`
