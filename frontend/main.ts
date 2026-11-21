@@ -95,8 +95,10 @@ window.addEventListener("pagehide", (e) => {
 });
 
 declare const __DEV__: boolean;
-if (__DEV__) {
-	const devWs = new WebSocket("ws://localhost:3001");
+declare const __DEV_RELOAD_PORT__: number;
+if (__DEV__ && __DEV_RELOAD_PORT__) {
+	const host = window.location.hostname || "localhost";
+	const devWs = new WebSocket(`ws://${host}:${__DEV_RELOAD_PORT__}`);
 	devWs.onmessage = () => location.reload();
 }
 

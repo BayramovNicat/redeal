@@ -8,7 +8,7 @@ function assertBuildSuccess(result: Bun.BuildOutput, label: string) {
 	throw new Error(`${label} build failed`);
 }
 
-export async function buildJavaScript() {
+export async function buildJavaScript(reloadPort = 0) {
 	const result = await Bun.build({
 		entrypoints: [`${dirs.frontend}/main.ts`],
 		outdir: dirs.public,
@@ -16,7 +16,10 @@ export async function buildJavaScript() {
 		format: "esm",
 		minify: true,
 		target: "browser",
-		define: { __DEV__: watchMode ? "true" : "false" },
+		define: {
+			__DEV__: watchMode ? "true" : "false",
+			__DEV_RELOAD_PORT__: String(reloadPort),
+		},
 	});
 	assertBuildSuccess(result, "JS");
 	return result;

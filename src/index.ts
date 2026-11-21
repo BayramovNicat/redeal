@@ -42,13 +42,40 @@ async function handleFetch(req: Request): Promise<Response> {
 	return serveStatic(req, publicDir);
 }
 
-Bun.serve({
-	port: PORT,
-	routes,
-	fetch: handleFetch,
-});
+const MAX_PORT_ATTEMPTS = 20;
 
-console.log(`Server listening on http://localhost:${PORT}`);
+function startServer(initialPort: number) {
+	const maxAttempts = IS_DEV ? MAX_PORT_ATTEMPTS : 1;
+
+	for (let offset = 0; offset < maxAttempts; offset++) {
+		const port = initialPort + offset;
+		try {
+			const server = Bun.serve({
+				port,
+				routes,
+				fetch: handleFetch,
+			});
+			const boundPort = server.port ?? port;
+			if (offset > 0) {
+				console.log(
+					`Port ${initialPort} is in use, using ${boundPort} instead.`,
+				);
+			}
+			return { server, port: boundPort };
+		} catch (error) {
+			const code = (error as { code?: string })?.code;
+			if (code !== "EADDRINUSE" || offset === maxAttempts - 1) {
+				throw error;
+			}
+		}
+	}
+
+	throw new Error(`No available port found starting at ${initialPort}`);
+}
+
+const { port: boundPort } = startServer(PORT);
+
+console.log(`Server listening on http://localhost:${boundPort}`);
 console.log("Routes:");
 console.log("  GET  /health");
 console.log("  GET  /api/auth/google");

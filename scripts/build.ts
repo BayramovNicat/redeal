@@ -13,10 +13,12 @@ import { writeIndexHtml } from "./build/html";
 import { notifyReloadClients, startReloadServer } from "./build/reload";
 import { watchFrontend } from "./build/watch";
 
+const reloadPort = watchMode ? startReloadServer() : 0;
+
 async function build() {
 	copyLeafletAssets();
 
-	const jsResult = await buildJavaScript();
+	const jsResult = await buildJavaScript(reloadPort);
 	logJavaScriptOutputs(jsResult);
 
 	await buildStyles();
@@ -52,9 +54,10 @@ async function logBuildSummary() {
 	);
 }
 
-if (watchMode) startReloadServer();
-
 cleanPublicDir();
 await build();
 
-if (watchMode) watchFrontend(build);
+if (watchMode) {
+	console.log(`Live reload WS listening on ws://localhost:${reloadPort}`);
+	watchFrontend(build);
+}
