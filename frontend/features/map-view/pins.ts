@@ -1,32 +1,53 @@
-import { type CircleMarker, circleMarker } from "leaflet";
+import { type CircleMarker, circleMarker, type Renderer } from "leaflet";
 import { bus, EVENTS } from "@/core/events";
 import type { MapPin, Property } from "@/core/types";
-import { fmt, fmtFloor, toast } from "@/core/utils";
+import { fmt, fmtFloor, toast, tTier } from "@/core/utils";
 import { ts } from "@/ui/tier";
 import type { MapViewState } from "./types";
 
+function getBaseRadius(tier: string): number {
+	if (tier === "High Value Deal") return 7.5;
+	if (tier === "Good Deal") return 6.5;
+	return 5.5;
+}
+
 /**
- * Creates a circle marker for a map pin with hover and click handlers.
+ * Creates a crisp, contrast-ringed circle marker for a map pin.
+ * Uses a shared Canvas renderer for large datasets and lazy tooltip generation.
  */
 export function createPinMarker(
 	pin: MapPin,
 	state: MapViewState,
+	renderer?: Renderer,
 ): CircleMarker {
 	const tStyle = ts(pin.tier);
+	const baseRadius = getBaseRadius(pin.tier);
+
 	const cm = circleMarker([pin.lat, pin.lng], {
-		radius: 7,
-		color: tStyle.hex,
+		renderer,
+		radius: baseRadius,
+		color: "#090b10",
 		fillColor: tStyle.hex,
-		fillOpacity: 0.82,
-		weight: 1.5,
-		opacity: 1,
+		fillOpacity: 0.94,
+		weight: 2,
+		opacity: 0.95,
 	});
 
-	const tipContent = getTooltipContent(pin, tStyle);
+	let tipContent: string | null = null;
 
 	cm.on("mouseover", () => {
-		cm.setRadius(10);
+		cm.bringToFront();
+		cm.setStyle({
+			radius: baseRadius + 3.5,
+			color: "#ffffff",
+			weight: 2.5,
+			fillOpacity: 1,
+			opacity: 1,
+		});
 		if (state.lmap) {
+			if (tipContent === null) {
+				tipContent = getTooltipContent(pin, tStyle);
+			}
 			state.sharedTooltip.setContent(tipContent);
 			state.sharedTooltip.setLatLng([pin.lat, pin.lng]);
 			state.sharedTooltip.addTo(state.lmap);
@@ -34,7 +55,13 @@ export function createPinMarker(
 	});
 
 	cm.on("mouseout", () => {
-		cm.setRadius(7);
+		cm.setStyle({
+			radius: baseRadius,
+			color: "#090b10",
+			weight: 2,
+			fillOpacity: 0.94,
+			opacity: 0.95,
+		});
 		state.sharedTooltip.remove();
 	});
 
@@ -57,36 +84,49 @@ export function createPinMarker(
 }
 
 /**
- * Formats the tooltip content for a pin.
+ * Formats the mini architectural preview card tooltip for a pin (computed lazily on hover).
  */
-function getTooltipContent(pin: MapPin, tStyle: { hex: string; c: string }) {
+function getTooltipContent(
+	pin: MapPin,
+	tStyle: { hex: string; c: string; bg: string; b: string },
+) {
 	const discSign = pin.discount_percent >= 0 ? "-" : "+";
 	const discAbs = Math.abs(Math.round(pin.discount_percent));
 	const floorStr = fmtFloor(pin.floor, pin.total_floors);
 	const meta = [
-		pin.area_sqm ? `${fmt(pin.area_sqm, 0)} m²` : null,
+		pin.area_sqm ? `${fmt(pin.area_sqm, 0)}m²` : null,
 		pin.rooms ? `${pin.rooms}br` : null,
-		floorStr ? `fl ${floorStr}` : null,
+		floorStr && floorStr !== "—" ? `fl ${floorStr}` : null,
 	]
 		.filter(Boolean)
 		.join(" · ");
 
 	const thumbHtml = pin.image_url
-		? `<img src="${pin.image_url}" style="width:56px;height:56px;object-fit:cover;flex-shrink:0;border-radius:8px;border:1px solid rgba(255,255,255,0.08)">`
+		? `<img src="${pin.image_url}" style="width:62px;height:62px;object-fit:cover;flex-shrink:0;border-radius:9px;border:1px solid rgba(255,255,255,0.1)">`
 		: "";
 
-	return /*html*/ `<div style="padding:10px 12px;min-width:196px;max-width:255px">
+	const locHtml = pin.location_name
+		? `<div style="font-size:10.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${pin.location_name}</div>`
+		: "";
+
+	return /*html*/ `<div style="padding:10px 13px;min-width:235px;max-width:305px">
 		<div style="display:flex;align-items:center;gap:10px">
 			${thumbHtml}
 			<div style="min-width:0;flex:1">
-				<div style="font-size:15px;font-weight:800;font-family:var(--font-mono);color:var(--text);line-height:1.2;margin-bottom:4px">
-					₼ ${fmt(pin.price)}
+				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+					<span style="font-size:15px;font-weight:800;font-family:var(--font-mono);color:var(--text);line-height:1.1">
+						₼ ${fmt(pin.price)}
+					</span>
+					<span style="font-size:10.5px;font-weight:800;font-family:var(--font-mono);color:${tStyle.c};background:${tStyle.bg};border:1px solid ${tStyle.b};padding:1px 6px;border-radius:999px;line-height:1.4">
+						${discSign}${discAbs}%
+					</span>
 				</div>
 				<div style="font-size:11px;font-family:var(--font-mono);color:var(--text-2);display:flex;align-items:center;gap:6px">
 					<span>₼${fmt(pin.price_per_sqm, 0)}/m²</span>
-					<span style="color:${tStyle.c};font-weight:700">${discSign}${discAbs}%</span>
+					<span style="font-size:10px;color:${tStyle.c};font-family:var(--font-sans);font-weight:600">${tTier(pin.tier, true)}</span>
 				</div>
-				${meta ? `<div style="font-size:10.5px;color:var(--muted);margin-top:3px">${meta}</div>` : ""}
+				${meta ? `<div style="font-size:10.5px;font-family:var(--font-mono);color:var(--muted);margin-top:2px">${meta}</div>` : ""}
+				${locHtml}
 			</div>
 		</div>
 	</div>`;

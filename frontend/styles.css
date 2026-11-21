@@ -288,14 +288,22 @@ input[type="number"] {
 .leaflet-container .leaflet-tooltip::before {
 	display: none;
 }
-.leaflet-container .leaflet-overlay-pane path {
-	transition:
-		fill-opacity 200ms ease,
-		stroke-opacity 200ms ease,
-		stroke-width 200ms ease;
-}
 .leaflet-container .leaflet-popup {
 	animation: leafletFadeUp 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.leaflet-container canvas.leaflet-zoom-animated {
+	will-change: transform;
+	max-width: none;
+	max-height: none;
+}
+
+.map-dark-tiles .leaflet-tile {
+	filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(95%)
+		saturate(52%);
+}
+
+.map-light-tiles .leaflet-tile {
+	filter: brightness(93%) contrast(103%) saturate(88%);
 }
 
 @keyframes galleryZoomIn {
