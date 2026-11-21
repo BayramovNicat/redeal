@@ -48,6 +48,7 @@ export async function deleteDeal(req: Request): Promise<Response> {
 			return ResponseHelper.error("Property not found", 404);
 		}
 
+		dealsService.invalidateDealsCaches();
 		return ResponseHelper.publicJson({ ok: true, deleted: result.count }, 0, 0);
 	} catch (err) {
 		console.error("[DealsController] deleteDeal:", err);
@@ -222,6 +223,9 @@ export async function checkEndedListing(req: Request): Promise<Response> {
 
 	try {
 		const data = await checkAndDeleteEndedListing(url.trim());
+		if (data.deleted) {
+			dealsService.invalidateDealsCaches();
+		}
 		return ResponseHelper.publicJson(data, 0, 0);
 	} catch (err) {
 		const message = (err as Error).message;
@@ -263,15 +267,35 @@ export async function validateUndervaluedDeals(
 	try {
 		const locations = loc.isAll ? "__all__" : loc.list;
 		const tier = q.get("tier") ?? undefined;
-		const urlTiers = await dealsService.getUndervaluedUrlTiers(
-			locations,
-			thresholdPct,
-			filterArgs,
-		);
-		const urls = urlTiers
-			.filter((property) => !tier || property.tier === tier)
-			.map((property) => property.source_url);
-		const validation = await checkAndDeleteEndedListings(urls);
+		const validation = { checked: 0, ended: 0, deleted: 0, failed: 0 };
+		const attemptedUrls = new Set<string>();
+		const MAX_VALIDATION_PASSES = 3;
+
+		for (let pass = 0; pass < MAX_VALIDATION_PASSES; pass++) {
+			const urlTiers = await dealsService.getUndervaluedUrlTiers(
+				locations,
+				thresholdPct,
+				filterArgs,
+				{ sort: sort.value },
+			);
+			const pendingUrls = urlTiers
+				.filter((property) => !tier || property.tier === tier)
+				.map((property) => property.source_url)
+				.filter((url) => !attemptedUrls.has(url));
+
+			if (pendingUrls.length === 0) break;
+			for (const url of pendingUrls) attemptedUrls.add(url);
+
+			const passResult = await checkAndDeleteEndedListings(pendingUrls);
+			validation.checked += passResult.checked;
+			validation.ended += passResult.ended;
+			validation.deleted += passResult.deleted;
+			validation.failed += passResult.failed;
+
+			if (passResult.deleted === 0) break;
+			dealsService.invalidateDealsCaches();
+		}
+
 		const { total, data } = await dealsService.getUndervalued(
 			locations,
 			thresholdPct,

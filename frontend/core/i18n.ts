@@ -84,6 +84,8 @@ const translations = {
 		validateBtn: "Validate",
 		validating: "Validating…",
 		validateDone: "Removed {deleted} ended listings. Fresh total: {total}.",
+		validateDonePartial:
+			"Removed {deleted} ended listings ({failed} could not be checked). Fresh total: {total}.",
 		sortDisc: "Most discounted",
 		sortPriceAsc: "Price: low → high",
 		sortPriceDesc: "Price: high → low",
@@ -372,6 +374,8 @@ const translations = {
 		validateBtn: "Yoxla",
 		validating: "Yoxlanılır…",
 		validateDone: "Bitmiş {deleted} elan silindi. Yeni cəmi: {total}.",
+		validateDonePartial:
+			"Bitmiş {deleted} elan silindi ({failed} yoxlanıla bilmədi). Yeni cəmi: {total}.",
 		sortDisc: "Ən çox endirimli",
 		sortPriceAsc: "Qiymət: aşağıdan yuxarı",
 		sortPriceDesc: "Qiymət: yuxarıdan aşağı",
@@ -651,6 +655,8 @@ const translations = {
 		validateBtn: "Проверить",
 		validating: "Проверка…",
 		validateDone: "Удалено завершённых: {deleted}. Новый итог: {total}.",
+		validateDonePartial:
+			"Удалено завершённых: {deleted} (не удалось проверить: {failed}). Новый итог: {total}.",
 		sortDisc: "Наибольшая скидка",
 		sortPriceAsc: "Цена: дешевле",
 		sortPriceDesc: "Цена: дороже",

@@ -374,8 +374,8 @@ export function initProducts(container: HTMLElement): () => void {
 				validation?: { checked: number; deleted: number; failed: number };
 			};
 
-			if (result.error) {
-				throw new Error(result.error);
+			if (!response.ok || result.error) {
+				throw new Error(result.error ?? `Request failed (${response.status})`);
 			}
 
 			state.allResults = result.data.filter(
@@ -384,13 +384,25 @@ export function initProducts(container: HTMLElement): () => void {
 			state.currentTotal = result.total;
 			state.currentOffset = result.data.length;
 			state.renderedSet.clear();
-			render();
-			toast(
-				t("validateDone", {
-					deleted: result.validation?.deleted ?? 0,
-					total: result.total,
-				}),
-			);
+			bus.emit(EVENTS.DEALS_UPDATED);
+			const failed = result.validation?.failed ?? 0;
+			if (failed > 0) {
+				toast(
+					t("validateDonePartial", {
+						deleted: result.validation?.deleted ?? 0,
+						failed,
+						total: result.total,
+					}),
+					true,
+				);
+			} else {
+				toast(
+					t("validateDone", {
+						deleted: result.validation?.deleted ?? 0,
+						total: result.total,
+					}),
+				);
+			}
 		} catch (err) {
 			toast((err as Error).message, true);
 		} finally {

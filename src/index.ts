@@ -40,6 +40,7 @@ function startServer(initialPort: number) {
 		try {
 			const server = Bun.serve({
 				port,
+				idleTimeout: 120,
 				routes,
 				fetch: handleFetch,
 			});

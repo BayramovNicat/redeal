@@ -38,6 +38,12 @@ const AVG_CACHE_TTL = 30 * 60_000;
 const avgCache = new Map<string, { avg: number; at: number }>();
 const avgPromises = new Map<string, Promise<Map<string, number>>>();
 
+export function invalidateDealsCaches(): void {
+	avgCache.clear();
+	avgPromises.clear();
+	locationsCache = null;
+}
+
 function effectiveCategory(filters: PropertyFilters = {}): string {
 	return filters.category ?? "new";
 }
@@ -445,10 +451,12 @@ export async function getUndervaluedUrlTiers(
 	locations: string[] | "__all__",
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
-	limit = 1000,
+	options: { sort?: DealSort; limit?: number } = {},
 ): Promise<{ source_url: string; tier: DealTier }[]> {
+	const { sort = "disc", limit } = options;
 	const listingType = effectiveListingType(filters);
 	const category = effectiveCategory(filters);
+	const orderBy = getUndervaluedOrderBy(sort);
 	const factor = (100 - thresholdPercent) / 100.0;
 
 	const avgsMap = await getLocationAverages(locations, category, listingType);
@@ -474,6 +482,9 @@ export async function getUndervaluedUrlTiers(
 		...applyFilters(filters),
 	];
 
+	const limitClause =
+		limit !== undefined ? Prisma.sql`LIMIT ${limit}` : Prisma.empty;
+
 	const rows = await queryRaw<
 		{ source_url: string; discount_percent: number | string }[]
 	>(Prisma.sql`
@@ -486,7 +497,8 @@ export async function getUndervaluedUrlTiers(
 		FROM "Property" p
 		JOIN loc_avg ON p.location_name = loc_avg.location_name
 		WHERE ${Prisma.join(conditions, " AND ")}
-		LIMIT ${limit}
+		ORDER BY ${orderBy}
+		${limitClause}
 	`);
 
 	return rows.map((row) => ({

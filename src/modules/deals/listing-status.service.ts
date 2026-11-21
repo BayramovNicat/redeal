@@ -6,6 +6,7 @@ const ENDED_MARKERS = [
 	"Bu elanın müddəti başa çatıb",
 	"Bu elanin muddeti basa catib",
 	"Müddəti başa çatıb:",
+	'"isSoftError":true',
 ];
 
 type ListingStatus = {
@@ -24,24 +25,37 @@ type BatchListingStatus = {
 };
 
 const BATCH_GRAPHQL_SIZE = 80;
-const BATCH_GRAPHQL_CONCURRENCY = 3;
+const BATCH_GRAPHQL_CONCURRENCY = 5;
+const MAX_BATCH_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 400;
+const DELETE_CHUNK_SIZE = 1000;
 
 type GraphQLResponse<T> = {
 	data?: T;
 	errors?: Array<{ message: string; path?: unknown[] }>;
 };
 
-type BinaItemStatus = {
-	item: { id: string; expiresAt: string | null } | null;
-};
-
-type BinaBatchItemStatus = {
+export type BinaBatchItemStatus = {
 	id: string;
+	state?: string | null;
+	isExpiredManually?: boolean | null;
 	expiresAt: string | null;
 } | null;
 
+type BinaItemStatus = {
+	item: BinaBatchItemStatus;
+};
+
 export function getBinaItemId(url: string): string | null {
 	return url.match(BINA_ITEM_RE)?.[1] ?? null;
+}
+
+export function isGraphQLItemEnded(item: BinaBatchItemStatus): boolean {
+	if (!item) return true;
+	if (item.state && item.state !== "PUBLISHED") return true;
+	if (item.isExpiredManually === true) return true;
+	if (item.expiresAt && Date.parse(item.expiresAt) <= Date.now()) return true;
+	return false;
 }
 
 export async function checkAndDeleteEndedListing(
@@ -63,7 +77,7 @@ export async function checkAndDeleteEndedListing(
 		});
 	}
 
-	if (gql.item.expiresAt && Date.parse(gql.item.expiresAt) <= Date.now()) {
+	if (isGraphQLItemEnded(gql.item)) {
 		return deleteIfNeeded({
 			url,
 			ended: true,
@@ -95,14 +109,23 @@ export async function checkAndDeleteEndedListing(
 
 export async function checkAndDeleteEndedListings(
 	urls: string[],
+	deleteByUrls: (
+		urlBatch: string[],
+	) => Promise<number> = deletePropertiesByUrls,
 ): Promise<BatchListingStatus> {
-	const entries = Array.from(
-		new Map<string, string>(
-			urls
-				.map((url): [string | null, string] => [getBinaItemId(url), url])
-				.filter((entry): entry is [string, string] => entry[0] !== null),
-		).entries(),
-	);
+	const urlsById = new Map<string, string[]>();
+	for (const url of urls) {
+		const id = getBinaItemId(url);
+		if (!id) continue;
+		const list = urlsById.get(id);
+		if (list) {
+			if (!list.includes(url)) list.push(url);
+		} else {
+			urlsById.set(id, [url]);
+		}
+	}
+
+	const entries = Array.from(urlsById.entries());
 	const chunks = chunk(entries, BATCH_GRAPHQL_SIZE);
 	let checked = 0;
 	let ended = 0;
@@ -115,22 +138,24 @@ export async function checkAndDeleteEndedListings(
 			const batch = chunks[index++];
 			if (!batch) continue;
 			try {
-				const statuses = await fetchBinaGraphQLStatuses(
+				const statuses = await fetchBinaGraphQLStatusesWithRetry(
 					batch.map(([id]) => id),
 				);
-				checked += batch.length;
-				for (const [id, url] of batch) {
-					const item = statuses[`i${id}`] ?? null;
-					if (
-						!item ||
-						(item.expiresAt && Date.parse(item.expiresAt) <= Date.now())
-					) {
-						ended++;
-						endedUrls.add(url);
+				for (const [id, itemUrls] of batch) {
+					const key = `i${id}`;
+					if (!Object.hasOwn(statuses, key)) {
+						failed += itemUrls.length;
+						continue;
+					}
+					checked += itemUrls.length;
+					const item = statuses[key] ?? null;
+					if (isGraphQLItemEnded(item)) {
+						ended += itemUrls.length;
+						for (const url of itemUrls) endedUrls.add(url);
 					}
 				}
 			} catch (err) {
-				failed += batch.length;
+				for (const [, itemUrls] of batch) failed += itemUrls.length;
 				console.warn("[ListingStatus] GraphQL batch check failed:", err);
 			}
 		}
@@ -143,13 +168,21 @@ export async function checkAndDeleteEndedListings(
 		),
 	);
 
-	const deleted = endedUrls.size
-		? await prisma.property.deleteMany({
-				where: { source_url: { in: [...endedUrls] } },
-			})
-		: { count: 0 };
+	let deletedCount = 0;
+	if (endedUrls.size > 0) {
+		for (const urlBatch of chunk([...endedUrls], DELETE_CHUNK_SIZE)) {
+			deletedCount += await deleteByUrls(urlBatch);
+		}
+	}
 
-	return { checked, ended, deleted: deleted.count, failed };
+	return { checked, ended, deleted: deletedCount, failed };
+}
+
+async function deletePropertiesByUrls(urlBatch: string[]): Promise<number> {
+	const deleted = await prisma.property.deleteMany({
+		where: { source_url: { in: urlBatch } },
+	});
+	return deleted.count;
 }
 
 async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {
@@ -162,7 +195,7 @@ async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {
 async function fetchBinaGraphQLStatus(itemId: string): Promise<BinaItemStatus> {
 	const query = /* graphql */ `
 		query ItemStatus($id: ID!) {
-			item(id: $id) { id expiresAt }
+			item(id: $id) { id state isExpiredManually expiresAt }
 		}
 	`;
 
@@ -184,11 +217,41 @@ async function fetchBinaGraphQLStatus(itemId: string): Promise<BinaItemStatus> {
 	return json.data ?? { item: null };
 }
 
+function isRetryableStatus(status: number): boolean {
+	return status === 429 || status >= 500;
+}
+
+async function fetchBinaGraphQLStatusesWithRetry(
+	itemIds: string[],
+): Promise<Record<string, BinaBatchItemStatus>> {
+	let lastErr: unknown;
+	for (let attempt = 1; attempt <= MAX_BATCH_ATTEMPTS; attempt++) {
+		try {
+			return await fetchBinaGraphQLStatuses(itemIds);
+		} catch (err) {
+			lastErr = err;
+			const retryable =
+				!(err instanceof NonRetryableGraphQLError) &&
+				attempt < MAX_BATCH_ATTEMPTS;
+			if (!retryable) throw err;
+			await new Promise((resolve) =>
+				setTimeout(resolve, RETRY_BASE_DELAY_MS * attempt),
+			);
+		}
+	}
+	throw lastErr;
+}
+
+class NonRetryableGraphQLError extends Error {}
+
 async function fetchBinaGraphQLStatuses(
 	itemIds: string[],
 ): Promise<Record<string, BinaBatchItemStatus>> {
 	const fields = itemIds
-		.map((id) => `i${id}: item(id: "${id}") { id expiresAt }`)
+		.map(
+			(id) =>
+				`i${id}: item(id: "${id}") { id state isExpiredManually expiresAt }`,
+		)
 		.join("\n");
 	const resp = await fetch(BINA_GRAPHQL_URL, {
 		method: "POST",
@@ -198,16 +261,22 @@ async function fetchBinaGraphQLStatuses(
 	});
 
 	if (!resp.ok) {
-		throw new Error(`bina.az GraphQL returned HTTP ${resp.status}`);
+		const message = `bina.az GraphQL returned HTTP ${resp.status}`;
+		if (isRetryableStatus(resp.status)) {
+			throw new Error(message);
+		}
+		throw new NonRetryableGraphQLError(message);
 	}
 
 	const json = (await resp.json()) as GraphQLResponse<
 		Record<string, BinaBatchItemStatus>
 	>;
-	if (json.errors?.some((error) => !error.path) && !json.data) {
-		throw new Error(json.errors[0]?.message ?? "bina.az GraphQL error");
+	if (!json.data || typeof json.data !== "object") {
+		throw new Error(
+			json.errors?.[0]?.message ?? "bina.az GraphQL returned empty data",
+		);
 	}
-	return json.data ?? {};
+	return json.data;
 }
 
 function binaHeaders(referer = "https://bina.az/"): Record<string, string> {
