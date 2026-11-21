@@ -55,19 +55,40 @@ function gridCard(): HTMLElement {
 function rowCard(): HTMLElement {
 	return html`
 		<div
-			class="re-skeleton bg-(--surface) border border-(--border) rounded-(--r) px-4 py-3 flex items-center gap-4"
+			class="re-skeleton bg-(--surface) border border-(--border) rounded-(--r) px-3.5 py-2.75 grid items-center grid-cols-[92px_minmax(200px,1.5fr)_148px_98px_auto] lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_104px_auto] gap-4"
 		>
-			<div class="size-13 rounded-(--r-sm) shimmer shrink-0"></div>
-			<div class="w-21 h-12 rounded-(--r-sm) shimmer shrink-0"></div>
-			<div class="flex-1 flex flex-col gap-2">
-				<div class="h-4 w-44 rounded shimmer"></div>
-				<div class="h-3 w-64 rounded shimmer"></div>
+			<div class="w-23 h-16.5 rounded-(--r-sm) shimmer"></div>
+			<div class="flex flex-col gap-2">
+				<div class="h-4.5 w-48 rounded shimmer"></div>
+				<div class="flex gap-1.5">
+					<div class="h-5 w-16 rounded-md shimmer"></div>
+					<div class="h-5 w-16 rounded-md shimmer"></div>
+				</div>
 			</div>
-			<div class="flex gap-1.5 shrink-0">
-				<div class="size-8 rounded-(--r-sm) shimmer"></div>
-				<div class="size-8 rounded-(--r-sm) shimmer"></div>
+			<div class="hidden lg:grid grid-cols-3 gap-3">
+				<div class="space-y-1.5">
+					<div class="h-2.5 w-8 rounded shimmer"></div>
+					<div class="h-4 w-12 rounded shimmer"></div>
+				</div>
+				<div class="space-y-1.5">
+					<div class="h-2.5 w-8 rounded shimmer"></div>
+					<div class="h-4 w-8 rounded shimmer"></div>
+				</div>
+				<div class="space-y-1.5">
+					<div class="h-2.5 w-8 rounded shimmer"></div>
+					<div class="h-4 w-10 rounded shimmer"></div>
+				</div>
 			</div>
-			<div class="h-7 w-16 rounded-(--r-sm) shimmer shrink-0"></div>
+			<div class="flex flex-col items-end gap-1.5">
+				<div class="h-4 w-24 rounded shimmer"></div>
+				<div class="h-3 w-28 rounded shimmer"></div>
+			</div>
+			<div class="h-12 w-full rounded-(--r-sm) shimmer"></div>
+			<div class="flex items-center gap-1.5">
+				<div class="size-7.5 rounded-(--r-sm) shimmer"></div>
+				<div class="size-7.5 rounded-(--r-sm) shimmer"></div>
+				<div class="h-7.5 w-16 rounded-(--r-sm) shimmer ml-1"></div>
+			</div>
 		</div>
 	`;
 }

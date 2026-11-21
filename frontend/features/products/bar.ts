@@ -15,7 +15,6 @@ export function renderProductsBar(
 ): HTMLElement {
 	const {
 		onExport,
-		onJsonReviewOpen,
 		onValidate,
 		onAlertsOpen,
 		onSavedClick,
@@ -110,13 +109,6 @@ export function renderProductsBar(
 					color: "green",
 					className: "hidden lg:inline-flex h-8",
 					onclick: (e) => onValidate(e.currentTarget as HTMLButtonElement),
-				})}
-				${Button({
-					title: t("jsonReviewBtn"),
-					content: frag`${Icons.desc(12)} ${t("jsonReviewBtn")}`,
-					color: "indigo",
-					className: "hidden lg:inline-flex h-8",
-					onclick: onJsonReviewOpen,
 				})}
 				${Button({
 					title: t("exportBtn"),

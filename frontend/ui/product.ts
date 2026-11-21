@@ -44,11 +44,7 @@ export function Product({
 	const floorStr = fmtFloor(property.floor, property.total_floors);
 	const discStr = fmtDiscount(property.discount_percent);
 
-	const { bmarkBtn, hideBtn, galleryBtn, deleteBtn } = createButtons(
-		property,
-		bookmarked,
-		Boolean(callbacks.onDelete),
-	);
+	const { hideBtn, deleteBtn } = createButtons(Boolean(callbacks.onDelete));
 
 	let element: HTMLElement;
 
@@ -336,27 +332,47 @@ export function Product({
 	} else {
 		const rowThumbUrl = property.image_urls?.[0];
 		const rowImgCount = property.image_urls?.length ?? 0;
-		const rowThumb = rowThumbUrl
-			? html`<div
-					class="relative size-13 rounded-(--r-sm) overflow-hidden bg-(--surface-2) border border-(--border-subtle) shrink-0"
-				>
-					${Image({
-						src: toThumbUrl(rowThumbUrl),
-						className: "w-full h-full object-cover thumb-zoom",
-					})}
-				</div>`
-			: html`<div
-					class="size-13 rounded-(--r-sm) bg-(--surface-2) border border-(--border-subtle) shrink-0 flex items-center justify-center text-(--muted)/40"
-				>${Icons.home(18)}</div>`;
+		const rowAgo = timeAgo(property.posted_date);
+		const rowDropCount = property.price_drop_count ?? 0;
+		const rowHistory = property.price_history;
+		const rowOriginalPrice =
+			rowHistory && rowHistory.length > 0
+				? Number(rowHistory[rowHistory.length - 1]?.price)
+				: null;
+		const rowDropTip =
+			rowDropCount > 0 && rowOriginalPrice !== null
+				? `₼${fmt(rowOriginalPrice, 0)} → ₼${fmt(property.price, 0)}`
+				: null;
 
-		if (rowThumbUrl && rowImgCount > 1) {
-			const badge = html`<span
-				class="absolute bottom-1 right-1 bg-black/75 border border-white/15 text-white text-[9px] font-semibold font-mono-num px-1.25 py-px rounded-full pointer-events-none leading-tight"
+		const rowPhotosBtn =
+			rowImgCount > 0
+				? Button({
+						variant: "padded",
+						color: "blue",
+						title: t("btnPhotos"),
+						ariaLabel: t("btnPhotos"),
+						className:
+							"h-5.5 px-1.75 rounded-full bg-black/70 border border-white/15 text-white/90 text-[10px] font-semibold font-mono-num backdrop-blur-md hover:bg-black/90 hover:border-white/30 hover:text-white",
+						dataset: { action: "gallery" },
+						content: frag`${Icons.gallery(10)} ${rowImgCount}`,
+					})
+				: "";
+
+		const rowThumb = html`
+			<div
+				class="relative w-23 h-16.5 rounded-(--r-sm) overflow-hidden bg-(--surface-2) border border-(--border-subtle) shrink-0"
 			>
-				${rowImgCount}
-			</span>`;
-			rowThumb.appendChild(badge);
-		}
+				${
+					rowThumbUrl
+						? Image({
+								src: toThumbUrl(rowThumbUrl),
+								className: "w-full h-full object-cover thumb-zoom",
+							})
+						: html`<div class="w-full h-full flex items-center justify-center text-(--muted)/35">${Icons.home(18)}</div>`
+				}
+				<div class="absolute bottom-1 right-1 z-2">${rowPhotosBtn}</div>
+			</div>
+		`;
 
 		const rowTierTip =
 			property.discount_percent >= 0
@@ -370,91 +386,200 @@ export function Product({
 		const isNewRow =
 			!!property.posted_date &&
 			Date.now() - new Date(property.posted_date).getTime() < 86400000;
+
 		const rowTagList = [
 			{
 				if: isNewRow,
 				label: t("tagNew"),
-				cls: "text-(--accent) border-(--accent-b) bg-(--accent-dim)",
-			},
-			{
-				if: (property.price_drop_count ?? 0) > 0,
-				label: `▼ ${t("tagPriceDrop", { n: property.price_drop_count ?? 0 })}`,
-				cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)",
+				cls: "text-(--accent) border-(--accent-b) bg-(--accent-dim) font-semibold",
 			},
 			{
 				if: property.is_urgent,
-				label: `⚡ ${t("tagUrgent")}`,
-				cls: "text-(--red) border-(--red-b) bg-(--red-dim)",
+				icon: "⚡",
+				label: t("tagUrgent"),
+				cls: "text-(--red) border-(--red-b) bg-(--red-dim) font-semibold",
+			},
+			{
+				if: rowDropCount > 0,
+				label: `▼ ${t("tagPriceDrop", { n: rowDropCount })}`,
+				tip: rowDropTip ?? undefined,
+				cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim) font-medium",
+			},
+			{
+				if: property.has_active_mortgage,
+				icon: "⚠",
+				label: t("tagActiveMortgage"),
+				cls: "text-(--yellow) border-(--yellow-b) bg-(--yellow-dim)",
 			},
 			{
 				if: property.has_document,
 				label: t("tagDocument"),
 				cls: "text-(--text-2) border-(--border) bg-white/[0.03]",
 			},
+			{
+				if: property.has_repair,
+				label: t("tagRepaired"),
+				cls: "text-(--text-2) border-(--border) bg-white/[0.03]",
+			},
+			{
+				if: property.has_mortgage,
+				label: t("tagMortgage"),
+				cls: "text-(--muted) border-(--border-subtle) bg-white/[0.02]",
+			},
 		];
+
 		const rowTagEls = rowTagList
 			.filter((rt) => rt.if)
-			.map((rt) => Tag({ label: rt.label, className: rt.cls }));
+			.map((rt) => {
+				const tagEl = Tag({
+					label: rt.label,
+					icon: rt.icon,
+					className: rt.cls,
+				});
+				if ((rt as { tip?: string }).tip) {
+					tagEl.setAttribute("data-tip", (rt as { tip: string }).tip);
+				}
+				return tagEl;
+			});
+
 		const rowTagsEl = rowTagEls.length
-			? html`<div class="flex flex-wrap gap-1 mt-1.25">${rowTagEls}</div>`
+			? html`<div class="flex flex-wrap gap-1.25 mt-1.5">${rowTagEls}</div>`
 			: null;
+
+		const rowSpark =
+			property.price_history && property.price_history.length >= 2
+				? Sparkline(property.price_history, tier.hex)
+				: null;
+
+		const rowSaveBtn = Button({
+			variant: "square",
+			color: "yellow",
+			active: bookmarked,
+			title: t("btnSave"),
+			ariaLabel: t("btnSave"),
+			className:
+				"size-7.5 bg-transparent border-transparent hover:border-(--yellow-b) [&.on]:border-(--yellow-b)",
+			dataset: { action: "bmark" },
+			content: Icons.bookmark({ size: 13, fill: bookmarked }),
+		});
 
 		element = html`<div
 			data-url="${property.source_url}"
 			class="product-card group bg-(--surface)
-      border border-(--border)
+      border
+      ${
+				property.tier === "Overpriced"
+					? "border-(--red-b) hover:border-(--red)/60"
+					: "border-(--border) hover:border-(--border-h)"
+			}
       rounded-(--r)
-      px-4 py-3
+      px-3.5 py-2.75
       grid items-center
-      grid-cols-[52px_84px_1fr_auto_auto]
+      grid-cols-[92px_minmax(200px,1.5fr)_148px_98px_auto]
+      lg:grid-cols-[92px_minmax(220px,1.4fr)_228px_156px_104px_auto]
       gap-4
       cursor-pointer
       surface-specular
       transition-[background-color,border-color,box-shadow] duration-200 ease-out
-      hover:border-(--border-h)
-      hover:bg-(--surface-2)/75
+      hover:bg-[#0f1218]
+      hover:shadow-[var(--shadow-card-h)]
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-1 focus-visible:ring-offset-(--bg)
       ${isNewRow ? "new-deal-anim" : ""}"
 		>
+			<!-- Photo -->
 			${rowThumb}
+
+			<!-- Price, Location, Date & Tags -->
+			<div class="min-w-0 flex flex-col justify-center">
+				<div class="flex items-baseline gap-2.5 flex-wrap">
+					<span class="text-[17px] font-extrabold font-mono-num tracking-[-0.02em] text-(--text) leading-tight">
+						₼ ${fmt(property.price)}
+					</span>
+					<span class="inline-flex items-center gap-1 text-xs font-medium text-(--text-2) truncate max-w-52">
+						<span class="text-(--muted) shrink-0">${Icons.map(11)}</span>
+						<span class="truncate">${property.location_name ?? property.district ?? "—"}</span>
+					</span>
+					${
+						rowAgo
+							? html`<span class="text-[11px] font-mono-num text-(--muted) shrink-0">· ${rowAgo}</span>`
+							: ""
+					}
+				</div>
+				<div class="lg:hidden mt-1 text-xs text-(--muted) font-mono-num truncate">
+					${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"} ${t("rooms_")} · ${t("floor_")} ${floorStr}
+				</div>
+				${rowTagsEl}
+			</div>
+
+			<!-- Aligned 3-Column Specs (Desktop) -->
+			<div class="hidden lg:grid grid-cols-3 divide-x divide-(--border-subtle) items-center">
+				<div class="pr-2.5">
+					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						${t("area")}
+					</div>
+					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+						${fmt(property.area_sqm, 1)}<span class="text-[10.5px] font-normal text-(--muted) ml-0.5">m²</span>
+					</div>
+				</div>
+				<div class="px-2.5">
+					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						${t("rooms")}
+					</div>
+					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+						${property.rooms ?? "—"}
+					</div>
+				</div>
+				<div class="pl-2.5">
+					<div class="text-[10px] font-medium text-(--muted) uppercase tracking-wider leading-none mb-1">
+						${t("floor")}
+					</div>
+					<div class="text-[13px] font-semibold font-mono-num text-(--text) leading-tight">
+						${floorStr}
+					</div>
+				</div>
+			</div>
+
+			<!-- Price/m² vs Market Avg + Sparkline -->
+			<div class="flex flex-col items-end justify-center gap-0.75 min-w-0">
+				<div class="flex items-center gap-2">
+					${rowSpark ?? ""}
+					<span class="text-[13.5px] font-bold font-mono-num text-(--text)">
+						₼${fmt(property.price_per_sqm, 0)}<span class="text-[11px] font-normal text-(--muted)">/m²</span>
+					</span>
+				</div>
+				<div class="text-[11px] font-mono-num text-(--muted) truncate">
+					${t("marketAvg")} ₼${fmt(property.location_avg_price_per_sqm, 0)}
+				</div>
+			</div>
+
+			<!-- Deal Signal Badge -->
 			<div
-				class="flex flex-col items-center justify-center rounded-(--r-sm) py-1.5 px-2 border"
+				class="flex flex-col items-center justify-center rounded-(--r-sm) py-1.5 px-2.5 border"
 				style="background:${tier.bg};border-color:${tier.b}"
 				title="${rowTierTip}"
 			>
-				<div class="text-[15px] font-extrabold font-mono-num leading-tight" style="color:${tier.c}">
+				<div class="inline-flex items-center gap-1.25 text-[15px] font-extrabold font-mono-num leading-tight" style="color:${tier.c}">
+					<span class="size-1.5 rounded-full shrink-0" style="background:${tier.hex};box-shadow:0 0 8px ${tier.hex}"></span>
 					${discStr}
 				</div>
 				<div class="text-[10px] font-semibold opacity-90 mt-0.5 truncate max-w-full" style="color:${tier.c}">
 					${tTier(property.tier, true)}
 				</div>
 			</div>
-			<div class="min-w-0">
-				<div class="flex items-baseline gap-2 flex-wrap">
-					<span class="text-[15px] font-bold font-mono-num text-(--text)">
-						₼ ${fmt(property.price)}
-					</span>
-					<span class="font-medium text-(--text-2) text-xs truncate">
-						· ${property.location_name ?? property.district ?? "—"}
-					</span>
-				</div>
-				<div class="mt-0.75 text-xs text-(--muted) font-mono-num truncate">
-					${fmt(property.area_sqm, 1)}m² · ${property.rooms ?? "—"} ${t("rooms_")}
-					· ${t("floor_")} ${floorStr} · ₼${fmt(property.price_per_sqm, 0)}/m²
-				</div>
-				${rowTagsEl}
-			</div>
+
+			<!-- Unified Action Cluster -->
 			<div class="flex items-center gap-1">
-				${bmarkBtn}${hideBtn}${deleteBtn}${galleryBtn}
+				${rowSaveBtn}${hideBtn}${deleteBtn}
+				<div class="w-px h-5 bg-(--border) mx-1"></div>
+				<a
+					class="inline-flex items-center gap-1 text-xs font-semibold text-(--text-2) px-3 py-1.75 rounded-(--r-sm) border border-(--border) bg-(--surface-2)/75 transition-colors duration-150 hover:text-(--accent) hover:border-(--accent-b) hover:bg-(--accent-dim)"
+					href="${property.source_url}"
+					target="_blank"
+					rel="noopener noreferrer"
+					style="white-space:nowrap"
+					>${t("viewShort")}</a
+				>
 			</div>
-			<a
-				class="inline-flex items-center gap-1.25 text-xs font-medium text-(--text-2) px-2.5 py-1.5 rounded-(--r-sm) border border-(--border) bg-(--surface-2)/60 transition-colors duration-150 hover:text-(--text) hover:border-(--border-h)"
-				href="${property.source_url}"
-				target="_blank"
-				rel="noopener noreferrer"
-				style="white-space:nowrap"
-				>${t("viewShort")}</a
-			>
 		</div>`;
 	}
 
@@ -512,29 +637,14 @@ function attachActionListeners({
 	});
 }
 
-function createButtons(
-	property: Property,
-	bookmarked: boolean,
-	canDelete = false,
-) {
-	const bmarkBtn = Button({
-		variant: "square",
-		color: "yellow",
-		active: bookmarked,
-		title: t("btnSave"),
-		ariaLabel: t("btnSave"),
-		className: "size-7.5",
-		dataset: { action: "bmark" },
-		content: Icons.bookmark({ size: 13, fill: bookmarked }),
-	});
-
+function createButtons(canDelete = false) {
 	const hideBtn = Button({
 		variant: "square",
 		color: "red",
 		title: t("btnHide"),
 		ariaLabel: t("btnHide"),
 		className:
-			"size-7 bg-transparent border-transparent hover:border-(--red-b)",
+			"size-7.5 bg-transparent border-transparent hover:border-(--red-b)",
 		dataset: { action: "hide" },
 		content: Icons.hide(13),
 	});
@@ -546,24 +656,11 @@ function createButtons(
 				title: t("btnDelete"),
 				ariaLabel: t("btnDelete"),
 				className:
-					"size-7 bg-transparent border-transparent hover:border-(--red-b)",
+					"size-7.5 bg-transparent border-transparent hover:border-(--red-b)",
 				dataset: { action: "delete" },
 				content: Icons.trash(13),
 			})
 		: "";
 
-	const galleryBtn =
-		(property.image_urls?.length ?? 0) > 0
-			? Button({
-					variant: "square",
-					color: "blue",
-					title: t("btnPhotos"),
-					ariaLabel: t("btnPhotos"),
-					className: "size-7.5",
-					dataset: { action: "gallery" },
-					content: frag`${Icons.gallery(12)}`,
-				})
-			: "";
-
-	return { bmarkBtn, hideBtn, galleryBtn, deleteBtn };
+	return { hideBtn, deleteBtn };
 }

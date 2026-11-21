@@ -15,11 +15,9 @@ import {
 // Lazy triggered via bus.emit(EVENTS.GALLERY_OPEN)
 // Map View is lazy loaded in setView()
 // Lazy triggered via bus.emit(EVENTS.PROPERTY_OPEN)
-import { Button, RawButton } from "@/ui/button";
-import { Dialog } from "@/ui/dialog";
+import { RawButton } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
 import { Icons } from "@/ui/icons";
-import { Product } from "@/ui/product";
 import { renderProductsBar } from "./bar";
 import { appendSkeletons, renderList, updatePagination } from "./list";
 import {
@@ -104,7 +102,6 @@ export function initProducts(container: HTMLElement): () => void {
 		},
 		onViewChange: (view) => setView(view),
 		onExport: () => handleExport(ui.sortSelect.value),
-		onJsonReviewOpen: () => openJsonReviewDialog(),
 		onValidate: (button) => void handleValidate(button),
 		onSavedClick: (e) => void handleSavedClick(e),
 		onAlertsOpen: () => bus.emit(EVENTS.ALERTS_OPEN),
@@ -377,140 +374,6 @@ export function initProducts(container: HTMLElement): () => void {
 			button.disabled = false;
 			button.replaceChildren(frag`${Icons.refresh(12)} ${t("validateBtn")}`);
 		}
-	}
-
-	type JsonReviewItem = {
-		item_id: string | number;
-		location?: string;
-		why?: string;
-		infrastructure_paved?: boolean;
-		price?: string;
-		area_sqm?: number;
-		floor?: string;
-		url?: string;
-	};
-
-	type JsonReviewEntry = {
-		item: JsonReviewItem;
-		property: Property | null;
-	};
-
-	function openJsonReviewDialog(): void {
-		const textarea = html`<textarea
-			class="w-full min-h-42 resize-y rounded-(--r) border border-(--border) bg-(--surface-2) text-(--text) text-xs leading-relaxed p-3 outline-none focus:border-(--accent-b) font-mono"
-			placeholder="${t("jsonReviewPlaceholder")}"
-		></textarea>` as HTMLTextAreaElement;
-		const results = html`<div class="flex flex-col gap-3 min-h-0"></div>`;
-		const submit = Button({
-			content: frag`${Icons.search(12)} ${t("jsonReviewFetch")}`,
-			color: "accent",
-		});
-		const form = html`<div class="flex flex-col gap-3">
-			${textarea}
-			<div class="flex items-center justify-end">${submit}</div>
-		</div>`;
-
-		const dialog = Dialog({
-			maxWidth: "1120px",
-			showClose: true,
-			content: html`<div class="p-4 flex flex-col gap-3 min-h-0">
-				${form}
-				${results}
-			</div>`,
-		});
-
-		submit.onclick = () =>
-			void fetchJsonReview(textarea, form, results, submit);
-		dialog.addEventListener("close", () => dialog.remove(), { once: true });
-		document.body.appendChild(dialog);
-		dialog.showModal();
-		textarea.focus();
-	}
-
-	async function fetchJsonReview(
-		textarea: HTMLTextAreaElement,
-		form: HTMLElement,
-		results: HTMLElement,
-		submit: HTMLButtonElement,
-	): Promise<void> {
-		let items: JsonReviewItem[];
-		try {
-			const parsed = JSON.parse(textarea.value.trim()) as unknown;
-			if (!Array.isArray(parsed)) throw new Error(t("jsonReviewArrayError"));
-			items = parsed as JsonReviewItem[];
-		} catch (err) {
-			toast((err as Error).message || t("jsonReviewParseError"), true);
-			return;
-		}
-
-		submit.disabled = true;
-		submit.replaceChildren(
-			frag`${Icons.spinner({ size: 12, className: "animate-spin" })} ${t("jsonReviewLoading")}`,
-		);
-		results.replaceChildren();
-
-		try {
-			const response = await fetch("/api/deals/by-json-items", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ items }),
-			});
-			const json = (await response.json()) as {
-				error?: string;
-				matched?: number;
-				count?: number;
-				data?: JsonReviewEntry[];
-			};
-
-			if (json.error) throw new Error(json.error);
-			const entries = json.data ?? [];
-			form.remove();
-			renderJsonReviewResults(results, entries);
-		} catch (err) {
-			toast((err as Error).message, true);
-		} finally {
-			if (form.isConnected) {
-				submit.disabled = false;
-				submit.replaceChildren(
-					frag`${Icons.search(12)} ${t("jsonReviewFetch")}`,
-				);
-			}
-		}
-	}
-
-	function renderJsonReviewResults(
-		container: HTMLElement,
-		entries: JsonReviewEntry[],
-	): void {
-		const wrap = html`<div class="grid grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-3.5 overflow-auto pr-1 max-h-[calc(100vh-4rem)]"></div>`;
-
-		for (const entry of entries) {
-			if (!entry.property) {
-				continue;
-			}
-
-			const why = renderJsonReviewWhy(entry.item);
-			const card = Product({
-				property: entry.property,
-				bookmarked: state.bookmarks.has(entry.property.source_url),
-				view: "grid",
-				callbacks: cardCallbacks,
-			});
-			wrap.appendChild(
-				html`<div class="flex flex-col gap-2">${why}${card}</div>`,
-			);
-		}
-
-		container.replaceChildren(wrap);
-	}
-
-	function renderJsonReviewWhy(item: JsonReviewItem): HTMLElement | string {
-		if (!item.why) return "";
-		return html`<section
-			class="rounded-(--r) border border-(--border) bg-(--surface-2) p-3 text-xs text-(--text-2) leading-relaxed"
-		>
-			${item.why}
-		</section>`;
 	}
 
 	const { add, cleanup: cleanupHandlers } = makeEventManager();
