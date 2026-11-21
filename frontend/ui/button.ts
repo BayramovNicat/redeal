@@ -12,7 +12,7 @@ const VARIANTS = {
 };
 
 const COLORS = {
-	solid: "bg-(--text) text-(--bg) border-none font-semibold hover:bg-[#d0d0e0]",
+	solid: "bg-(--text) text-(--bg) border-none font-semibold hover:bg-[#d7dbdc]",
 	yellow:
 		"text-(--muted) border-(--border) bg-transparent hover:text-(--yellow) hover:border-(--yellow-b) hover:bg-(--yellow-dim) [&.on]:text-(--yellow) [&.on]:border-(--yellow-b) [&.on]:bg-(--yellow-dim)",
 	red: "text-(--muted) border-(--border) bg-transparent hover:text-(--red) hover:border-(--red-b) hover:bg-(--red-dim) [&.on]:text-(--red) [&.on]:border-(--red-b) [&.on]:bg-(--red-dim)",
