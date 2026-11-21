@@ -16,7 +16,7 @@ function gridCard(): HTMLElement {
 		<article
 			class="re-skeleton bg-(--surface) border border-(--border) rounded-(--r-lg) p-4 max-[480px]:p-2.5 flex flex-col gap-3.5 max-[480px]:gap-2"
 		>
-			<div class="rounded-(--r) -mx-4 -mt-4 mb-0.5 h-40 max-[480px]:-mx-2.5 max-[480px]:-mt-2.5 max-[480px]:h-28 shimmer"></div>
+			<div class="rounded-t-[calc(var(--r-lg)-1px)] -mx-4 -mt-4 mb-0.5 h-40 max-[480px]:-mx-2.5 max-[480px]:-mt-2.5 max-[480px]:h-28 shimmer"></div>
 			<div class="flex justify-between items-start gap-2 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-1">
 				<div class="flex flex-col gap-1.5 max-[480px]:gap-1">
 					<div class="h-2.5 w-20 rounded shimmer"></div>

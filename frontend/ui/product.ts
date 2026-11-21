@@ -148,7 +148,7 @@ export function Product({
 		const imgCount = property.image_urls?.length ?? 0;
 		const thumb = thumbUrl
 			? html`<div
-					class="relative rounded-(--r) overflow-hidden -mx-4 -mt-4 mb-0.5 h-40 bg-(--surface-3) max-[480px]:-mx-2.5 max-[480px]:-mt-2.5 max-[480px]:h-28 max-[480px]:mb-1.5"
+					class="relative rounded-t-[calc(var(--r-lg)-1px)] overflow-hidden -mx-4 -mt-4 mb-0.5 h-40 bg-(--surface-3) max-[480px]:-mx-2.5 max-[480px]:-mt-2.5 max-[480px]:h-28 max-[480px]:mb-1.5"
 				>
 					${Image({
 						src: toThumbUrl(thumbUrl),
@@ -182,6 +182,11 @@ export function Product({
 			data-url="${property.source_url}"
 			class="product-card bg-(--surface)
       border
+      ${
+				property.tier === "Overpriced"
+					? "border-(--red-b) hover:border-(--red)/50"
+					: "border-(--border) hover:border-(--border-h)"
+			}
       rounded-(--r-lg)
       p-4
       max-[480px]:p-2.5
@@ -189,16 +194,12 @@ export function Product({
       gap-3.5
       max-[480px]:gap-2
       cursor-pointer
-      transition-[border-color,box-shadow,transform]
-      duration-200
-      hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
-      hover:-translate-y-0.5
+      transition-colors
+      duration-150
+      hover:bg-[#151617]
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg)
       relative
       ${isNew ? "new-deal-anim" : ""}"
-			style="border-color:${
-				property.tier === "Overpriced" ? "var(--red-b)" : "var(--border)"
-			}"
 		>
 			${thumb}
 			<div class="flex justify-between items-start gap-2 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-1">
