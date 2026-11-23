@@ -20,7 +20,12 @@
 		"db:normalize-categories": "bun scripts/normalize-property-categories.ts",
 		"update:active-mortgages": "bun scripts/update-active-mortgages.ts",
 		"verify": "bun run typecheck && bun test && bun run test:e2e",
-		"verify:db": "bun scripts/verify-db.ts"
+		"verify:db": "bun scripts/verify-db.ts",
+		"audit:har": "./scripts/record-har.sh",
+		"audit:lighthouse": "./scripts/lighthouse.sh",
+		"graphify": "graphify .",
+		"graphify:update": "graphify . --update",
+		"graphify:html": "graphify export html"
 	},
 	"dependencies": {
 		"@prisma/client": "^5.22.0",

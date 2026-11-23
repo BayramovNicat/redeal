@@ -13,6 +13,7 @@ coverage
 
 # test artifacts
 test-results/
+graphify-out
 
 # logs
 logs
