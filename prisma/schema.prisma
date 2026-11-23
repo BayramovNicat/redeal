@@ -54,6 +54,7 @@ model Property {
   has_active_mortgage Boolean           @default(false)
   price_drop_count    Int               @default(0)
   posted_date         DateTime?
+  expires_at          DateTime?
   created_at          DateTime          @default(now())
   updated_at          DateTime          @updatedAt
 
@@ -70,6 +71,7 @@ model Property {
   @@index([location_name, is_urgent, posted_date])
   @@index([district, price_per_sqm])
   @@index([location_name, district, posted_date])
+  @@index([expires_at])
 }
 
 model PriceHistory {

@@ -25,6 +25,7 @@ export interface ScrapedListing {
 	is_urgent: boolean;
 	has_active_mortgage: boolean;
 	posted_date?: Date;
+	expires_at?: Date;
 }
 
 export type ScrapeProgressEvent =
@@ -62,6 +63,11 @@ export interface ScraperOptions {
 	listingType?: "sale" | "rent";
 	/** Optional filter for category id */
 	categoryId?: string;
+	/**
+	 * Optional lookup returning existing DB prices keyed by source_url.
+	 * When provided, scrapers can skip detail fetches for unchanged listings.
+	 */
+	findExistingPrices?: (sourceUrls: string[]) => Promise<Map<string, number>>;
 }
 
 /** Contract every scraper implementation must satisfy */

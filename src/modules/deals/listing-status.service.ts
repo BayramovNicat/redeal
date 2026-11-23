@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import {
 	type BinaHeaderProfile,
 	createBinaHeaderProfile,
@@ -28,11 +29,17 @@ type BatchListingStatus = {
 	failed: number;
 };
 
-const BATCH_GRAPHQL_SIZE = 80;
-const BATCH_GRAPHQL_CONCURRENCY = 5;
+const BATCH_GRAPHQL_SIZE = 25;
+const BATCH_GRAPHQL_CONCURRENCY = 2;
+const CHUNK_DELAY_MIN_MS = 300;
+const CHUNK_DELAY_MAX_MS = 800;
 const MAX_BATCH_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 400;
 const DELETE_CHUNK_SIZE = 1000;
+
+function randomJitterMs(minMs: number, maxMs: number): number {
+	return minMs + Math.floor(Math.random() * (maxMs - minMs + 1));
+}
 
 type GraphQLResponse<T> = {
 	data?: T;
@@ -138,6 +145,7 @@ export async function checkAndDeleteEndedListings(
 	let ended = 0;
 	let failed = 0;
 	const endedUrls = new Set<string>();
+	const activeExpiresUpdates: Array<{ url: string; expiresAt: Date }> = [];
 	let index = 0;
 
 	async function worker(): Promise<void> {
@@ -160,11 +168,28 @@ export async function checkAndDeleteEndedListings(
 					if (isGraphQLItemEnded(item)) {
 						ended += itemUrls.length;
 						for (const url of itemUrls) endedUrls.add(url);
+					} else if (item?.expiresAt) {
+						const parsed = Date.parse(item.expiresAt);
+						if (!Number.isNaN(parsed)) {
+							const expiresAt = new Date(parsed);
+							for (const url of itemUrls) {
+								activeExpiresUpdates.push({ url, expiresAt });
+							}
+						}
 					}
 				}
 			} catch (err) {
 				for (const [, itemUrls] of batch) failed += itemUrls.length;
 				console.warn("[ListingStatus] GraphQL batch check failed:", err);
+			}
+
+			if (index < chunks.length) {
+				await new Promise((resolve) =>
+					setTimeout(
+						resolve,
+						randomJitterMs(CHUNK_DELAY_MIN_MS, CHUNK_DELAY_MAX_MS),
+					),
+				);
 			}
 		}
 	}
@@ -183,14 +208,40 @@ export async function checkAndDeleteEndedListings(
 		}
 	}
 
+	if (
+		activeExpiresUpdates.length > 0 &&
+		deleteByUrls === deletePropertiesByUrls
+	) {
+		await persistExpiresAtUpdates(activeExpiresUpdates);
+	}
+
 	return { checked, ended, deleted: deletedCount, failed };
 }
 
-async function deletePropertiesByUrls(urlBatch: string[]): Promise<number> {
+export async function deletePropertiesByUrls(
+	urlBatch: string[],
+): Promise<number> {
+	if (urlBatch.length === 0) return 0;
 	const deleted = await prisma.property.deleteMany({
 		where: { source_url: { in: urlBatch } },
 	});
 	return deleted.count;
+}
+
+async function persistExpiresAtUpdates(
+	updates: Array<{ url: string; expiresAt: Date }>,
+): Promise<void> {
+	for (const batch of chunk(updates, DELETE_CHUNK_SIZE)) {
+		const values = batch.map(
+			(u) => Prisma.sql`(${u.url}, ${u.expiresAt}::timestamp)`,
+		);
+		await prisma.$executeRaw`
+			UPDATE "Property" AS p
+			SET expires_at = v.expires_at
+			FROM (VALUES ${Prisma.join(values)}) AS v(source_url, expires_at)
+			WHERE p.source_url = v.source_url
+		`;
+	}
 }
 
 async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {

@@ -12,6 +12,7 @@ import * as dealsService from "./deals.service.js";
 import {
 	checkAndDeleteEndedListing,
 	checkAndDeleteEndedListings,
+	deletePropertiesByUrls,
 } from "./listing-status.service.js";
 
 export async function deleteDeal(req: Request): Promise<Response> {
@@ -290,21 +291,55 @@ export async function validateUndervaluedDeals(
 				filterArgs,
 				{ sort: sort.value },
 			);
-			const pendingUrls = urlTiers
-				.filter((property) => !tier || property.tier === tier)
-				.map((property) => property.source_url)
-				.filter((url) => !attemptedUrls.has(url));
+			const nowMs = Date.now();
+			const pendingItems = urlTiers.filter(
+				(property) =>
+					(!tier || property.tier === tier) &&
+					!attemptedUrls.has(property.source_url),
+			);
 
-			if (pendingUrls.length === 0) break;
-			for (const url of pendingUrls) attemptedUrls.add(url);
+			if (pendingItems.length === 0) break;
+			for (const item of pendingItems) attemptedUrls.add(item.source_url);
 
-			const passResult = await checkAndDeleteEndedListings(pendingUrls);
-			validation.checked += passResult.checked;
-			validation.ended += passResult.ended;
-			validation.deleted += passResult.deleted;
-			validation.failed += passResult.failed;
+			// Delete listings already known to be expired without hitting bina.az.
+			const alreadyExpiredUrls = pendingItems
+				.filter(
+					(item) =>
+						item.expires_at !== null && item.expires_at.getTime() <= nowMs,
+				)
+				.map((item) => item.source_url);
+			let expiredDeleted = 0;
+			if (alreadyExpiredUrls.length > 0) {
+				expiredDeleted = await deletePropertiesByUrls(alreadyExpiredUrls);
+				validation.checked += alreadyExpiredUrls.length;
+				validation.ended += alreadyExpiredUrls.length;
+				validation.deleted += expiredDeleted;
+			}
 
-			if (passResult.deleted === 0) break;
+			// Prioritize unknown-expiry and soonest-expiring listings first.
+			const toCheckRemotely = pendingItems
+				.filter(
+					(item) =>
+						item.expires_at === null || item.expires_at.getTime() > nowMs,
+				)
+				.sort((a, b) => {
+					const aTime = a.expires_at ? a.expires_at.getTime() : 0;
+					const bTime = b.expires_at ? b.expires_at.getTime() : 0;
+					return aTime - bTime;
+				})
+				.map((item) => item.source_url);
+
+			let passDeleted = expiredDeleted;
+			if (toCheckRemotely.length > 0) {
+				const passResult = await checkAndDeleteEndedListings(toCheckRemotely);
+				validation.checked += passResult.checked;
+				validation.ended += passResult.ended;
+				validation.deleted += passResult.deleted;
+				validation.failed += passResult.failed;
+				passDeleted += passResult.deleted;
+			}
+
+			if (passDeleted === 0) break;
 			dealsService.invalidateDealsCaches();
 		}
 

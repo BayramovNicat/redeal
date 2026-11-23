@@ -28,6 +28,7 @@ type PreparedRow = {
 	is_urgent: boolean;
 	has_active_mortgage: boolean;
 	posted_date: Date | null;
+	expires_at: Date | null;
 };
 
 export interface ScrapeResult {
@@ -49,6 +50,12 @@ export class ScrapingService {
 	}
 
 	async runAll(options?: ScraperOptions): Promise<ScrapeResult[]> {
+		const scrapeOptions: ScraperOptions = {
+			...options,
+			findExistingPrices:
+				options?.findExistingPrices ?? findExistingPropertyPrices,
+		};
+
 		const results = await Promise.all(
 			this.scrapers.map(async (scraper) => {
 				const result: ScrapeResult = {
@@ -59,7 +66,7 @@ export class ScrapingService {
 				};
 
 				try {
-					const listings = await scraper.scrape(options);
+					const listings = await scraper.scrape(scrapeOptions);
 					options?.onProgress?.({
 						type: "persisting",
 						platform: scraper.platform,
@@ -134,6 +141,7 @@ export class ScrapingService {
 			is_urgent: l.is_urgent,
 			has_active_mortgage: l.has_active_mortgage,
 			posted_date: l.posted_date ?? null,
+			expires_at: l.expires_at ?? null,
 		}));
 
 		// Deduplicate by source_url (latest wins) so PostgreSQL ON CONFLICT DO UPDATE
@@ -158,7 +166,7 @@ export class ScrapingService {
             ${r.district}, ${r.location_name}, ${r.latitude}, ${r.longitude},
             ${r.rooms}, ${r.floor}, ${r.total_floors}, ${r.category}::"PropertyCategory", ${r.listing_type}::"ListingType",
             ${r.has_document}, ${r.has_mortgage}, ${r.has_repair},
-            ${r.description}, ${r.image_urls}, ${r.is_urgent}, ${r.has_active_mortgage}, ${r.posted_date},
+            ${r.description}, ${r.image_urls}, ${r.is_urgent}, ${r.has_active_mortgage}, ${r.posted_date}, ${r.expires_at},
             ${0},
             ${now}, ${now}
           )`,
@@ -178,7 +186,7 @@ export class ScrapingService {
 								district, location_name, latitude, longitude,
 								rooms, floor, total_floors, category, listing_type,
 								has_document, has_mortgage, has_repair,
-								description, image_urls, is_urgent, has_active_mortgage, posted_date,
+								description, image_urls, is_urgent, has_active_mortgage, posted_date, expires_at,
 								price_drop_count,
 								created_at, updated_at
 							)
@@ -204,6 +212,7 @@ export class ScrapingService {
 								is_urgent           = EXCLUDED.is_urgent,
 								has_active_mortgage = EXCLUDED.has_active_mortgage,
 								posted_date         = EXCLUDED.posted_date,
+								expires_at          = COALESCE(EXCLUDED.expires_at, "Property".expires_at),
 								price_drop_count    = CASE
 									WHEN EXCLUDED.price < "Property".price
 									THEN "Property".price_drop_count + 1
@@ -286,6 +295,7 @@ export class ScrapingService {
 						is_urgent: r.is_urgent,
 						has_active_mortgage: r.has_active_mortgage,
 						posted_date: r.posted_date,
+						...(r.expires_at ? { expires_at: r.expires_at } : {}),
 						...(isPriceDrop ? { price_drop_count: { increment: 1 } } : {}),
 					},
 					create: {
@@ -310,6 +320,7 @@ export class ScrapingService {
 						is_urgent: r.is_urgent,
 						has_active_mortgage: r.has_active_mortgage,
 						posted_date: r.posted_date,
+						expires_at: r.expires_at,
 						price_drop_count: 0,
 					},
 				});
@@ -332,4 +343,15 @@ export class ScrapingService {
 			};
 		}
 	}
+}
+
+async function findExistingPropertyPrices(
+	sourceUrls: string[],
+): Promise<Map<string, number>> {
+	if (sourceUrls.length === 0) return new Map();
+	const rows = await prisma.property.findMany({
+		where: { source_url: { in: sourceUrls } },
+		select: { source_url: true, price: true },
+	});
+	return new Map(rows.map((r) => [r.source_url, Number(r.price)]));
 }

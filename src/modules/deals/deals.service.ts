@@ -489,7 +489,7 @@ export async function getUndervaluedUrlTiers(
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
 	options: { sort?: DealSort; limit?: number } = {},
-): Promise<{ source_url: string; tier: DealTier }[]> {
+): Promise<{ source_url: string; tier: DealTier; expires_at: Date | null }[]> {
 	const { sort = "disc", limit } = options;
 	const listingType = effectiveListingType(filters);
 	const category = effectiveCategory(filters);
@@ -525,13 +525,18 @@ export async function getUndervaluedUrlTiers(
 		limit !== undefined ? Prisma.sql`LIMIT ${limit}` : Prisma.empty;
 
 	const rows = await queryRaw<
-		{ source_url: string; discount_percent: number | string }[]
+		{
+			source_url: string;
+			discount_percent: number | string;
+			expires_at: Date | null;
+		}[]
 	>(Prisma.sql`
 		WITH loc_avg(location_name, avg_ppsm) AS (
 			VALUES ${Prisma.join(avgEntries)}
 		)
 		SELECT
 			p.source_url,
+			p.expires_at,
 			ROUND(((loc_avg.avg_ppsm - p.price_per_sqm) / loc_avg.avg_ppsm * 100)::numeric, 2) AS discount_percent
 		FROM "Property" p
 		JOIN loc_avg ON p.location_name = loc_avg.location_name
@@ -543,6 +548,7 @@ export async function getUndervaluedUrlTiers(
 	return rows.map((row) => ({
 		source_url: row.source_url,
 		tier: classifyDeal(Number(row.discount_percent)),
+		expires_at: row.expires_at ? new Date(row.expires_at) : null,
 	}));
 }
 

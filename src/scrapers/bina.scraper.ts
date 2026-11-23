@@ -115,6 +115,7 @@ interface ItemDetail {
 	title: string;
 	description: string;
 	updatedAt: string;
+	expiresAt: string | null;
 	category: { name: string } | null;
 	latitude: number | null;
 	longitude: number | null;
@@ -194,14 +195,33 @@ export class BinaScraper extends BaseScraper {
 
 				if (edges.length === 0) break;
 
-				// Fetch full item details in one batched GraphQL request
-				const ids = edges.map((e) => e.node.id);
-				const details = await this.batchFetchDetails(ids, propertyType.referer);
+				const validEdges = edges.filter(
+					({ node }) => node.price.total > 0 && node.area.value > 0,
+				);
+				const existingPrices = options.findExistingPrices
+					? await options.findExistingPrices(
+							validEdges.map(({ node }) => `${ITEM_BASE_URL}/${node.id}`),
+						)
+					: undefined;
+				const edgesToFetch = existingPrices
+					? validEdges.filter(
+							({ node }) =>
+								existingPrices.get(`${ITEM_BASE_URL}/${node.id}`) !==
+								node.price.total,
+						)
+					: validEdges;
+				const skippedUnchanged = validEdges.length - edgesToFetch.length;
 
-				for (const { node } of edges) {
+				// Fetch full item details in one batched GraphQL request (only for new or price-changed items)
+				const ids = edgesToFetch.map((e) => e.node.id);
+				const details =
+					ids.length > 0
+						? await this.batchFetchDetails(ids, propertyType.referer)
+						: {};
+
+				for (const { node } of edgesToFetch) {
 					const price = node.price.total;
 					const area = node.area.value;
-					if (price <= 0 || area <= 0) continue;
 
 					const detail = details[node.id];
 					if (!detail) continue;
@@ -239,11 +259,17 @@ export class BinaScraper extends BaseScraper {
 						posted_date: detail?.updatedAt
 							? new Date(detail.updatedAt)
 							: undefined,
+						expires_at: detail?.expiresAt
+							? new Date(detail.expiresAt)
+							: undefined,
 					});
 				}
 
 				console.log(
-					`[${this.platform}] ${propertyType.label} page ${page}: ${edges.length} listings fetched` +
+					`[${this.platform}] ${propertyType.label} page ${page}: ${edgesToFetch.length} fetched` +
+						(skippedUnchanged > 0
+							? `, ${skippedUnchanged} unchanged skipped`
+							: "") +
 						` (total so far: ${all.length})`,
 				);
 				options.onProgress?.({
@@ -364,7 +390,7 @@ export class BinaScraper extends BaseScraper {
 		const fields = ids
 			.map(
 				(id) =>
-					`i${id}: item(id: "${id}") { title description updatedAt category { name } latitude longitude photos { full } }`,
+					`i${id}: item(id: "${id}") { title description updatedAt expiresAt category { name } latitude longitude photos { full } }`,
 			)
 			.join("\n");
 

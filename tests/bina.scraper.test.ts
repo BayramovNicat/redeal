@@ -89,6 +89,136 @@ describe("BinaScraper", () => {
 		]);
 	});
 
+	test("skips batchFetchDetails for unchanged existing listings and fetches new or price-changed ones", async () => {
+		const gqlBodies: string[] = [];
+		globalThis.fetch = (async (_url, init) => {
+			const body = String(init?.body ?? "");
+			gqlBodies.push(body);
+
+			if (body.includes("itemsConnection")) {
+				return Response.json({
+					data: {
+						itemsConnection: {
+							pageInfo: { hasNextPage: false, endCursor: "" },
+							edges: [
+								{
+									node: {
+										id: "1001",
+										rooms: 2,
+										floor: 4,
+										floors: 12,
+										hasMortgage: false,
+										hasRepair: true,
+										hasBillOfSale: true,
+										price: { total: 150000, currency: "AZN" },
+										area: { value: 75 },
+										location: {
+											name: "Yasamal",
+											slug: "yasamal",
+											id: "10",
+											latitude: 40.38,
+											longitude: 49.81,
+										},
+									},
+								},
+								{
+									node: {
+										id: "1002",
+										rooms: 3,
+										floor: 6,
+										floors: 16,
+										hasMortgage: false,
+										hasRepair: true,
+										hasBillOfSale: true,
+										price: { total: 210000, currency: "AZN" },
+										area: { value: 110 },
+										location: {
+											name: "Nerimanov",
+											slug: "nerimanov",
+											id: "11",
+											latitude: 40.4,
+											longitude: 49.85,
+										},
+									},
+								},
+								{
+									node: {
+										id: "1003",
+										rooms: 1,
+										floor: 2,
+										floors: 9,
+										hasMortgage: false,
+										hasRepair: true,
+										hasBillOfSale: true,
+										price: { total: 95000, currency: "AZN" },
+										area: { value: 48 },
+										location: {
+											name: "Xetai",
+											slug: "xetai",
+											id: "12",
+											latitude: 40.37,
+											longitude: 49.9,
+										},
+									},
+								},
+							],
+						},
+					},
+				});
+			}
+
+			return Response.json({
+				data: {
+					i1002: {
+						title: "Price changed",
+						description: "Updated price",
+						updatedAt: "2026-11-23T00:00:00Z",
+						expiresAt: "2026-12-23T00:00:00Z",
+						category: { name: "Yeni tikili" },
+						latitude: null,
+						longitude: null,
+						photos: [{ full: "https://example.test/1002.jpg" }],
+					},
+					i1003: {
+						title: "Brand new",
+						description: "New listing",
+						updatedAt: "2026-11-23T01:00:00Z",
+						expiresAt: null,
+						category: { name: "Köhnə tikili" },
+						latitude: null,
+						longitude: null,
+						photos: [{ full: "https://example.test/1003.jpg" }],
+					},
+				},
+			});
+		}) as typeof fetch;
+
+		const results = await new BinaScraper().scrape({
+			maxPages: 1,
+			listingType: "sale",
+			categoryId: "1",
+			findExistingPrices: async () =>
+				new Map([
+					["https://bina.az/items/1001", 150000], // unchanged -> skip
+					["https://bina.az/items/1002", 220000], // price changed -> fetch
+				]),
+		});
+
+		expect(gqlBodies).toHaveLength(2);
+		const detailQuery = JSON.parse(gqlBodies[1] ?? "{}").query as string;
+		expect(detailQuery).not.toContain('item(id: "1001")');
+		expect(detailQuery).toContain('item(id: "1002")');
+		expect(detailQuery).toContain('item(id: "1003")');
+		expect(results.map((r) => r.source_url)).toEqual([
+			"https://bina.az/items/1002",
+			"https://bina.az/items/1003",
+		]);
+		expect(results[0]?.expires_at?.toISOString()).toBe(
+			"2026-12-23T00:00:00.000Z",
+		);
+		expect(results[1]?.expires_at).toBeUndefined();
+	});
+
 	test("detectActiveMortgage matches hazir ipoteka/kredit and uppercase Azerbaijani İ", async () => {
 		const { detectActiveMortgage } = await import(
 			"../src/scrapers/base.scraper.js"
