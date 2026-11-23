@@ -1,3 +1,7 @@
+import {
+	type BinaHeaderProfile,
+	createBinaHeaderProfile,
+} from "@/utils/bina-headers.js";
 import { prisma } from "@/utils/prisma.js";
 
 const BINA_GRAPHQL_URL = "https://bina.az/graphql";
@@ -67,7 +71,8 @@ export async function checkAndDeleteEndedListing(
 	}
 
 	const canonicalUrl = `https://bina.az/items/${itemId}`;
-	const gql = await fetchBinaGraphQLStatus(itemId);
+	const headerProfile = createBinaHeaderProfile();
+	const gql = await fetchBinaGraphQLStatus(itemId, headerProfile);
 	if (!gql.item) {
 		return deleteIfNeeded({
 			url: canonicalUrl,
@@ -88,7 +93,7 @@ export async function checkAndDeleteEndedListing(
 		});
 	}
 
-	const htmlEnded = await fetchBinaHtmlEnded(canonicalUrl);
+	const htmlEnded = await fetchBinaHtmlEnded(canonicalUrl, headerProfile);
 	if (htmlEnded) {
 		return deleteIfNeeded({
 			url: canonicalUrl,
@@ -128,6 +133,7 @@ export async function checkAndDeleteEndedListings(
 
 	const entries = Array.from(urlsById.entries());
 	const chunks = chunk(entries, BATCH_GRAPHQL_SIZE);
+	const headerProfile = createBinaHeaderProfile();
 	let checked = 0;
 	let ended = 0;
 	let failed = 0;
@@ -141,6 +147,7 @@ export async function checkAndDeleteEndedListings(
 			try {
 				const statuses = await fetchBinaGraphQLStatusesWithRetry(
 					batch.map(([id]) => id),
+					headerProfile,
 				);
 				for (const [id, itemUrls] of batch) {
 					const key = `i${id}`;
@@ -197,7 +204,10 @@ async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {
 	return { ...status, deleted: deleted.count > 0 };
 }
 
-async function fetchBinaGraphQLStatus(itemId: string): Promise<BinaItemStatus> {
+async function fetchBinaGraphQLStatus(
+	itemId: string,
+	headerProfile: BinaHeaderProfile,
+): Promise<BinaItemStatus> {
 	const query = /* graphql */ `
 		query ItemStatus($id: ID!) {
 			item(id: $id) { id state isExpiredManually expiresAt }
@@ -206,7 +216,7 @@ async function fetchBinaGraphQLStatus(itemId: string): Promise<BinaItemStatus> {
 
 	const resp = await fetch(BINA_GRAPHQL_URL, {
 		method: "POST",
-		headers: binaHeaders(`https://bina.az/items/${itemId}`),
+		headers: headerProfile.graphql(`https://bina.az/items/${itemId}`),
 		body: JSON.stringify({ query, variables: { id: itemId } }),
 		signal: AbortSignal.timeout(10_000),
 	});
@@ -228,11 +238,12 @@ function isRetryableStatus(status: number): boolean {
 
 async function fetchBinaGraphQLStatusesWithRetry(
 	itemIds: string[],
+	headerProfile: BinaHeaderProfile,
 ): Promise<Record<string, BinaBatchItemStatus>> {
 	let lastErr: unknown;
 	for (let attempt = 1; attempt <= MAX_BATCH_ATTEMPTS; attempt++) {
 		try {
-			return await fetchBinaGraphQLStatuses(itemIds);
+			return await fetchBinaGraphQLStatuses(itemIds, headerProfile);
 		} catch (err) {
 			lastErr = err;
 			const retryable =
@@ -251,6 +262,7 @@ class NonRetryableGraphQLError extends Error {}
 
 async function fetchBinaGraphQLStatuses(
 	itemIds: string[],
+	headerProfile: BinaHeaderProfile,
 ): Promise<Record<string, BinaBatchItemStatus>> {
 	const fields = itemIds
 		.map(
@@ -260,7 +272,7 @@ async function fetchBinaGraphQLStatuses(
 		.join("\n");
 	const resp = await fetch(BINA_GRAPHQL_URL, {
 		method: "POST",
-		headers: binaHeaders(),
+		headers: headerProfile.graphql("https://bina.az/"),
 		body: JSON.stringify({ query: `{ ${fields} }` }),
 		signal: AbortSignal.timeout(15_000),
 	});
@@ -299,18 +311,6 @@ async function fetchBinaGraphQLStatuses(
 	return json.data;
 }
 
-function binaHeaders(referer = "https://bina.az/"): Record<string, string> {
-	return {
-		"Content-Type": "application/json",
-		"User-Agent":
-			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-		Accept: "application/json, text/plain, */*",
-		Origin: "https://bina.az",
-		Referer: referer,
-		"Accept-Language": "az-AZ,az;q=0.9,en;q=0.8",
-	};
-}
-
 function chunk<T>(items: T[], size: number): T[][] {
 	const chunks: T[][] = [];
 	for (let i = 0; i < items.length; i += size) {
@@ -319,14 +319,12 @@ function chunk<T>(items: T[], size: number): T[][] {
 	return chunks;
 }
 
-async function fetchBinaHtmlEnded(url: string): Promise<boolean> {
+async function fetchBinaHtmlEnded(
+	url: string,
+	headerProfile: BinaHeaderProfile,
+): Promise<boolean> {
 	const resp = await fetch(url, {
-		headers: {
-			"User-Agent":
-				"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-			Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-			"Accept-Language": "az-AZ,az;q=0.9,en;q=0.8",
-		},
+		headers: headerProfile.html(),
 		signal: AbortSignal.timeout(10_000),
 	});
 

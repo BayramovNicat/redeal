@@ -12,6 +12,10 @@
  *  3. Derive district from location.slug using slugToDistrict().
  */
 
+import {
+	type BinaHeaderProfile,
+	createBinaHeaderProfile,
+} from "@/utils/bina-headers.js";
 import { slugToDistrict } from "@/utils/district-normalizer.js";
 import { normalizePropertyCategory } from "@/utils/property-category.js";
 import {
@@ -60,52 +64,6 @@ const BINA_PROPERTY_TYPES = [
 ] as const;
 
 type BinaPropertyType = (typeof BINA_PROPERTY_TYPES)[number];
-
-const USER_AGENTS: [string, ...string[]] = [
-	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-	"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
-	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-];
-
-const ACCEPT_LANGUAGES: [string, ...string[]] = [
-	"az-AZ,az;q=0.9,en;q=0.8",
-	"az-AZ,az;q=0.9,en-US;q=0.8,en;q=0.7",
-	"az,en-US;q=0.9,en;q=0.8",
-];
-
-function pick<T>(arr: [T, ...T[]]): T {
-	return arr[Math.floor(Math.random() * arr.length)] as T;
-}
-
-function randomHeaders(
-	referer = "https://bina.az/baki/alqi-satqi/menziller",
-): Record<string, string> {
-	const ua = pick(USER_AGENTS);
-	const lang = pick(ACCEPT_LANGUAGES);
-	return {
-		"Content-Type": "application/json",
-		"User-Agent": ua,
-		Accept: "application/json, text/plain, */*",
-		Origin: "https://bina.az",
-		Referer: referer,
-		"Accept-Language": lang,
-		"Accept-Encoding": "gzip, deflate, br",
-		"sec-ch-ua": `"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"`,
-		"sec-ch-ua-mobile": "?0",
-		"sec-ch-ua-platform": ua.includes("Windows")
-			? '"Windows"'
-			: ua.includes("Linux")
-				? '"Linux"'
-				: '"macOS"',
-		"sec-fetch-dest": "empty",
-		"sec-fetch-mode": "cors",
-		"sec-fetch-site": "same-origin",
-	};
-}
 
 function shouldRetry(status: number): boolean {
 	return status === 429 || status >= 500;
@@ -167,8 +125,10 @@ interface ItemDetail {
 
 export class BinaScraper extends BaseScraper {
 	readonly platform = "bina.az";
+	private headerProfile: BinaHeaderProfile = createBinaHeaderProfile();
 
 	async scrape(options: ScraperOptions = {}): Promise<ScrapedListing[]> {
+		this.headerProfile = createBinaHeaderProfile();
 		const {
 			maxPages: defaultMax = 20,
 			startPage = 1,
@@ -446,7 +406,7 @@ export class BinaScraper extends BaseScraper {
 			try {
 				const resp = await fetch(GRAPHQL_URL, {
 					method: "POST",
-					headers: randomHeaders(referer),
+					headers: this.headerProfile.graphql(referer),
 					body,
 					signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 				});
