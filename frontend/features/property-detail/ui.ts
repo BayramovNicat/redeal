@@ -90,7 +90,7 @@ export function renderPropertyDetailLayout(
 	ui.linkEl = html`<a
 		href="#"
 		target="_blank"
-		rel="noopener"
+		rel="noopener noreferrer"
 		class="flex-1 h-10.5 flex items-center justify-center gap-2 bg-(--accent-solid) text-white border border-white/10 rounded-full font-semibold text-[13px] shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_6px_18px_-4px_rgba(88,101,242,0.55)] transition-all hover:bg-(--accent-hover) hover:shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_10px_24px_-4px_rgba(88,101,242,0.65)] active:scale-[0.98]"
 	>
 		${t("viewListing")} ${Icons.external(13)}

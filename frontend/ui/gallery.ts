@@ -1,5 +1,5 @@
 import { t } from "@/core/i18n";
-import { ce, cn, html, makeEventManager, toThumbUrl } from "@/core/utils";
+import { ce, cn, html, makeEventManager } from "@/core/utils";
 import { RawButton } from "./button";
 import { Icons } from "./icons";
 
@@ -134,9 +134,7 @@ export function Gallery({
 	) as GalleryElement;
 
 	const _resolveUrl = (idx: number): string => {
-		const raw = imageUrls[(idx + count) % count];
-		if (!raw) return "";
-		return fullscreen ? raw : toThumbUrl(raw);
+		return imageUrls[(idx + count) % count] || "";
 	};
 
 	const _preload = (idx: number): void => {

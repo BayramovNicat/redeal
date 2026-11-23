@@ -117,7 +117,7 @@ function getTooltipContent(
 	const safeImageUrl =
 		pin.image_url && /^https?:\/\//i.test(pin.image_url) ? pin.image_url : null;
 	const thumbEl = safeImageUrl
-		? html`<img src="${safeImageUrl}" style="width:62px;height:62px;object-fit:cover;flex-shrink:0;border-radius:9px;border:1px solid rgba(255,255,255,0.1)" alt="">`
+		? html`<img src="${safeImageUrl}" referrerpolicy="no-referrer" style="width:62px;height:62px;object-fit:cover;flex-shrink:0;border-radius:9px;border:1px solid rgba(255,255,255,0.1)" alt="">`
 		: "";
 
 	const locEl = pin.location_name
