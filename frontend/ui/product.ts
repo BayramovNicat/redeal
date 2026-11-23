@@ -143,8 +143,8 @@ export function Product({
 				? Button({
 						variant: "padded",
 						color: "blue",
-						title: t("btnPhotos"),
-						ariaLabel: t("btnPhotos"),
+						title: `${imgCount} ${t("btnPhotos")}`,
+						ariaLabel: `${imgCount} ${t("btnPhotos")}`,
 						className:
 							"h-6.5 px-2.25 rounded-full bg-black/60 border border-white/15 text-white/90 text-[11px] font-semibold font-mono-num backdrop-blur-md hover:bg-black/85 hover:border-white/30 hover:text-white",
 						dataset: { action: "gallery" },
@@ -398,8 +398,8 @@ export function Product({
 				? Button({
 						variant: "padded",
 						color: "blue",
-						title: t("btnPhotos"),
-						ariaLabel: t("btnPhotos"),
+						title: `${rowImgCount} ${t("btnPhotos")}`,
+						ariaLabel: `${rowImgCount} ${t("btnPhotos")}`,
 						className:
 							"h-5.5 px-1.75 rounded-full bg-black/70 border border-white/15 text-white/90 text-[10px] font-semibold font-mono-num backdrop-blur-md hover:bg-black/90 hover:border-white/30 hover:text-white",
 						dataset: { action: "gallery" },
