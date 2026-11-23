@@ -59,9 +59,7 @@ export function Chip({
 		props,
 	);
 	const el = html`
-		<label
-			class="${cn("group inline-flex cursor-pointer select-none", className)}"
-		>
+		<label class="group inline-flex cursor-pointer select-none">
 			${input}
 			<span class="${cn(CHIP_SHARED, className)}">${label}</span>
 		</label>

@@ -3,7 +3,7 @@
 # Automatically run Lighthouse for tourmkr (or any URL) using isolated headless Brave
 set -euo pipefail
 
-URL="${1:-http://localhost:3001}"
+URL="${1:-http://localhost:3000}"
 RAW_OUTPUT="${2:-$HOME/Downloads/tourmkr-lighthouse}"
 PRESET="${3:-${LH_PRESET:-desktop}}"
 TIMEOUT="${LH_TIMEOUT:-60000}"

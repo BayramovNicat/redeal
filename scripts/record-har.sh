@@ -3,7 +3,7 @@
 # Automatically capture HAR for tourmkr (or any URL) using headless Brave & chrome-har-capturer
 set -euo pipefail
 
-URL="${1:-http://localhost:3001}"
+URL="${1:-http://localhost:3000}"
 OUTPUT="${2:-$HOME/Downloads/tourmkr.har}"
 GRACE="${3:-4000}"
 WIDTH="${HAR_WIDTH:-1440}"

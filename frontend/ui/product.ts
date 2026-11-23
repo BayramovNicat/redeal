@@ -46,6 +46,9 @@ export function Product({
 	const floorStr = fmtFloor(property.floor, property.total_floors);
 	const discStr = fmtDiscount(property.discount_percent);
 
+	const safeSourceUrl = /^https?:\/\//i.test(property.source_url)
+		? property.source_url
+		: "#";
 	const { hideBtn, deleteBtn } = createButtons(Boolean(callbacks.onDelete));
 
 	let element: HTMLElement;
@@ -368,7 +371,7 @@ export function Product({
 				>
 					<a
 						class="inline-flex items-center gap-1.5 text-xs max-[520px]:text-[11px] font-medium text-(--muted) transition-colors duration-150 group-hover:text-(--text-2) hover:text-(--accent)!"
-						href="${property.source_url}"
+						href="${safeSourceUrl}"
 						target="_blank"
 						rel="noopener noreferrer"
 						>${t("viewListing")} ${Icons.external(11)}</a
@@ -666,7 +669,7 @@ export function Product({
 				<div class="w-px h-5 bg-(--border) mx-1"></div>
 				<a
 					class="inline-flex items-center gap-1 text-xs font-semibold text-(--text-2) px-3 py-1.75 rounded-(--r-sm) border border-(--border) bg-(--surface-2)/75 transition-colors duration-150 hover:text-(--accent) hover:border-(--accent-b) hover:bg-(--accent-dim)"
-					href="${property.source_url}"
+					href="${safeSourceUrl}"
 					target="_blank"
 					rel="noopener noreferrer"
 					style="white-space:nowrap"
