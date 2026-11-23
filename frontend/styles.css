@@ -308,17 +308,6 @@ input[type="number"] {
 	filter: brightness(93%) contrast(103%) saturate(88%);
 }
 
-@keyframes galleryZoomIn {
-	from {
-		opacity: 0.45;
-		scale: 0.985;
-	}
-	to {
-		opacity: 1;
-		scale: 1;
-	}
-}
-
 .thumb-zoom {
 	transform: scale(1);
 	transition:

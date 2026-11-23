@@ -139,6 +139,7 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 	add(ui.modal, "keydown", onKey);
 	add(ui.modal, "close", () => {
 		ui.statusAbort?.abort();
+		ui.gallery.setUrls([]);
 	});
 
 	const open = async (p: Property) => {

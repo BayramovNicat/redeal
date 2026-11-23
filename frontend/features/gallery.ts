@@ -32,6 +32,7 @@ export function initGallery(root: HTMLElement): () => void {
 	// ── Interaction Handlers ───────────────────────────────────────────────────
 
 	add(modal, "close", () => {
+		gallery.setUrls([]);
 		if (lastTrigger) {
 			lastTrigger.focus({ preventScroll: true });
 			lastTrigger = null;

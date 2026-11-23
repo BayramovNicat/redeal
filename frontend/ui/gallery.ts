@@ -35,6 +35,8 @@ export function Gallery({
 	let currentIndex = 0;
 	let count = 0;
 	let imageUrls: string[] = [];
+	let loadToken = 0;
+	let revealedToken = 0;
 	const preloaded = new Set<string>();
 	const eventManager = makeEventManager();
 
@@ -42,7 +44,7 @@ export function Gallery({
 		referrerpolicy="no-referrer"
 		alt=""
 		class="${cn(
-			"h-full w-full object-contain select-none hidden transition-[opacity,transform,scale] duration-250 ease-out",
+			"h-full w-full object-contain select-none hidden opacity-0 transition-opacity duration-150 ease-out",
 			fullscreen && "shadow-2xl rounded-sm",
 		)}"
 	/>` as HTMLImageElement;
@@ -147,24 +149,48 @@ export function Gallery({
 		pre.src = url;
 	};
 
+	const _reveal = (token: number): void => {
+		if (token !== loadToken || token === revealedToken) return;
+		revealedToken = token;
+		imgElm.classList.remove("opacity-0");
+	};
+
+	eventManager.add(imgElm, "load", () => {
+		const token = loadToken;
+		if (!imgElm.getAttribute("src")) return;
+		imgElm
+			.decode()
+			.catch(() => {})
+			.finally(() => _reveal(token));
+	});
+
+	eventManager.add(imgElm, "error", () => {
+		const token = loadToken;
+		if (token !== loadToken || !imgElm.getAttribute("src")) return;
+		imgElm.classList.remove("opacity-0");
+	});
+
 	const _sync = (): void => {
+		const token = ++loadToken;
+
 		if (count > 0) {
 			const url = _resolveUrl(currentIndex);
 			if (imgElm.getAttribute("src") !== url) {
-				imgElm.classList.remove(
-					"animate-[galleryZoomIn_220ms_cubic-bezier(0.22,1,0.36,1)_both]",
-				);
-				void imgElm.offsetWidth;
+				imgElm.classList.add("opacity-0");
+				imgElm.removeAttribute("src");
 				imgElm.src = url;
-				imgElm.classList.add(
-					"animate-[galleryZoomIn_220ms_cubic-bezier(0.22,1,0.36,1)_both]",
-				);
+				if (imgElm.complete && imgElm.naturalWidth > 0) {
+					_reveal(token);
+				}
+			} else {
+				_reveal(token);
 			}
 			imgElm.alt = t("propPhotoAlt", { n: currentIndex + 1, total: count });
 			imgElm.classList.remove("hidden");
 			_preload(currentIndex + 1);
 			_preload(currentIndex - 1);
 		} else {
+			imgElm.classList.add("opacity-0");
 			imgElm.removeAttribute("src");
 			imgElm.alt = "";
 			imgElm.classList.add("hidden");
