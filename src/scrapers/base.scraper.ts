@@ -77,6 +77,12 @@ export interface IScraper {
 	scrape(options?: ScraperOptions): Promise<ScrapedListing[]>;
 }
 
+const URGENCY_RE = /t[əe]c[iİ]l[iİ]|[əea]l[iİ]m\s+yand[ıiIİ]|срочно/i;
+
+export function detectUrgent(text: string): boolean {
+	return URGENCY_RE.test(text);
+}
+
 const ACTIVE_MORTGAGE_RE =
 	/haz[ıiIİ]r\s+(?:[iİ]poteka|kred[iİ]t)|d[öo]vl[əe]t\s+[iİ]poteka(?:s[ıiIİ])?|[iİ]lk[iİ]n\s+[öo]d[əe]n[iİ][şs]|[iİ]poteka\s+borcu|bank\s+borcu|kred[iİ]t\s+borcu|[üu]z[əe]r[iİ]nd[əe]\s+borc|borclu|g[iİ]rov|qal[ıiIİ]q\s+m[əe]bl[əe][ğg]|dax[iİ]l[iİ]\s+kred[iİ]t/i;
 
@@ -88,9 +94,6 @@ export function detectActiveMortgage(text: string): boolean {
 export abstract class BaseScraper implements IScraper {
 	abstract readonly platform: string;
 	abstract scrape(options?: ScraperOptions): Promise<ScrapedListing[]>;
-
-	private static readonly URGENCY_RE =
-		/t[əe]c[iİ]l[iİ]|[əea]l[iİ]m\s+yand[ıiIİ]|срочно/i;
 
 	/**
 	 * Detects listings where the property already carries an active mortgage or debt.
@@ -106,7 +109,7 @@ export abstract class BaseScraper implements IScraper {
 	 * Listings marked "təcili" are typically priced to sell quickly.
 	 */
 	protected isUrgent(text: string): boolean {
-		return BaseScraper.URGENCY_RE.test(text);
+		return detectUrgent(text);
 	}
 
 	/**

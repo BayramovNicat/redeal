@@ -1,9 +1,15 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type PropertyCategory } from "@prisma/client";
+import {
+	detectActiveMortgage,
+	detectUrgent,
+} from "@/scrapers/base.scraper.js";
 import {
 	type BinaHeaderProfile,
 	createBinaHeaderProfile,
 } from "@/utils/bina-headers.js";
+import { slugToDistrict } from "@/utils/district-normalizer.js";
 import { prisma } from "@/utils/prisma.js";
+import { normalizePropertyCategory } from "@/utils/property-category.js";
 
 const BINA_GRAPHQL_URL = "https://bina.az/graphql";
 const BINA_ITEM_RE = /^https:\/\/(?:www\.)?bina\.az\/items\/(\d+)(?:[/?#].*)?$/;
@@ -14,10 +20,11 @@ const ENDED_MARKERS = [
 	'"isSoftError":true',
 ];
 
-type ListingStatus = {
+export type ListingStatus = {
 	url: string;
 	ended: boolean;
 	deleted: boolean;
+	updated: boolean;
 	expiresAt: string | null;
 	source: "graphql" | "html" | "missing";
 };
@@ -53,8 +60,33 @@ export type BinaBatchItemStatus = {
 	expiresAt: string | null;
 } | null;
 
+export type BinaFullItem = NonNullable<BinaBatchItemStatus> & {
+	title?: string | null;
+	description?: string | null;
+	updatedAt?: string | null;
+	rooms?: number | null;
+	floor?: number | null;
+	floors?: number | null;
+	hasMortgage?: boolean | null;
+	hasRepair?: boolean | null;
+	hasBillOfSale?: boolean | null;
+	price?: { total: number; currency: string } | null;
+	area?: { value: number } | null;
+	location?: {
+		name: string;
+		slug: string;
+		id: string;
+		latitude: number | null;
+		longitude: number | null;
+	} | null;
+	category?: { name: string } | null;
+	latitude?: number | null;
+	longitude?: number | null;
+	photos?: Array<{ full: string }> | null;
+};
+
 type BinaItemStatus = {
-	item: BinaBatchItemStatus;
+	item: BinaFullItem | null;
 };
 
 export function getBinaItemId(url: string): string | null {
@@ -85,6 +117,7 @@ export async function checkAndDeleteEndedListing(
 			url: canonicalUrl,
 			ended: true,
 			deleted: false,
+			updated: false,
 			expiresAt: null,
 			source: "missing",
 		});
@@ -95,6 +128,7 @@ export async function checkAndDeleteEndedListing(
 			url: canonicalUrl,
 			ended: true,
 			deleted: false,
+			updated: false,
 			expiresAt: gql.item.expiresAt,
 			source: "graphql",
 		});
@@ -106,15 +140,23 @@ export async function checkAndDeleteEndedListing(
 			url: canonicalUrl,
 			ended: true,
 			deleted: false,
+			updated: false,
 			expiresAt: gql.item.expiresAt,
 			source: "html",
 		});
 	}
 
+	const syncResult = await syncListingIfChanged(
+		itemId,
+		canonicalUrl,
+		gql.item,
+	);
+
 	return {
-		url: canonicalUrl,
+		url: syncResult.sourceUrl,
 		ended: false,
 		deleted: false,
+		updated: syncResult.updated,
 		expiresAt: gql.item.expiresAt,
 		source: "graphql",
 	};
@@ -244,6 +286,282 @@ async function persistExpiresAtUpdates(
 	}
 }
 
+type ExistingPropertySnapshot = {
+	id: number;
+	source_url: string;
+	price: Prisma.Decimal | number;
+	area_sqm: Prisma.Decimal | number;
+	price_per_sqm: Prisma.Decimal | number;
+	district: string;
+	location_name: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	rooms: number | null;
+	floor: number | null;
+	total_floors: number | null;
+	category: PropertyCategory | null;
+	has_document: boolean | null;
+	has_mortgage: boolean | null;
+	has_repair: boolean | null;
+	description: string | null;
+	image_urls: string[];
+	is_urgent: boolean;
+	has_active_mortgage: boolean;
+	posted_date: Date | null;
+	expires_at: Date | null;
+};
+
+function numbersDiffer(
+	a: Prisma.Decimal | number | null | undefined,
+	b: number | null | undefined,
+): boolean {
+	if (a == null && b == null) return false;
+	if (a == null || b == null) return true;
+	return Math.abs(Number(a) - b) > 1e-6;
+}
+
+function datesDiffer(
+	a: Date | null | undefined,
+	b: Date | null | undefined,
+): boolean {
+	const ta = a ? a.getTime() : null;
+	const tb = b ? b.getTime() : null;
+	return ta !== tb;
+}
+
+function arraysDiffer(a: string[], b: string[]): boolean {
+	if (a.length !== b.length) return true;
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) return true;
+	}
+	return false;
+}
+
+function parseOptionalDate(raw: string | null | undefined): Date | null {
+	if (!raw) return null;
+	const ms = Date.parse(raw);
+	return Number.isNaN(ms) ? null : new Date(ms);
+}
+
+/**
+ * Compares live bina.az GraphQL item fields against the stored Property row
+ * and returns a Prisma update payload containing only changed fields, or null
+ * when everything matches.
+ */
+export function buildPropertyUpdateData(
+	existing: ExistingPropertySnapshot,
+	item: BinaFullItem,
+): { updateData: Prisma.PropertyUpdateInput; isPriceDrop: boolean } | null {
+	const updateData: Prisma.PropertyUpdateInput = {};
+	let changed = false;
+
+	const oldPrice = Number(existing.price);
+	const oldArea = Number(existing.area_sqm);
+	const nextPrice =
+		item.price?.total && item.price.total > 0 ? item.price.total : oldPrice;
+	const nextArea =
+		item.area?.value && item.area.value > 0 ? item.area.value : oldArea;
+	const priceChanged = numbersDiffer(oldPrice, nextPrice);
+	const areaChanged = numbersDiffer(oldArea, nextArea);
+
+	if (priceChanged) {
+		updateData.price = nextPrice;
+		changed = true;
+	}
+	if (areaChanged) {
+		updateData.area_sqm = nextArea;
+		changed = true;
+	}
+	if (priceChanged || areaChanged) {
+		const nextPpsm =
+			nextArea > 0 ? parseFloat((nextPrice / nextArea).toFixed(2)) : 0;
+		if (numbersDiffer(existing.price_per_sqm, nextPpsm)) {
+			updateData.price_per_sqm = nextPpsm;
+			changed = true;
+		}
+	}
+
+	const isPriceDrop = priceChanged && nextPrice < oldPrice;
+	if (isPriceDrop) {
+		updateData.price_drop_count = { increment: 1 };
+	}
+
+	if (item.location?.slug) {
+		const normalized = slugToDistrict(item.location.slug);
+		const nextDistrict =
+			normalized === "Unknown" ? item.location.name : normalized;
+		if (nextDistrict && nextDistrict !== existing.district) {
+			updateData.district = nextDistrict;
+			changed = true;
+		}
+		if (item.location.slug !== existing.location_name) {
+			updateData.location_name = item.location.slug;
+			changed = true;
+		}
+	}
+
+	const nextLat = item.latitude ?? item.location?.latitude ?? null;
+	const nextLng = item.longitude ?? item.location?.longitude ?? null;
+	if (nextLat !== null && numbersDiffer(existing.latitude, nextLat)) {
+		updateData.latitude = nextLat;
+		changed = true;
+	}
+	if (nextLng !== null && numbersDiffer(existing.longitude, nextLng)) {
+		updateData.longitude = nextLng;
+		changed = true;
+	}
+
+	const nextRooms = item.rooms !== undefined ? item.rooms : existing.rooms;
+	if (nextRooms !== existing.rooms) {
+		updateData.rooms = nextRooms;
+		changed = true;
+	}
+	const nextFloor = item.floor !== undefined ? item.floor : existing.floor;
+	if (nextFloor !== existing.floor) {
+		updateData.floor = nextFloor;
+		changed = true;
+	}
+	const nextTotalFloors =
+		item.floors !== undefined ? item.floors : existing.total_floors;
+	if (nextTotalFloors !== existing.total_floors) {
+		updateData.total_floors = nextTotalFloors;
+		changed = true;
+	}
+
+	if (item.category?.name) {
+		const nextCategory = normalizePropertyCategory(item.category.name) ?? null;
+		if (nextCategory && nextCategory !== existing.category) {
+			updateData.category = nextCategory;
+			changed = true;
+		}
+	}
+
+	if (
+		item.hasBillOfSale !== undefined &&
+		item.hasBillOfSale !== existing.has_document
+	) {
+		updateData.has_document = item.hasBillOfSale;
+		changed = true;
+	}
+	if (
+		item.hasMortgage !== undefined &&
+		item.hasMortgage !== existing.has_mortgage
+	) {
+		updateData.has_mortgage = item.hasMortgage;
+		changed = true;
+	}
+	if (item.hasRepair !== undefined && item.hasRepair !== existing.has_repair) {
+		updateData.has_repair = item.hasRepair;
+		changed = true;
+	}
+
+	if (item.description !== undefined) {
+		const nextDesc = item.description ?? null;
+		if (nextDesc !== existing.description) {
+			updateData.description = nextDesc;
+			changed = true;
+		}
+		const urgencyText = `${item.title ?? ""} ${item.description ?? ""}`;
+		const nextUrgent = detectUrgent(urgencyText);
+		if (nextUrgent !== existing.is_urgent) {
+			updateData.is_urgent = nextUrgent;
+			changed = true;
+		}
+		const nextActiveMortgage = detectActiveMortgage(item.description ?? "");
+		if (nextActiveMortgage !== existing.has_active_mortgage) {
+			updateData.has_active_mortgage = nextActiveMortgage;
+			changed = true;
+		}
+	}
+
+	if (item.photos !== undefined) {
+		const nextImages = item.photos?.map((p) => p.full) ?? [];
+		if (arraysDiffer(existing.image_urls ?? [], nextImages)) {
+			updateData.image_urls = nextImages;
+			changed = true;
+		}
+	}
+
+	const nextPosted = parseOptionalDate(item.updatedAt);
+	if (nextPosted && datesDiffer(existing.posted_date, nextPosted)) {
+		updateData.posted_date = nextPosted;
+		changed = true;
+	}
+
+	const nextExpires = parseOptionalDate(item.expiresAt);
+	if (nextExpires && datesDiffer(existing.expires_at, nextExpires)) {
+		updateData.expires_at = nextExpires;
+		changed = true;
+	}
+
+	return changed ? { updateData, isPriceDrop } : null;
+}
+
+async function syncListingIfChanged(
+	itemId: string,
+	canonicalUrl: string,
+	item: BinaFullItem,
+): Promise<{ updated: boolean; sourceUrl: string }> {
+	const urls = [
+		`https://bina.az/items/${itemId}`,
+		`https://www.bina.az/items/${itemId}`,
+	];
+	const existing = await prisma.property.findFirst({
+		where: { source_url: { in: urls } },
+		select: {
+			id: true,
+			source_url: true,
+			price: true,
+			area_sqm: true,
+			price_per_sqm: true,
+			district: true,
+			location_name: true,
+			latitude: true,
+			longitude: true,
+			rooms: true,
+			floor: true,
+			total_floors: true,
+			category: true,
+			has_document: true,
+			has_mortgage: true,
+			has_repair: true,
+			description: true,
+			image_urls: true,
+			is_urgent: true,
+			has_active_mortgage: true,
+			posted_date: true,
+			expires_at: true,
+		},
+	});
+
+	if (!existing) {
+		return { updated: false, sourceUrl: canonicalUrl };
+	}
+
+	const diff = buildPropertyUpdateData(existing, item);
+	if (!diff) {
+		return { updated: false, sourceUrl: existing.source_url };
+	}
+
+	await prisma.$transaction(async (tx) => {
+		if (diff.isPriceDrop) {
+			await tx.priceHistory.create({
+				data: {
+					property_id: existing.id,
+					price: existing.price,
+					price_per_sqm: existing.price_per_sqm,
+				},
+			});
+		}
+		await tx.property.update({
+			where: { id: existing.id },
+			data: diff.updateData,
+		});
+	});
+
+	return { updated: true, sourceUrl: existing.source_url };
+}
+
 async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {
 	const itemId = getBinaItemId(status.url);
 	const urls = itemId
@@ -261,7 +579,28 @@ async function fetchBinaGraphQLStatus(
 ): Promise<BinaItemStatus> {
 	const query = /* graphql */ `
 		query ItemStatus($id: ID!) {
-			item(id: $id) { id state isExpiredManually expiresAt }
+			item(id: $id) {
+				id
+				state
+				isExpiredManually
+				expiresAt
+				title
+				description
+				updatedAt
+				rooms
+				floor
+				floors
+				hasMortgage
+				hasRepair
+				hasBillOfSale
+				price { total currency }
+				area { value }
+				location { name slug id latitude longitude }
+				category { name }
+				latitude
+				longitude
+				photos { full }
+			}
 		}
 	`;
 

@@ -187,18 +187,48 @@ async function checkEnded(
 		});
 		if (!res.ok) return;
 
-		const status = (await res.json()) as { ended?: boolean };
-		if (!status.ended || signal.aborted) return;
+		const status = (await res.json()) as {
+			ended?: boolean;
+			updated?: boolean;
+			property?: Property | null;
+		};
+		if (signal.aborted) return;
 
-		ui.endedBannerEl.textContent = t("listingEndedBanner");
-		ui.endedBannerEl.classList.remove("hidden");
-		ui.modal.dispatchEvent(
-			new CustomEvent("pd:hide", {
-				bubbles: true,
-				detail: p,
-			}),
-		);
-		toast(t("listingEnded"));
+		if (status.ended) {
+			ui.endedBannerEl.textContent = t("listingEndedBanner");
+			ui.endedBannerEl.classList.remove("hidden");
+			ui.modal.dispatchEvent(
+				new CustomEvent("pd:hide", {
+					bubbles: true,
+					detail: p,
+				}),
+			);
+			toast(t("listingEnded"));
+			return;
+		}
+
+		if (status.updated && status.property) {
+			const updated: Property = {
+				...p,
+				...status.property,
+				price: Number(status.property.price),
+				area_sqm: Number(status.property.area_sqm),
+				price_per_sqm: Number(status.property.price_per_sqm),
+				location_avg_price_per_sqm: Number(
+					status.property.location_avg_price_per_sqm,
+				),
+				discount_percent: Number(status.property.discount_percent),
+			};
+			if (ui.currentProperty?.source_url === p.source_url) {
+				bindPropertyData(ui, updated);
+			}
+			ui.modal.dispatchEvent(
+				new CustomEvent("pd:update", {
+					bubbles: true,
+					detail: updated,
+				}),
+			);
+		}
 	} catch (err) {
 		if ((err as Error).name !== "AbortError") {
 			console.warn("Failed to check listing status", err);

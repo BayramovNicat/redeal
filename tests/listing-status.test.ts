@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
+	buildPropertyUpdateData,
 	checkAndDeleteEndedListings,
 	getBinaItemId,
 	isGraphQLItemEnded,
@@ -151,5 +152,87 @@ describe("listing-status service", () => {
 			failed: 1,
 		});
 		expect(deletedUrls).toEqual([]);
+	});
+
+	test("buildPropertyUpdateData returns null when fields match and detects price drops & field edits", () => {
+		const baseExisting = {
+			id: 1,
+			source_url: "https://bina.az/items/999",
+			price: 200000,
+			area_sqm: 100,
+			price_per_sqm: 2000,
+			district: "Səbail",
+			location_name: "baki/sebail/bayil",
+			latitude: 40.34,
+			longitude: 49.83,
+			rooms: 3,
+			floor: 5,
+			total_floors: 12,
+			category: "new" as const,
+			has_document: true,
+			has_mortgage: true,
+			has_repair: true,
+			description: "Nice flat",
+			image_urls: ["https://img.example/1.jpg"],
+			is_urgent: false,
+			has_active_mortgage: false,
+			posted_date: new Date("2026-10-01T10:00:00Z"),
+			expires_at: new Date("2026-12-01T10:00:00Z"),
+		};
+
+		const matchingItem = {
+			id: "999",
+			state: "PUBLISHED",
+			isExpiredManually: false,
+			expiresAt: "2026-12-01T10:00:00Z",
+			title: "Satılır 3 otaqlı yeni tikili 100 m²",
+			description: "Nice flat",
+			updatedAt: "2026-10-01T10:00:00Z",
+			rooms: 3,
+			floor: 5,
+			floors: 12,
+			hasMortgage: true,
+			hasRepair: true,
+			hasBillOfSale: true,
+			price: { total: 200000, currency: "AZN" },
+			area: { value: 100 },
+			location: {
+				name: "Bayıl",
+				slug: "baki/sebail/bayil",
+				id: "49",
+				latitude: 40.34,
+				longitude: 49.83,
+			},
+			category: { name: "Yeni tikili" },
+			latitude: 40.34,
+			longitude: 49.83,
+			photos: [{ full: "https://img.example/1.jpg" }],
+		};
+
+		expect(buildPropertyUpdateData(baseExisting, matchingItem)).toBeNull();
+
+		const changedItem = {
+			...matchingItem,
+			price: { total: 180000, currency: "AZN" },
+			area: { value: 80 },
+			description: "Təcili satılır! Hazır ipoteka.",
+			rooms: 2,
+			photos: [{ full: "https://img.example/2.jpg" }],
+		};
+
+		const diff = buildPropertyUpdateData(baseExisting, changedItem);
+		expect(diff).not.toBeNull();
+		expect(diff?.isPriceDrop).toBe(true);
+		expect(diff?.updateData).toEqual({
+			price: 180000,
+			area_sqm: 80,
+			price_per_sqm: 2250,
+			price_drop_count: { increment: 1 },
+			rooms: 2,
+			description: "Təcili satılır! Hazır ipoteka.",
+			is_urgent: true,
+			has_active_mortgage: true,
+			image_urls: ["https://img.example/2.jpg"],
+		});
 	});
 });

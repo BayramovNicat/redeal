@@ -233,8 +233,16 @@ export async function checkEndedListing(req: Request): Promise<Response> {
 
 	try {
 		const data = await checkAndDeleteEndedListing(url.trim());
-		if (data.deleted) {
+		if (data.deleted || data.updated) {
 			dealsService.invalidateDealsCaches();
+		}
+		if (data.updated && !data.deleted) {
+			const [property] = await dealsService.getPropertiesByUrls([data.url]);
+			return ResponseHelper.publicJson(
+				{ ...data, property: property ?? null },
+				0,
+				0,
+			);
 		}
 		return ResponseHelper.publicJson(data, 0, 0);
 	} catch (err) {

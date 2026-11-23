@@ -665,9 +665,28 @@ export function initProducts(container: HTMLElement): () => void {
 			);
 		}
 	};
+	const onPdUpdate = (e: Event) => {
+		const updated = (e as CustomEvent<Property>).detail;
+		if (!updated) return;
+
+		const replaceIn = (arr: Property[]) =>
+			arr.map((item) =>
+				item.source_url === updated.source_url ? updated : item,
+			);
+		state.allResults = replaceIn(state.allResults);
+		state.savedOnlyResults = replaceIn(state.savedOnlyResults);
+		if (state.bookmarkData.has(updated.source_url)) {
+			state.bookmarkData.set(updated.source_url, updated);
+			syncStateToStorage();
+		}
+		state.renderedSet.clear();
+		ui.cardsContainer.replaceChildren();
+		render();
+	};
 	add(document, "pd:bmark", onPdBmark);
 	add(document, "pd:hide", onPdHide);
 	add(document, "pd:delete", onPdDelete);
+	add(document, "pd:update", onPdUpdate);
 
 	function prepareFocusRestore(url: string): () => void {
 		const cards = Array.from(
