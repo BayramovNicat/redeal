@@ -1,4 +1,5 @@
 import type { Prisma, ScrapeRun, ScrapeRunTrigger } from "@prisma/client";
+import { invalidateDealsCaches } from "@/modules/deals/deals.service.js";
 import type {
 	ScrapeProgressEvent,
 	ScraperOptions,
@@ -80,6 +81,7 @@ export class ScrapeRunsService {
 					...options,
 					onProgress: progressHandler,
 				});
+				invalidateDealsCaches();
 
 				const finishedAt = new Date();
 				const summary = this.buildSummary(stats, results);
@@ -208,13 +210,19 @@ export class ScrapeRunsService {
 		totalErrors: number;
 		platformResults: Prisma.JsonArray;
 	} {
+		const errorsByPlatform = new Map(
+			(results ?? []).map((result) => [result.platform, result.errors.length]),
+		);
 		const platformResults = Array.from(stats.platforms.values()).map(
 			(summary) => ({
 				platform: summary.platform,
 				fetched: summary.fetched,
 				persisted: summary.persisted,
 				skipped: summary.skipped,
-				errors: summary.errors,
+				errors: Math.max(
+					summary.errors,
+					errorsByPlatform.get(summary.platform) ?? 0,
+				),
 			}),
 		);
 

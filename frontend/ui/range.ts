@@ -52,11 +52,13 @@ export interface RangeColors {
  * Updates the CSS variable --p on a range input to reflect its current progress.
  */
 export function setRangeProgress(input: HTMLInputElement): void {
-	const min = Number(input.min) || 0;
-	const max = Number(input.max) || 100;
+	const rawMin = input.min !== "" ? Number(input.min) : 0;
+	const rawMax = input.max !== "" ? Number(input.max) : 100;
+	const min = Number.isFinite(rawMin) ? rawMin : 0;
+	const max = Number.isFinite(rawMax) ? rawMax : 100;
 	const val = Number(input.value);
-	const p = ((val - min) / (max - min)) * 100;
-	input.style.setProperty("--p", `${p}%`);
+	const p = max > min ? ((val - min) / (max - min)) * 100 : 0;
+	input.style.setProperty("--p", `${Math.max(0, Math.min(100, p))}%`);
 }
 
 /**
@@ -91,11 +93,12 @@ export function RawRange(props: RawRangeProps): HTMLInputElement {
 		class="${cn(INPUT_CLS, className)}"
 	/>` as HTMLInputElement;
 
+	ce<HTMLInputElement>(el, rest);
 	if (min != null) el.min = String(min);
 	if (max != null) el.max = String(max);
 	if (value != null) el.value = String(value);
 
-	return ce<HTMLInputElement>(el, rest);
+	return el;
 }
 
 /** Props accepted by {@link Range}. */

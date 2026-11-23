@@ -104,7 +104,9 @@ export function fmt(n: number | string, d = 0): string {
 
 export function timeAgo(s: string | null | undefined): string | null {
 	if (!s) return null;
-	const sec = Math.floor((Date.now() - new Date(s).getTime()) / 1000);
+	const ms = new Date(s).getTime();
+	if (Number.isNaN(ms)) return null;
+	const sec = Math.max(0, Math.floor((Date.now() - ms) / 1000));
 	if (sec < 3600) return `${Math.floor(sec / 60)}${t("unitMin")} ${t("ago")}`;
 	if (sec < 86400)
 		return `${Math.floor(sec / 3600)}${t("unitHour")} ${t("ago")}`;

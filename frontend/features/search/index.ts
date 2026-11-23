@@ -303,6 +303,7 @@ export function initSearch(container: HTMLElement): () => void {
 		for (const config of getBooleanFilters())
 			ui.booleanInputs[config.id].checked = false;
 		ui.categorySelect.value = "";
+		ui.listingTypeSelect.value = "sale";
 		ui.mortgageSelect.value = "";
 		ui.descriptionInput.value = "";
 		refreshFilterChips(ui, debouncedSearch);
@@ -316,11 +317,16 @@ export function initSearch(container: HTMLElement): () => void {
 			activeLocations,
 			onAction: (locName: string, isToggle: boolean) => {
 				if (isToggle) {
-					const current = ui.locationSelect.getValue();
+					const current = ui.locationSelect
+						.getValue()
+						.filter((v) => v !== "__all__");
 					const idx = current.indexOf(locName);
-					if (idx > -1)
-						ui.locationSelect.setValue(current.filter((v) => v !== locName));
-					else ui.locationSelect.setValue([...current, locName]);
+					if (idx > -1) {
+						const next = current.filter((v) => v !== locName);
+						ui.locationSelect.setValue(next.length > 0 ? next : ["__all__"]);
+					} else {
+						ui.locationSelect.setValue([...current, locName]);
+					}
 				} else {
 					ui.locationSelect.setValue([locName]);
 				}
@@ -379,15 +385,19 @@ export function initSearch(container: HTMLElement): () => void {
 	const { add, cleanup: cleanupHandlers } = makeEventManager();
 
 	add(document, "keydown", (e: KeyboardEvent) => {
+		const target = e.target as Element | null;
 		if (
 			e.key === "Enter" &&
 			!e.defaultPrevented &&
-			!["BUTTON", "A", "SELECT"].includes((e.target as Element).tagName)
+			!document.body.hasAttribute("data-dialog-open") &&
+			target &&
+			!["BUTTON", "A", "SELECT"].includes(target.tagName)
 		) {
 			if (!isUserAuthenticated()) {
 				if (
-					(e.target as Element).tagName === "INPUT" &&
-					!document.body.hasAttribute("data-dialog-open")
+					target.tagName === "INPUT" &&
+					target.id !== "discount-threshold" &&
+					!target.closest('[role="listbox"]')
 				) {
 					openLoginModal("filter");
 				}
@@ -436,12 +446,6 @@ export function initSearch(container: HTMLElement): () => void {
 			];
 
 			ui.locationSelect.setOptions(locationOptions);
-			if (isUserAuthenticated()) {
-				restoreStateFromUrl(ui);
-			} else {
-				restorePublicFiltersFromUrl(ui);
-			}
-			refreshFilterChips(ui, debouncedSearch);
 		} catch {
 			ui.locationSelect.setOptions([{ value: "", label: t("failedLocs") }]);
 		}

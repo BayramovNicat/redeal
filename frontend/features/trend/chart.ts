@@ -110,7 +110,7 @@ export function renderTrendChart(
 	</svg>` as unknown as SVGElement;
 
 	svg.onmousemove = (evt: MouseEvent) => {
-		const svgW = (svg as SVGSVGElement).clientWidth;
+		const svgW = (svg as SVGSVGElement).clientWidth || 1;
 		const normX = evt.offsetX / svgW;
 		const idx = Math.max(
 			0,
@@ -125,7 +125,7 @@ export function renderTrendChart(
 
 		ui.tipEl.style.display = "block";
 		const tipW = ui.tipEl.offsetWidth || 160;
-		const left = Math.min(evt.offsetX + 12, svgW - tipW - 4);
+		const left = Math.max(4, Math.min(evt.offsetX + 12, svgW - tipW - 4));
 		ui.tipEl.style.left = `${left}px`;
 		ui.tipEl.style.top = `${Math.max(4, evt.offsetY - ui.tipEl.offsetHeight - 8)}px`;
 	};

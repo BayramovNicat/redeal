@@ -25,11 +25,19 @@ export async function deleteDeal(req: Request): Promise<Response> {
 				body.status,
 			);
 		}
-		const url = body.data?.url?.trim();
+		const url =
+			typeof body.data?.url === "string" ? body.data.url.trim() : undefined;
 		const rawId = body.data?.id;
-		const idNum =
-			rawId !== undefined && rawId !== null && !Number.isNaN(Number(rawId))
+		const parsedId =
+			typeof rawId === "number" ||
+			(typeof rawId === "string" && rawId.trim() !== "")
 				? Number(rawId)
+				: Number.NaN;
+		const idNum =
+			Number.isSafeInteger(parsedId) &&
+			parsedId > 0 &&
+			parsedId <= 2_147_483_647
+				? parsedId
 				: undefined;
 
 		if (!url && idNum === undefined) {
@@ -63,6 +71,7 @@ type TrendCacheEntry = {
 const trendCache = new Map<string, TrendCacheEntry>();
 const TREND_TTL_MS = 30 * 60_000;
 const TREND_CACHE_MAX = 300;
+dealsService.onDealsCacheInvalidated(() => trendCache.clear());
 
 export async function getLocations(): Promise<Response> {
 	try {
@@ -246,7 +255,10 @@ export async function validateUndervaluedDeals(
 	if (loc.error) return loc.error;
 
 	const thresholdRaw = q.get("threshold");
-	const thresholdPct = thresholdRaw !== null ? Number(thresholdRaw) : 10;
+	const thresholdPct =
+		thresholdRaw !== null && thresholdRaw.trim() !== ""
+			? Number(thresholdRaw)
+			: 10;
 	if (Number.isNaN(thresholdPct) || thresholdPct < 0 || thresholdPct > 100) {
 		return ResponseHelper.error(
 			'"threshold" must be a number between 0 and 100',
@@ -337,7 +349,10 @@ export async function getMapPins(req: Request): Promise<Response> {
 	if (loc.error) return loc.error;
 
 	const thresholdRaw = q.get("threshold");
-	const thresholdPct = thresholdRaw !== null ? Number(thresholdRaw) : 10;
+	const thresholdPct =
+		thresholdRaw !== null && thresholdRaw.trim() !== ""
+			? Number(thresholdRaw)
+			: 10;
 	if (Number.isNaN(thresholdPct) || thresholdPct < 0 || thresholdPct > 100) {
 		return ResponseHelper.error(
 			'"threshold" must be a number between 0 and 100',
@@ -428,7 +443,10 @@ export async function getUndervaluedDeals(req: Request): Promise<Response> {
 	if (loc.error) return loc.error;
 
 	const thresholdRaw = q.get("threshold");
-	const thresholdPct = thresholdRaw !== null ? Number(thresholdRaw) : 10;
+	const thresholdPct =
+		thresholdRaw !== null && thresholdRaw.trim() !== ""
+			? Number(thresholdRaw)
+			: 10;
 	if (Number.isNaN(thresholdPct) || thresholdPct < 0 || thresholdPct > 100) {
 		return ResponseHelper.error(
 			'"threshold" must be a number between 0 and 100',
@@ -580,7 +598,7 @@ function parsePropertyFilters(q: URLSearchParams): PropertyFilters {
 		isUrgent: parseQueryBool(q.get("isUrgent")),
 		notLastFloor: parseQueryBool(q.get("notLastFloor")),
 		hasActiveMortgage: parseQueryBool(q.get("hasActiveMortgage")),
-		category: q.get("category") ?? undefined,
+		category: q.get("category")?.trim() || undefined,
 		listingType: q.get("listingType") === "rent" ? "rent" : "sale",
 		descriptionSearch: q.get("descriptionSearch") ?? undefined,
 	};

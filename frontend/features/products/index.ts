@@ -254,10 +254,12 @@ export function initProducts(container: HTMLElement): () => void {
 			hide(ui.cardsContainer);
 			hide(ui.sentinel);
 			hide(ui.loadMoreContainer);
+			hide(ui.emptyState);
 			render();
 			const { initMapView, showMapView } = await import(
 				"@/features/map-view/index"
 			);
+			if (state.currentView !== "map") return;
 			if (!cleanupMapView) cleanupMapView = initMapView(ui.mapViewContainer);
 			showMapView();
 		} else {
@@ -300,7 +302,8 @@ export function initProducts(container: HTMLElement): () => void {
 				body: JSON.stringify({ urls: [...state.bookmarks] }),
 			});
 			const json = (await res.json()) as { data?: Property[] };
-			if (json.data && json.data.length > 0) {
+			if (!state.showingSaved) return;
+			if (res.ok && Array.isArray(json.data)) {
 				state.savedOnlyResults = json.data;
 				for (const p of json.data) {
 					state.bookmarkData.set(p.source_url, p);

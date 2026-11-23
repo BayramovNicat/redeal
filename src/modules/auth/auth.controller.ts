@@ -258,7 +258,11 @@ export async function handleAddWhitelist(req: Request): Promise<Response> {
 
 	let body: { email?: unknown; note?: unknown } = {};
 	try {
-		body = (await req.json()) as { email?: unknown; note?: unknown };
+		const raw = (await req.json()) as unknown;
+		if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+			return ResponseHelper.error("JSON body must be an object", 400);
+		}
+		body = raw as { email?: unknown; note?: unknown };
 	} catch {
 		return ResponseHelper.error("Invalid JSON body", 400);
 	}

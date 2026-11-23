@@ -150,6 +150,29 @@ export async function serveStatic(
 	if (pathname.startsWith("/api/"))
 		return new Response("Not Found", { status: 404 });
 
+	if (pathname === "/" || pathname === "/index.html") {
+		if (acceptsBr) {
+			return new Response(new Uint8Array(await getVersionedHtmlBr(publicDir)), {
+				headers: {
+					"Content-Type": "text/html; charset=utf-8",
+					"Content-Encoding": "br",
+					Vary: "Accept-Encoding",
+					"Cache-Control": CACHE_REVALIDATE,
+					"Content-Security-Policy": CSP,
+				},
+			});
+		}
+
+		return new Response(await getVersionedHtml(publicDir), {
+			headers: {
+				"Content-Type": "text/html; charset=utf-8",
+				Vary: "Accept-Encoding",
+				"Cache-Control": CACHE_REVALIDATE,
+				"Content-Security-Policy": CSP,
+			},
+		});
+	}
+
 	const staticPath = resolveStaticPath(publicDir, pathname);
 	if (staticPath === null) return new Response("Not Found", { status: 404 });
 
@@ -196,6 +219,7 @@ export async function serveStatic(
 	return new Response(await getVersionedHtml(publicDir), {
 		headers: {
 			"Content-Type": "text/html; charset=utf-8",
+			Vary: "Accept-Encoding",
 			"Cache-Control": CACHE_REVALIDATE,
 			"Content-Security-Policy": CSP,
 		},

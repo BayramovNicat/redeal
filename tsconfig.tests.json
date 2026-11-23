@@ -6,7 +6,7 @@
 		"moduleResolution": "Bundler",
 		"declaration": false,
 		"lib": ["ES2022", "DOM"],
-		"types": ["bun-types", "@playwright/test"]
+		"types": ["bun-types"]
 	},
 	"include": ["tests/**/*.ts", "scripts/**/*.ts"],
 	"exclude": ["node_modules", "dist"]

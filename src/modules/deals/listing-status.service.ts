@@ -66,10 +66,11 @@ export async function checkAndDeleteEndedListing(
 		throw new Error("Only bina.az item URLs are supported");
 	}
 
+	const canonicalUrl = `https://bina.az/items/${itemId}`;
 	const gql = await fetchBinaGraphQLStatus(itemId);
 	if (!gql.item) {
 		return deleteIfNeeded({
-			url,
+			url: canonicalUrl,
 			ended: true,
 			deleted: false,
 			expiresAt: null,
@@ -79,7 +80,7 @@ export async function checkAndDeleteEndedListing(
 
 	if (isGraphQLItemEnded(gql.item)) {
 		return deleteIfNeeded({
-			url,
+			url: canonicalUrl,
 			ended: true,
 			deleted: false,
 			expiresAt: gql.item.expiresAt,
@@ -87,10 +88,10 @@ export async function checkAndDeleteEndedListing(
 		});
 	}
 
-	const htmlEnded = await fetchBinaHtmlEnded(url);
+	const htmlEnded = await fetchBinaHtmlEnded(canonicalUrl);
 	if (htmlEnded) {
 		return deleteIfNeeded({
-			url,
+			url: canonicalUrl,
 			ended: true,
 			deleted: false,
 			expiresAt: gql.item.expiresAt,
@@ -99,7 +100,7 @@ export async function checkAndDeleteEndedListing(
 	}
 
 	return {
-		url,
+		url: canonicalUrl,
 		ended: false,
 		deleted: false,
 		expiresAt: gql.item.expiresAt,

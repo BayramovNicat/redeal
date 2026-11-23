@@ -177,7 +177,7 @@ export class BinaScraper extends BaseScraper {
 			listingType,
 			categoryId,
 		} = options;
-		const finalMaxPages = endPage ?? defaultMax;
+		const finalMaxPages = endPage ?? startPage + defaultMax - 1;
 		const all: ScrapedListing[] = [];
 
 		const activePropertyTypes = BINA_PROPERTY_TYPES.filter((type) => {
@@ -400,6 +400,7 @@ export class BinaScraper extends BaseScraper {
 		ids: string[],
 		referer?: string,
 	): Promise<Record<string, ItemDetail>> {
+		if (ids.length === 0) return {};
 		const fields = ids
 			.map(
 				(id) =>

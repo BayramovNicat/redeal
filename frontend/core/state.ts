@@ -11,6 +11,19 @@ function loadBookmarkData(): Map<string, Property> {
 	}
 }
 
+function loadStringSet(key: string): Set<string> {
+	try {
+		const raw = localStorage.getItem(key);
+		if (!raw) return new Set();
+		const arr = JSON.parse(raw);
+		return Array.isArray(arr)
+			? new Set(arr.filter((x) => typeof x === "string"))
+			: new Set();
+	} catch {
+		return new Set();
+	}
+}
+
 export const state = {
 	allResults: [] as Property[],
 	savedOnlyResults: [] as Property[],
@@ -21,13 +34,9 @@ export const state = {
 	showingSaved: false,
 	scrollObserver: null as IntersectionObserver | null,
 	renderedSet: new Set<string>(),
-	bookmarks: new Set<string>(
-		JSON.parse(localStorage.getItem("re-bm") || "[]") as string[],
-	),
+	bookmarks: loadStringSet("re-bm"),
 	bookmarkData: loadBookmarkData(),
-	hidden: new Set<string>(
-		JSON.parse(localStorage.getItem("re-hidden") || "[]") as string[],
-	),
+	hidden: loadStringSet("re-hidden"),
 	PAGE: 50,
 	hasSearched: false,
 	isPreviewLimited: false,

@@ -5,7 +5,7 @@ import { ResponseHelper } from "@/utils/response.js";
 
 export async function getAlerts(req: Request): Promise<Response> {
 	const chatId = new URL(req.url).searchParams.get("chat_id") ?? "";
-	if (!/^\d+$/.test(chatId)) {
+	if (!/^-?\d+$/.test(chatId)) {
 		return ResponseHelper.error(
 			"chat_id must be a numeric Telegram chat ID",
 			400,
@@ -40,8 +40,11 @@ export async function createAlert(req: Request): Promise<Response> {
 	}
 
 	const body = parsed.data;
+	if (!body || typeof body !== "object" || Array.isArray(body)) {
+		return ResponseHelper.error("JSON body must be an object", 400);
+	}
 	const chatId = String(body.chat_id ?? "").trim();
-	if (!/^\d+$/.test(chatId)) {
+	if (!/^-?\d+$/.test(chatId)) {
 		return ResponseHelper.error(
 			"chat_id must be a numeric Telegram chat ID",
 			400,
@@ -85,7 +88,7 @@ export async function deleteAlert(req: Request): Promise<Response> {
 	}
 
 	const chatId = url.searchParams.get("chat_id") ?? "";
-	if (!/^\d+$/.test(chatId)) {
+	if (!/^-?\d+$/.test(chatId)) {
 		return ResponseHelper.error(
 			"chat_id must be a numeric Telegram chat ID",
 			400,

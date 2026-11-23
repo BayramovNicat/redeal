@@ -31,7 +31,12 @@ const DISTRICT_ALIASES: Record<string, BakuDistrict> = {
 	"nərimanov rayonu": BakuDistrict.NARIMANOV,
 
 	// Nasimi
+	nəsimi: BakuDistrict.NASIMI,
+	nesimi: BakuDistrict.NASIMI,
 	nasimi: BakuDistrict.NASIMI,
+	"nəsimi r.": BakuDistrict.NASIMI,
+	"nəsimi ray.": BakuDistrict.NASIMI,
+	"nəsimi rayonu": BakuDistrict.NASIMI,
 	"nasimi r.": BakuDistrict.NASIMI,
 	"nasimi ray.": BakuDistrict.NASIMI,
 	"nasimi rayonu": BakuDistrict.NASIMI,
@@ -139,8 +144,8 @@ const METRO_AND_AREA_TO_DISTRICT: Record<string, BakuDistrict> = {
 	"xalqlar-dostlugu": BakuDistrict.NASIMI,
 
 	// Yasamal district
-	"memar-ecemi": BakuDistrict.YASAMAL,
-	narimanov: BakuDistrict.YASAMAL,
+	"memar-ecemi": BakuDistrict.NASIMI,
+	narimanov: BakuDistrict.NARIMANOV,
 
 	// Xətai district
 	"hezi-aslanov": BakuDistrict.KHATAI,
@@ -168,7 +173,7 @@ const METRO_AND_AREA_TO_DISTRICT: Record<string, BakuDistrict> = {
  * slugToDistrict("baki/genclik")                  // → "Nərimanov"
  */
 export function slugToDistrict(slug: string): BakuDistrict {
-	const parts = slug.split("/");
+	const parts = slug.trim().toLowerCase().split("/").filter(Boolean);
 
 	if (parts.length >= 3) {
 		// baki/{district-slug}/{neighborhood} — district is always parts[1]

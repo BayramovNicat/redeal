@@ -45,11 +45,20 @@ let locationsCache: { data: string[]; at: number } | null = null;
 const AVG_CACHE_TTL = 30 * 60_000;
 const avgCache = new Map<string, { avg: number; at: number }>();
 const avgPromises = new Map<string, Promise<Map<string, number>>>();
+let cacheGeneration = 0;
+const cacheInvalidators: Array<() => void> = [];
+
+export function onDealsCacheInvalidated(fn: () => void): void {
+	cacheInvalidators.push(fn);
+}
 
 export function invalidateDealsCaches(): void {
+	cacheGeneration++;
 	avgCache.clear();
 	avgPromises.clear();
 	locationsCache = null;
+	locationsPromise = null;
+	for (const fn of cacheInvalidators) fn();
 }
 
 function effectiveCategory(filters: PropertyFilters = {}): string {
@@ -121,6 +130,7 @@ export async function getLocations(): Promise<string[]> {
 	}
 	if (locationsPromise) return locationsPromise;
 
+	const gen = cacheGeneration;
 	locationsPromise = (async () => {
 		try {
 			const rows = await queryRaw<{ location_name: string }[]>(Prisma.sql`
@@ -130,10 +140,14 @@ export async function getLocations(): Promise<string[]> {
 				ORDER BY location_name ASC
 			`);
 			const data = rows.map((r) => r.location_name);
-			locationsCache = { data, at: Date.now() };
+			if (gen === cacheGeneration) {
+				locationsCache = { data, at: Date.now() };
+			}
 			return data;
 		} finally {
-			locationsPromise = null;
+			if (gen === cacheGeneration) {
+				locationsPromise = null;
+			}
 		}
 	})();
 
@@ -172,6 +186,7 @@ async function getLocationAverages(
 		if (avgPromise) return avgPromise;
 	}
 
+	const gen = cacheGeneration;
 	const fetchPromise = (async () => {
 		const avgLocCondition = isAll
 			? Prisma.sql`location_name IS NOT NULL`
@@ -194,7 +209,9 @@ async function getLocationAverages(
 		for (const r of rows) {
 			const avg = Number(r.avg_ppsm);
 			result.set(r.location_name, avg);
-			avgCache.set(cacheKey(r.location_name), { avg, at: now });
+			if (gen === cacheGeneration) {
+				avgCache.set(cacheKey(r.location_name), { avg, at: now });
+			}
 		}
 		return result;
 	})();
@@ -323,7 +340,6 @@ export async function getMapPins(options: {
 	const { locations, thresholdPercent, filters } = options;
 	const category = effectiveCategory(filters);
 	const listingType = effectiveListingType(filters);
-	const factor = (100 - thresholdPercent) / 100.0;
 
 	const avgsMap = await getLocationAverages(locations, category, listingType);
 	if (avgsMap.size === 0) return [];
@@ -346,7 +362,9 @@ export async function getMapPins(options: {
 		categoryCondition(category),
 		maxDiscountCondition(),
 		...(thresholdPercent > 0
-			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
+			? [
+					Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ((100 - ${thresholdPercent})::numeric / 100)`,
+				]
 			: []),
 		...applyFilters(filters),
 	];
@@ -402,7 +420,6 @@ export async function getUndervalued(
 	const category = effectiveCategory(filters);
 	const listingType = effectiveListingType(filters);
 	const orderBy = getUndervaluedOrderBy(sort);
-	const factor = (100 - thresholdPercent) / 100.0;
 
 	const avgsMap = await getLocationAverages(locations, category, listingType);
 	if (avgsMap.size === 0) return { total: 0, data: [] };
@@ -423,7 +440,9 @@ export async function getUndervalued(
 		categoryCondition(category),
 		maxDiscountCondition(),
 		...(thresholdPercent > 0
-			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
+			? [
+					Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ((100 - ${thresholdPercent})::numeric / 100)`,
+				]
 			: []),
 		...applyFilters(filters),
 	];
@@ -475,7 +494,6 @@ export async function getUndervaluedUrlTiers(
 	const listingType = effectiveListingType(filters);
 	const category = effectiveCategory(filters);
 	const orderBy = getUndervaluedOrderBy(sort);
-	const factor = (100 - thresholdPercent) / 100.0;
 
 	const avgsMap = await getLocationAverages(locations, category, listingType);
 	if (avgsMap.size === 0) return [];
@@ -496,7 +514,9 @@ export async function getUndervaluedUrlTiers(
 		categoryCondition(category),
 		maxDiscountCondition(),
 		...(thresholdPercent > 0
-			? [Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ${factor}`]
+			? [
+					Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ((100 - ${thresholdPercent})::numeric / 100)`,
+				]
 			: []),
 		...applyFilters(filters),
 	];
@@ -544,15 +564,17 @@ export async function getPriceDropDeals(
 	const locationList = isAll ? [] : (location as string[]);
 
 	const avgsMap = await getLocationAverages(location, category, listingType);
-	if (avgsMap.size === 0) return { total: 0, data: [] };
 
 	const locCondition = isAll
 		? Prisma.sql`p.location_name IS NOT NULL`
 		: Prisma.sql`p.location_name IN (${Prisma.join(locationList)})`;
 
-	const avgEntries = Array.from(avgsMap.entries()).map(
-		([loc, avg]) => Prisma.sql`(${loc}, ${avg}::numeric)`,
-	);
+	const avgEntries =
+		avgsMap.size > 0
+			? Array.from(avgsMap.entries()).map(
+					([loc, avg]) => Prisma.sql`(${loc}, ${avg}::numeric)`,
+				)
+			: [Prisma.sql`(NULL::text, NULL::numeric)`];
 
 	const baseQuery = Prisma.sql`
 		FROM "Property" p
@@ -692,10 +714,16 @@ function applyFilters(filters: PropertyFilters): Prisma.Sql[] {
 	if (listingType !== undefined)
 		conditions.push(Prisma.sql`p.listing_type::text = ${listingType}`);
 	if (since !== undefined) conditions.push(Prisma.sql`p.created_at > ${since}`);
-	if (descriptionSearch !== undefined && descriptionSearch.trim() !== "")
+	if (descriptionSearch !== undefined && descriptionSearch.trim() !== "") {
+		const escaped = descriptionSearch
+			.trim()
+			.replaceAll("\\", "\\\\")
+			.replaceAll("%", "\\%")
+			.replaceAll("_", "\\_");
 		conditions.push(
-			Prisma.sql`p.description ILIKE ${`%${descriptionSearch.trim()}%`}`,
+			Prisma.sql`p.description ILIKE ${`%${escaped}%`} ESCAPE '\\'`,
 		);
+	}
 
 	return conditions;
 }

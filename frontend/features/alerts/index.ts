@@ -22,9 +22,15 @@ export function initAlerts(root: HTMLElement): () => void {
 		isLoadingAlerts: false,
 	};
 
+	let listReqId = 0;
+	let loadedChatId = "";
+
 	const refreshList = async (chatId: string) => {
+		const reqId = ++listReqId;
 		state_local.isLoadingAlerts = true;
 		const alerts = await fetchAlerts(chatId);
+		if (reqId !== listReqId) return;
+		loadedChatId = chatId;
 		renderAlertList(alerts, ui.itemsEl, ui.listEl, handleDelete);
 		state_local.isLoadingAlerts = false;
 	};
@@ -58,7 +64,8 @@ export function initAlerts(root: HTMLElement): () => void {
 	};
 
 	const handleDelete = async (token: string, rowEl: HTMLElement) => {
-		const success = await deleteAlert(token, ui.chatIdInput.value.trim());
+		const chatId = loadedChatId || ui.chatIdInput.value.trim();
+		const success = await deleteAlert(token, chatId);
 		if (success) {
 			rowEl.remove();
 			if (ui.itemsEl.children.length === 0) {

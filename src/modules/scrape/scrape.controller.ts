@@ -8,6 +8,7 @@ import {
 	requireScrapeAdminMutation,
 	verifyScrapeAdminPassword,
 } from "@/modules/scrape/scrape-admin-auth.js";
+import { readJsonBody } from "@/utils/json-body.js";
 import { parseQueryNum } from "@/utils/query.js";
 import { ResponseHelper } from "@/utils/response.js";
 import { scrapeRunsService } from "./scrape-runs.service.js";
@@ -17,12 +18,19 @@ export async function loginScrapeAdmin(req: Request): Promise<Response> {
 		return ResponseHelper.error("SCRAPE_ADMIN_PASSWORD is not configured", 503);
 	}
 
-	let body: { password?: unknown } = {};
-	try {
-		body = (await req.json()) as { password?: unknown };
-	} catch {
-		return ResponseHelper.error("Invalid JSON body", 400);
+	const parsed = await readJsonBody<unknown>(req);
+	if (!parsed.ok) {
+		return ResponseHelper.error(
+			parsed.status === 413 ? "JSON body too large" : "Invalid JSON body",
+			parsed.status,
+		);
 	}
+	const body =
+		parsed.data &&
+		typeof parsed.data === "object" &&
+		!Array.isArray(parsed.data)
+			? (parsed.data as { password?: unknown })
+			: {};
 
 	if (
 		typeof body.password !== "string" ||

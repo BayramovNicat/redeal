@@ -41,8 +41,8 @@ export function initTrend(container: HTMLElement): () => void {
 
 		const vals = data.map((p) => Number(p.avg_ppsm));
 		const last = vals[vals.length - 1] ?? 0;
-		const first = vals[0] ?? 1;
-		const changePct = ((last - first) / first) * 100;
+		const first = vals[0] ?? 0;
+		const changePct = first > 0 ? ((last - first) / first) * 100 : 0;
 		const up = changePct > 2;
 		const dn = changePct < -2;
 
@@ -83,7 +83,10 @@ export function initTrend(container: HTMLElement): () => void {
 		if (state.currentSvg) ui.chartEl.insertBefore(state.currentSvg, ui.tipEl);
 	}
 
+	let trendReqId = 0;
+
 	async function updateTrend(location: string): Promise<void> {
+		const reqId = ++trendReqId;
 		if (!location || location === "__all__") {
 			hide(ui.panel);
 			return;
@@ -98,6 +101,7 @@ export function initTrend(container: HTMLElement): () => void {
 		}
 
 		const data = await fetchTrendData(location, state);
+		if (reqId !== trendReqId) return;
 		renderTrend(location, data);
 	}
 

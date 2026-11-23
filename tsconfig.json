@@ -7,6 +7,7 @@
 			"@/*": ["./src/*", "./frontend/*"]
 		},
 		"lib": ["ES2022"],
+		"types": ["node", "bun"],
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"strict": true,

@@ -125,9 +125,10 @@ export function buildFilterPreview(f: AlertFilters): string {
 		parts.push(`₼ ${f.minPrice ?? "0"}–${f.maxPrice ?? "∞"}`);
 	}
 	if (f.minRooms || f.maxRooms) {
-		parts.push(
-			`${f.minRooms ?? "1"}–${f.maxRooms ?? "5"}+ ${t("previewRooms")}`,
-		);
+		const range = f.maxRooms
+			? `${f.minRooms ?? "1"}–${f.maxRooms}`
+			: `${f.minRooms}+`;
+		parts.push(`${range} ${t("previewRooms")}`);
 	}
 	if (f.minArea || f.maxArea) {
 		parts.push(`${f.minArea ?? "0"}–${f.maxArea ?? "∞"} ${t("previewArea")}`);

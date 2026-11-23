@@ -66,7 +66,7 @@ export function initTooltip(root: HTMLElement = document.body): () => void {
 	add(window, "mouseout", onMouseOut);
 	add(window, "pointerdown", onPointerDown);
 	add(window, "click", onClick);
-	add(window, "scroll", onScroll);
+	add(window, "scroll", onScroll, { capture: true });
 	add(window, "resize", onScroll);
 
 	return () => {
@@ -80,9 +80,15 @@ export function initTooltip(root: HTMLElement = document.body): () => void {
 function show(target: HTMLElement) {
 	if (!el) return;
 
+	if (activeTarget && activeTarget !== target) {
+		activeTarget.removeAttribute("aria-describedby");
+	}
 	activeTarget = target;
 	const text = target.getAttribute("data-tip");
-	if (!text) return;
+	if (!text) {
+		hide();
+		return;
+	}
 
 	// Handle top-layer (dialog) visibility
 	const dialog = target.closest("dialog");

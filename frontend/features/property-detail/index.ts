@@ -88,13 +88,14 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		},
 		onHide: () => {
 			if (ui.currentProperty) {
+				const prop = ui.currentProperty;
+				ui.modal.close();
 				ui.modal.dispatchEvent(
 					new CustomEvent("pd:hide", {
 						bubbles: true,
-						detail: ui.currentProperty,
+						detail: prop,
 					}),
 				);
-				ui.modal.close();
 			}
 		},
 		onDelete: () => {
@@ -126,6 +127,9 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 		if (e.key === "ArrowRight") ui.gallery.navigate(1);
 	};
 	add(ui.modal, "keydown", onKey);
+	add(ui.modal, "close", () => {
+		ui.statusAbort?.abort();
+	});
 
 	const open = async (p: Property) => {
 		ui.statusAbort?.abort();
@@ -137,7 +141,9 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 			void checkEnded(ui, p, ui.statusAbort.signal);
 		}
 		// Reset scroll position after showModal
-		const body = ui.modal.querySelector(".overflow-y-auto");
+		const body =
+			ui.modal.querySelector(".md\\:overflow-y-auto") ??
+			ui.modal.querySelector(".overflow-y-auto");
 		if (body) setTimeout(() => (body.scrollTop = 0), 0);
 		await initMap(ui);
 	};

@@ -14,14 +14,14 @@ try {
 	console.log("Rent Scraper Completed:");
 	console.log(JSON.stringify(rentResults, null, 2));
 
-	console.log("--- Starting House Scraper (300 pages) ---");
-	const houseResults = await service.runAll({
+	console.log("--- Starting Sale Scraper (300 pages) ---");
+	const saleResults = await service.runAll({
 		maxPages: 300,
 		delayMs: 800,
-		categoryId: "5",
+		listingType: "sale",
 	});
-	console.log("House Scraper Completed:");
-	console.log(JSON.stringify(houseResults, null, 2));
+	console.log("Sale Scraper Completed:");
+	console.log(JSON.stringify(saleResults, null, 2));
 } finally {
 	await prisma.$disconnect();
 }

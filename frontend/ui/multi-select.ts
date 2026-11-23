@@ -179,9 +179,10 @@ export function MultiSelect({
 			label.className = "truncate text-(--text-2)";
 			countBadge.style.display = "none";
 		} else {
-			const selectedLabels = options
-				.filter((o) => selectedValues.includes(o.value))
-				.map((o) => o.label);
+			const labelMap = new Map(options.map((o) => [o.value, o.label]));
+			const selectedLabels = selectedValues.map(
+				(v) => labelMap.get(v) ?? (v === "__all__" ? placeholder : v),
+			);
 
 			if (selectedLabels.length <= 2) {
 				label.textContent = selectedLabels.join(", ");
@@ -228,10 +229,7 @@ export function MultiSelect({
 	}
 
 	const handleOutside = (e: MouseEvent) => {
-		if (!document.body.contains(el)) {
-			document.removeEventListener("click", handleOutside);
-			return;
-		}
+		if (!isOpen) return;
 		if (!el.contains(e.target as Node)) {
 			setOpen(false);
 		}
@@ -239,9 +237,13 @@ export function MultiSelect({
 	document.addEventListener("click", handleOutside);
 
 	const multiEl = el as MultiSelectElement;
-	multiEl.getValue = () => selectedValues;
+	multiEl.getValue = () => [...selectedValues];
 	multiEl.setValue = (vals: string[]) => {
-		selectedValues = vals;
+		const copy = [...vals];
+		selectedValues =
+			exclusiveValue !== undefined && copy.length > 1
+				? copy.filter((v) => v !== exclusiveValue)
+				: copy;
 		updateUI();
 	};
 	multiEl.setOptions = (newOptions: MultiSelectOption[]) => {

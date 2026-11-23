@@ -112,19 +112,25 @@ export function Dialog({
 
 	const originalShowModal = el.showModal.bind(el);
 	el.showModal = () => {
-		if (!el.open) {
-			openDialogsCount++;
-			document.body.setAttribute("data-dialog-open", "true");
-		}
+		if (el.open) return;
 		originalShowModal();
+		openDialogsCount++;
+		document.body.setAttribute("data-dialog-open", "true");
 	};
 
-	el.addEventListener("close", () => {
+	const onDialogClosed = () => {
 		openDialogsCount = Math.max(0, openDialogsCount - 1);
 		if (openDialogsCount === 0) {
 			document.body.removeAttribute("data-dialog-open");
 		}
-	});
+	};
+	el.addEventListener("close", onDialogClosed);
+
+	const originalRemove = el.remove.bind(el);
+	el.remove = () => {
+		if (el.open) onDialogClosed();
+		originalRemove();
+	};
 
 	return el;
 }

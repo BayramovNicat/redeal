@@ -27,10 +27,14 @@ export function sortDeals(list: Property[], sortBy: string): Property[] {
  * Syncs bookmarks and hidden items to localStorage.
  */
 export function syncStateToStorage(): void {
-	const bmDataObj = Object.fromEntries(state.bookmarkData);
-	localStorage.setItem("re-bm-data", JSON.stringify(bmDataObj));
-	localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
-	localStorage.setItem("re-hidden", JSON.stringify([...state.hidden]));
+	try {
+		const bmDataObj = Object.fromEntries(state.bookmarkData);
+		localStorage.setItem("re-bm-data", JSON.stringify(bmDataObj));
+		localStorage.setItem("re-bm", JSON.stringify([...state.bookmarks]));
+		localStorage.setItem("re-hidden", JSON.stringify([...state.hidden]));
+	} catch {
+		// Ignore QuotaExceededError / restricted storage
+	}
 }
 
 /**
@@ -119,8 +123,8 @@ export function formatExportText(list: Property[]): string {
 
 		const loc = `${p.location_name ?? "Unknown"}${p.district && p.district !== p.location_name ? ` (${p.district})` : ""}`;
 		const details = [
-			p.rooms !== undefined && `${p.rooms} rooms`,
-			p.floor !== undefined &&
+			p.rooms != null && `${p.rooms} rooms`,
+			p.floor != null &&
 				`Floor ${p.floor}${p.total_floors ? `/${p.total_floors}` : ""}`,
 		]
 			.filter(Boolean)

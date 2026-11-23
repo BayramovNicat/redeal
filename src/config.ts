@@ -16,10 +16,17 @@ export const TELEGRAM_WEBHOOK_SECRET =
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
 export const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI ?? "";
-export const AUTH_SESSION_SECRET =
-	process.env.AUTH_SESSION_SECRET ??
-	process.env.SCRAPE_ADMIN_SESSION_SECRET ??
-	"redeal-auth-secret-key-change-in-production";
+export const AUTH_SESSION_SECRET = (() => {
+	const secret =
+		process.env.AUTH_SESSION_SECRET ?? process.env.SCRAPE_ADMIN_SESSION_SECRET;
+	if (secret) return secret;
+	if (process.env.NODE_ENV === "production") {
+		throw new Error(
+			"AUTH_SESSION_SECRET (or SCRAPE_ADMIN_SESSION_SECRET) must be set in production",
+		);
+	}
+	return "redeal-auth-secret-key-change-in-production";
+})();
 export const AUTH_SESSION_TTL_SECONDS = Number(
 	process.env.AUTH_SESSION_TTL_SECONDS ?? 30 * 24 * 60 * 60, // 30 days
 );

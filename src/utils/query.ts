@@ -1,8 +1,8 @@
 /** Parse optional numeric query parameter */
 export function parseQueryNum(val: string | null): number | undefined {
-	if (val === null || val === "") return undefined;
+	if (val === null || val.trim() === "") return undefined;
 	const n = Number(val);
-	return Number.isNaN(n) ? undefined : n;
+	return Number.isFinite(n) ? n : undefined;
 }
 
 /** Parse optional boolean query parameter */

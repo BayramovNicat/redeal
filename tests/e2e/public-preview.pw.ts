@@ -75,7 +75,7 @@ test("guest can browse unfiltered preview, inspect details and stats, and sees p
 
 	// Only unfiltered default query was sent
 	expect(searchUrls).toHaveLength(1);
-	const initialParams = new URL(searchUrls[0]).searchParams;
+	const initialParams = new URL(searchUrls[0] ?? "").searchParams;
 	expect(initialParams.get("location")).toBe("__all__");
 	expect(initialParams.get("threshold")).toBe("10");
 
@@ -167,8 +167,8 @@ test("guest landing on a location+filter URL loads that location preview and pro
 
 	// Background request kept the public location but stripped gated minPrice
 	expect(searchUrls).toHaveLength(1);
-	expect(new URL(searchUrls[0]).searchParams.get("location")).toBe(
+	expect(new URL(searchUrls[0] ?? "").searchParams.get("location")).toBe(
 		"baki/yasamal",
 	);
-	expect(new URL(searchUrls[0]).searchParams.get("minPrice")).toBeNull();
+	expect(new URL(searchUrls[0] ?? "").searchParams.get("minPrice")).toBeNull();
 });

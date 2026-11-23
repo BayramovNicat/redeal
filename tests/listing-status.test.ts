@@ -89,7 +89,7 @@ describe("listing-status service", () => {
 					// i104 intentionally omitted from partial GraphQL data
 				},
 			});
-		}) as typeof fetch;
+		}) as unknown as typeof fetch;
 
 		const deletedUrlBatches: string[][] = [];
 		const result = await checkAndDeleteEndedListings(
@@ -133,7 +133,7 @@ describe("listing-status service", () => {
 					},
 				},
 				errors: [{ message: "Upstream timeout", path: ["i201"] }],
-			})) as typeof fetch;
+			})) as unknown as typeof fetch;
 
 		const deletedUrls: string[] = [];
 		const result = await checkAndDeleteEndedListings(

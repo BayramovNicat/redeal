@@ -34,16 +34,19 @@ export async function buildStyles() {
 	});
 
 	await Bun.write(stylesTemp, postcssResult.css);
-
-	const result = await Bun.build({
-		entrypoints: [stylesTemp],
-		outdir: dirs.public,
-		naming: "styles.css",
-		minify: true,
-	});
-	assertBuildSuccess(result, "CSS");
-
-	await Bun.file(stylesTemp).delete?.();
+	try {
+		const result = await Bun.build({
+			entrypoints: [stylesTemp],
+			outdir: dirs.public,
+			naming: "styles.css",
+			minify: true,
+		});
+		assertBuildSuccess(result, "CSS");
+	} finally {
+		await Bun.file(stylesTemp)
+			.delete?.()
+			.catch(() => {});
+	}
 }
 
 export async function buildServiceWorker() {

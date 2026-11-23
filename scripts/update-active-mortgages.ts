@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { detectActiveMortgage } from "../src/scrapers/base.scraper";
 import { prisma } from "../src/utils/prisma";
 
@@ -35,14 +36,24 @@ try {
 			);
 
 		if (updates.length > 0) {
-			await prisma.$transaction(
-				updates.map((property) =>
-					prisma.property.update({
-						where: { id: property.id },
-						data: { has_active_mortgage: property.hasActiveMortgage },
-					}),
-				),
-			);
+			const toTrueIds = updates
+				.filter((u) => u.hasActiveMortgage)
+				.map((u) => u.id);
+			const toFalseIds = updates
+				.filter((u) => !u.hasActiveMortgage)
+				.map((u) => u.id);
+			await prisma.$transaction([
+				...(toTrueIds.length > 0
+					? [
+							prisma.$executeRaw`UPDATE "Property" SET has_active_mortgage = true, updated_at = updated_at WHERE id = ANY(${Prisma.sql`ARRAY[${Prisma.join(toTrueIds)}]::int[]`})`,
+						]
+					: []),
+				...(toFalseIds.length > 0
+					? [
+							prisma.$executeRaw`UPDATE "Property" SET has_active_mortgage = false, updated_at = updated_at WHERE id = ANY(${Prisma.sql`ARRAY[${Prisma.join(toFalseIds)}]::int[]`})`,
+						]
+					: []),
+			]);
 		}
 
 		for (const update of updates) {

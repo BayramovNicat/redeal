@@ -1,3 +1,4 @@
+import { state } from "@/core/state";
 import { getBooleanFilters, getNumericFilters } from "./constants";
 import { syncDiscountThresholdUI } from "./filters";
 import type { SearchUI } from "./types";
@@ -246,6 +247,18 @@ export function restoreStateFromUrl(ui: SearchUI): void {
 	const desc = urlParams.get("descriptionSearch");
 	if (desc && desc !== "undefined" && desc !== "null") {
 		ui.descriptionInput.value = desc;
+	}
+
+	const sort = urlParams.get("sort");
+	if (
+		sort &&
+		state.refs.sortSelect &&
+		Array.from(state.refs.sortSelect.options).some((o) => o.value === sort)
+	) {
+		state.refs.sortSelect.value = sort;
+		try {
+			localStorage.setItem("re-sort", sort);
+		} catch {}
 	}
 
 	const location = urlParams.get("location");
