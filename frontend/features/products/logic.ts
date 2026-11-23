@@ -69,7 +69,10 @@ export function hideItem(url: string): void {
 /**
  * Permanently deletes a property via API and removes from state.
  */
-export async function deleteItem(p: Property): Promise<boolean> {
+export async function deleteItem(
+	p: Property,
+	options?: { skipToast?: boolean },
+): Promise<boolean> {
 	if (!window.confirm(t("confirmDelete"))) return false;
 
 	try {
@@ -92,7 +95,7 @@ export async function deleteItem(p: Property): Promise<boolean> {
 		state.hidden.delete(p.source_url);
 		syncStateToStorage();
 
-		toast(t("toastDeleted"));
+		if (!options?.skipToast) toast(t("toastDeleted"));
 		bus.emit(EVENTS.DEALS_UPDATED);
 		return true;
 	} catch (err) {

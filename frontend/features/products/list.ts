@@ -43,6 +43,20 @@ export function renderList(
 			skeletons.forEach((s) => {
 				s.remove();
 			});
+			for (const child of Array.from(wrap.children)) {
+				const url = (child as HTMLElement).dataset.url;
+				if (!url) continue;
+				const bmarkBtn = child.querySelector<HTMLButtonElement>(
+					'button[data-action="bmark"]',
+				);
+				if (bmarkBtn) {
+					const bookmarked = state.bookmarks.has(url);
+					bmarkBtn.classList.toggle("on", bookmarked);
+					bmarkBtn.replaceChildren(
+						Icons.bookmark({ size: 13, fill: bookmarked }),
+					);
+				}
+			}
 			const newItems = list.slice(realCount);
 
 			if (newItems.length > 0) {

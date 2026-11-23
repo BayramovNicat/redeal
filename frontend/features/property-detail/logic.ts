@@ -145,37 +145,46 @@ export function bindPropertyData(ui: PropertyDetailUI, p: Property): void {
 	ui.linkEl.href = p.source_url;
 }
 
+let mapInitPromise: Promise<void> | null = null;
+
 /**
  * Initializes the Leaflet map and marker.
  */
 export async function initMap(ui: PropertyDetailUI): Promise<void> {
-	if (ui.lmap) return;
+	if (!ui.lmap) {
+		if (!mapInitPromise) {
+			mapInitPromise = (async () => {
+				// Map requires its container to be in the DOM and visible to size correctly.
+				const wasHidden = ui.mapSecEl.classList.contains("hidden");
+				ui.mapSecEl.classList.remove("hidden");
+				ui.mapSecEl.style.visibility = "hidden";
 
-	// Map requires its container to be in the DOM and visible to size correctly.
-	const wasHidden = ui.mapSecEl.classList.contains("hidden");
-	ui.mapSecEl.classList.remove("hidden");
-	ui.mapSecEl.style.visibility = "hidden";
+				ui.lmap = await initLeaflet(ui.mapCtEl);
+				const { divIcon, marker } = await import("leaflet");
+				const mapIcon = divIcon({
+					className: "",
+					html: /*html*/ `<div class="w-3.5 h-3.5 rounded-full bg-(--green) border-2 border-[#060709] animate-[mpulse_2s_ease-out_infinite] cursor-pointer shadow-md"></div>`,
+					iconSize: [14, 14],
+					iconAnchor: [7, 7],
+				});
+				if (ui.lmap) {
+					ui.lmark = marker([0, 0], { icon: mapIcon }).addTo(ui.lmap);
+					ui.lmark.on("click", () => {
+						if (ui.currentProperty?.latitude && ui.currentProperty?.longitude) {
+							const url = `https://www.google.com/maps/search/?api=1&query=${ui.currentProperty.latitude},${ui.currentProperty.longitude}`;
+							window.open(url, "_blank");
+						}
+					});
+				}
 
-	ui.lmap = await initLeaflet(ui.mapCtEl);
-	const { divIcon, marker } = await import("leaflet");
-	const mapIcon = divIcon({
-		className: "",
-		html: /*html*/ `<div class="w-3.5 h-3.5 rounded-full bg-(--green) border-2 border-[#060709] animate-[mpulse_2s_ease-out_infinite] cursor-pointer shadow-md"></div>`,
-		iconSize: [14, 14],
-		iconAnchor: [7, 7],
-	});
-	if (ui.lmap) {
-		ui.lmark = marker([0, 0], { icon: mapIcon }).addTo(ui.lmap);
-		ui.lmark.on("click", () => {
-			if (ui.currentProperty?.latitude && ui.currentProperty?.longitude) {
-				const url = `https://www.google.com/maps/search/?api=1&query=${ui.currentProperty.latitude},${ui.currentProperty.longitude}`;
-				window.open(url, "_blank");
-			}
-		});
+				ui.mapSecEl.style.visibility = "";
+				if (wasHidden) ui.mapSecEl.classList.add("hidden");
+			})().finally(() => {
+				mapInitPromise = null;
+			});
+		}
+		await mapInitPromise;
 	}
-
-	ui.mapSecEl.style.visibility = "";
-	if (wasHidden) ui.mapSecEl.classList.add("hidden");
 
 	if (ui.currentProperty) updateMap(ui, ui.currentProperty);
 }

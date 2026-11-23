@@ -651,12 +651,13 @@ export function initProducts(container: HTMLElement): () => void {
 		if (p) {
 			const dialog = e.target instanceof HTMLDialogElement ? e.target : null;
 			void import("./logic").then(({ deleteItem }) =>
-				deleteItem(p).then((deleted) => {
+				deleteItem(p, { skipToast: true }).then((deleted) => {
 					if (deleted) {
 						updateSavedBadge();
 						if (dialog?.open) {
 							dialog.close();
 						}
+						toast(t("toastDeleted"));
 					}
 				}),
 			);

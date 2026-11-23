@@ -141,6 +141,7 @@ export function initDistrictStats(root: HTMLElement): () => void {
 }
 
 function renderTable(): void {
+	if (state.cachedData === null) return;
 	const data = getProcessedData(state);
 	ui.tbody.replaceChildren();
 
@@ -193,7 +194,10 @@ function renderTable(): void {
 		: countStr;
 }
 
+let loadingStats = false;
+
 async function loadStats(): Promise<void> {
+	if (loadingStats) return;
 	const isFresh = state.cachedData && Date.now() - state.cachedAt < CACHE_TTL;
 	if (isFresh) {
 		ui.loading.classList.add("hidden");
@@ -201,6 +205,7 @@ async function loadStats(): Promise<void> {
 		return;
 	}
 
+	loadingStats = true;
 	ui.loading.classList.remove("hidden");
 	[ui.table, ui.error, ui.empty].forEach((el) => {
 		el.classList.add("hidden");
@@ -221,6 +226,8 @@ async function loadStats(): Promise<void> {
 		console.error("[DistrictStats]", e);
 		ui.loading.classList.add("hidden");
 		ui.error.classList.remove("hidden");
+	} finally {
+		loadingStats = false;
 	}
 }
 

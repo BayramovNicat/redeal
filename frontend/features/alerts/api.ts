@@ -3,11 +3,13 @@ import { state } from "@/core/state";
 import type { Alert } from "@/core/types";
 import { toast } from "@/core/utils";
 
+import { openLoginModal } from "@/features/auth/api";
+
 /**
  * Fetches active alerts for a given chatId.
  */
 export async function fetchAlerts(chatId: string): Promise<Alert[]> {
-	if (!chatId || !/^\d+$/.test(chatId)) {
+	if (!chatId || !/^-?\d+$/.test(chatId)) {
 		return [];
 	}
 
@@ -15,10 +17,19 @@ export async function fetchAlerts(chatId: string): Promise<Alert[]> {
 		const res = await fetch(
 			`/api/alerts?chat_id=${encodeURIComponent(chatId)}`,
 		);
-		const d = (await res.json()) as { alerts?: Alert[] };
+		const d = (await res.json()) as { alerts?: Alert[]; error?: string };
+		if (res.status === 401) {
+			openLoginModal("alerts");
+			return [];
+		}
+		if (!res.ok) {
+			toast(d.error ?? `Request failed (${res.status})`, true);
+			return [];
+		}
 		return d.alerts ?? [];
 	} catch (e) {
 		console.error("[Alerts] fetchAlerts failed:", e);
+		toast((e as Error).message, true);
 		return [];
 	}
 }

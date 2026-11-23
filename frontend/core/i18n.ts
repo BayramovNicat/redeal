@@ -6,9 +6,13 @@ export type TranslationKey = keyof typeof en;
 const STORAGE_KEY = "redeal-lang";
 
 function getInitialLang(): Lang {
-	const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
-	if (saved && (saved === "en" || saved === "az" || saved === "ru")) {
-		return saved;
+	try {
+		const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
+		if (saved && (saved === "en" || saved === "az" || saved === "ru")) {
+			return saved;
+		}
+	} catch {
+		// Ignore restricted storage
 	}
 
 	const browserLang = (
@@ -17,7 +21,11 @@ function getInitialLang(): Lang {
 	const detected: Lang =
 		browserLang === "az" || browserLang === "ru" ? browserLang : "en";
 
-	localStorage.setItem(STORAGE_KEY, detected);
+	try {
+		localStorage.setItem(STORAGE_KEY, detected);
+	} catch {
+		// Ignore restricted storage
+	}
 	return detected;
 }
 
@@ -54,6 +62,10 @@ export function getLang(): Lang {
 
 export function setLang(lang: Lang): void {
 	if (lang === currentLang) return;
-	localStorage.setItem(STORAGE_KEY, lang);
+	try {
+		localStorage.setItem(STORAGE_KEY, lang);
+	} catch {
+		// Ignore restricted storage
+	}
 	window.location.reload();
 }

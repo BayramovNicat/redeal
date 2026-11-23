@@ -1,11 +1,13 @@
 import { bus, EVENTS } from "@/core/events";
 import { t } from "@/core/i18n";
+import { state } from "@/core/state";
 import type { Property } from "@/core/types";
 import { makeEventManager, toast } from "@/core/utils";
 import { isUserAuthenticated } from "@/features/auth/api";
 import { bindPropertyData, initMap } from "@/features/property-detail/logic";
 import type { PropertyDetailUI } from "@/features/property-detail/types";
 import { renderPropertyDetailLayout } from "@/features/property-detail/ui";
+import { Icons } from "@/ui/icons";
 
 export function initPropertyDetail(root: HTMLElement): () => void {
 	const ui: PropertyDetailUI = {
@@ -53,11 +55,11 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 			if (!ui.currentProperty) return;
 			const url = ui.currentProperty.source_url;
 			const flash = (msg: string) => {
-				const prev = ui.shareBtn.title;
-				ui.shareBtn.title = msg;
+				const prev = ui.shareBtn.getAttribute("aria-label") || t("btnShare");
+				ui.shareBtn.setAttribute("data-tip", msg);
 				ui.shareBtn.setAttribute("aria-label", msg);
 				setTimeout(() => {
-					ui.shareBtn.title = prev;
+					ui.shareBtn.setAttribute("data-tip", prev);
 					ui.shareBtn.setAttribute("aria-label", prev);
 				}, 2000);
 			};
@@ -68,11 +70,15 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 					.then(() => flash(t("shareCopied")))
 					.catch(() =>
 						navigator.clipboard
-							.writeText(url)
-							.then(() => flash(t("shareCopied"))),
+							?.writeText(url)
+							.then(() => flash(t("shareCopied")))
+							.catch(() => {}),
 					);
 			} else {
-				navigator.clipboard.writeText(url).then(() => flash(t("shareCopied")));
+				navigator.clipboard
+					?.writeText(url)
+					.then(() => flash(t("shareCopied")))
+					.catch(() => {});
 			}
 		},
 		onBookmark: () => {
@@ -83,7 +89,11 @@ export function initPropertyDetail(root: HTMLElement): () => void {
 						detail: ui.currentProperty,
 					}),
 				);
-				bindPropertyData(ui, ui.currentProperty);
+				const bookmarked = state.bookmarks.has(ui.currentProperty.source_url);
+				ui.bmarkBtn.classList.toggle("on", bookmarked);
+				ui.bmarkBtn.replaceChildren(
+					Icons.bookmark({ size: 15, fill: bookmarked }),
+				);
 			}
 		},
 		onHide: () => {

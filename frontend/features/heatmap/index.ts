@@ -53,6 +53,8 @@ export function initHeatmap(root: HTMLElement): () => void {
 		});
 	};
 
+	let lmapInitPromise: Promise<void> | null = null;
+
 	const onOpen = async (
 		activeLocations: string[],
 		onAction: (name: string, isToggle: boolean) => void,
@@ -63,11 +65,18 @@ export function initHeatmap(root: HTMLElement): () => void {
 		modal.showModal();
 
 		if (!lmap) {
-			const { featureGroup } = await import("leaflet");
-			overlay = featureGroup();
-			const ct = modal.querySelector(`#${containerId}`) as HTMLElement;
-			lmap = await initLeaflet(ct);
-			overlay.addTo(lmap);
+			if (!lmapInitPromise) {
+				lmapInitPromise = (async () => {
+					const { featureGroup } = await import("leaflet");
+					overlay = featureGroup();
+					const ct = modal.querySelector(`#${containerId}`) as HTMLElement;
+					lmap = await initLeaflet(ct);
+					overlay.addTo(lmap);
+				})().finally(() => {
+					lmapInitPromise = null;
+				});
+			}
+			await lmapInitPromise;
 		}
 
 		if (isFirstOpen) {
@@ -100,7 +109,7 @@ export function initHeatmap(root: HTMLElement): () => void {
 			updateCircleStyles();
 		}
 
-		lmap.invalidateSize();
+		lmap?.invalidateSize();
 	};
 
 	const offOpen = bus.on(EVENTS.HEATMAP_OPEN, (payload) => {

@@ -187,8 +187,12 @@ async function deletePropertiesByUrls(urlBatch: string[]): Promise<number> {
 }
 
 async function deleteIfNeeded(status: ListingStatus): Promise<ListingStatus> {
+	const itemId = getBinaItemId(status.url);
+	const urls = itemId
+		? [`https://bina.az/items/${itemId}`, `https://www.bina.az/items/${itemId}`]
+		: [status.url];
 	const deleted = await prisma.property.deleteMany({
-		where: { source_url: status.url },
+		where: { source_url: { in: urls } },
 	});
 	return { ...status, deleted: deleted.count > 0 };
 }

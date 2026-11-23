@@ -281,35 +281,47 @@ async function createSmoothCanvasRenderer(): Promise<Renderer> {
 	)({ padding: 0.3, tolerance: 4 });
 }
 
+let mapInitPromise: Promise<void> | null = null;
+
 export async function showMapView(): Promise<void> {
 	if (!mapContainer) return;
 	mapContainer.style.display = "";
 
 	if (!state.lmap) {
-		const {
-			featureGroup,
-			svg,
-			tooltip: leafletTooltip,
-		} = await import("leaflet");
-		canvasRenderer = await createSmoothCanvasRenderer();
-		svgRenderer = svg({ padding: 0.25 });
-		state.pinGroup = featureGroup();
-		state.sharedTooltip = leafletTooltip({
-			sticky: false,
-			direction: "top",
-			offset: [0, -10],
-			opacity: 1,
-			className:
-				"!bg-(--surface-glass-strong) !border-(--border-h) !rounded-(--r) !shadow-[var(--shadow-float)] !p-0 [&::before]:!hidden",
-		});
+		if (!mapInitPromise) {
+			mapInitPromise = (async () => {
+				const {
+					featureGroup,
+					svg,
+					tooltip: leafletTooltip,
+				} = await import("leaflet");
+				canvasRenderer = await createSmoothCanvasRenderer();
+				svgRenderer = svg({ padding: 0.25 });
+				state.pinGroup = featureGroup();
+				state.sharedTooltip = leafletTooltip({
+					sticky: false,
+					direction: "top",
+					offset: [0, -10],
+					opacity: 1,
+					className:
+						"!bg-(--surface-glass-strong) !border-(--border-h) !rounded-(--r) !shadow-[var(--shadow-float)] !p-0 [&::before]:!hidden",
+				});
 
-		state.lmap = await initLeaflet(mapContainer);
-		state.lmap.on("movestart zoomstart", () => state.sharedTooltip.remove());
-		state.lmap.setView([40.396698, 49.8664491], 13);
-		state.pinGroup.addTo(state.lmap);
-		mountMapHud(mapContainer);
+				if (!mapContainer) return;
+				const lmap = await initLeaflet(mapContainer);
+				state.lmap = lmap;
+				lmap.on("movestart zoomstart", () => state.sharedTooltip.remove());
+				lmap.setView([40.396698, 49.8664491], 13);
+				state.pinGroup.addTo(lmap);
+				mountMapHud(mapContainer);
+			})().finally(() => {
+				mapInitPromise = null;
+			});
+		}
+		await mapInitPromise;
 	}
 
+	if (globalState.currentView !== "map") return;
 	requestAnimationFrame(() => state.lmap?.invalidateSize());
 	void debouncedFetch();
 }

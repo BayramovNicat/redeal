@@ -62,7 +62,7 @@ if (window.location.pathname === "/login") {
 	}
 
 	root.appendChild(html`
-		<div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-24">
+		<div class="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-24">
 			${headerArea}
 			${searchArea}
 			${trendArea}
@@ -86,13 +86,20 @@ bus.once(EVENTS.ALERTS_OPEN, async () => {
 	bus.emit(EVENTS.ALERTS_OPEN);
 });
 
-let galleryReady = false;
+let galleryPromise: Promise<void> | null = null;
 
 async function ensureGallery(): Promise<void> {
-	if (galleryReady) return;
-	galleryReady = true;
-	const { initGallery } = await import("@/features/gallery");
-	cleanups.push(initGallery(root));
+	if (!galleryPromise) {
+		galleryPromise = import("@/features/gallery")
+			.then(({ initGallery }) => {
+				cleanups.push(initGallery(root));
+			})
+			.catch((err) => {
+				galleryPromise = null;
+				throw err;
+			});
+	}
+	await galleryPromise;
 }
 
 // Property Detail & Gallery (Grouped)

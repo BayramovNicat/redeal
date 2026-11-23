@@ -44,7 +44,7 @@ function LangSwitcher(evm: ReturnType<typeof makeEventManager>): HTMLElement {
 
 	const dropdown = html`
 		<div
-			class="absolute right-0 top-full mt-2.5 z-50 min-w-24 rounded-(--r) border border-(--border-h) glass-panel bg-(--surface-glass-strong) shadow-[var(--shadow-float)] p-1 hidden animate-[fadeUp_0.15s_ease-out] origin-top-right"
+			class="absolute right-0 top-full mt-2.5 z-50 min-w-24 rounded-(--r) border border-(--border-h) glass-panel bg-(--surface-glass-strong) shadow-(--shadow-float) p-1 hidden animate-[fadeUp_0.15s_ease-out] origin-top-right"
 		>
 			${LANGS.map((lang) => {
 				const isActive = cur === lang.code;
@@ -298,7 +298,7 @@ export function initHeader(container: HTMLElement): () => void {
 			>
 				<div class="flex items-center gap-2 pr-0.5" title="${user.email}">
 					${avatarEl}
-					<span class="text-xs font-medium text-(--text) max-w-[130px] truncate max-[640px]:hidden">
+					<span class="text-xs font-medium text-(--text) max-w-32.5 truncate max-[640px]:hidden">
 						${user.name || user.email.split("@")[0]}
 					</span>
 					${roleDot}

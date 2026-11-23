@@ -77,10 +77,14 @@ export function initScrapeOps(root: HTMLElement): () => void {
 	};
 }
 
-export function openScrapeOps(): void {
+export async function openScrapeOps(): Promise<void> {
 	ui.modal?.showModal();
-	void fetchScrapeAdminSession();
-	void loadRuns();
+	ui.runBtn.disabled = true;
+	try {
+		await Promise.all([fetchScrapeAdminSession(), loadRuns()]);
+	} finally {
+		if (!state.running) ui.runBtn.disabled = false;
+	}
 }
 
 async function loadRuns(): Promise<void> {
@@ -110,6 +114,7 @@ async function handleRunNow(): Promise<void> {
 
 	try {
 		await runScrapeNow();
+		await new Promise((r) => setTimeout(r, 400));
 		await loadRuns();
 	} catch (err) {
 		ui.error.textContent =
