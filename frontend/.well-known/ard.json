@@ -1,0 +1,26 @@
+{
+	"entries": [
+		{
+			"identifier": "urn:air:redeal.holmityd.com:api:undervalued-deals",
+			"displayName": "Redeal Undervalued Deals API",
+			"type": "application/json",
+			"description": "Query undervalued Baku real estate listings by location and discount threshold.",
+			"url": "https://redeal.holmityd.com/api/deals/undervalued",
+			"representativeQueries": [
+				"Find undervalued apartments in Baku",
+				"Show real estate deals with at least 15% discount"
+			]
+		},
+		{
+			"identifier": "urn:air:redeal.holmityd.com:api:locations",
+			"displayName": "Redeal Locations API",
+			"type": "application/json",
+			"description": "List available Baku districts and neighborhoods indexed by Redeal.",
+			"url": "https://redeal.holmityd.com/api/deals/locations",
+			"representativeQueries": [
+				"List Baku real estate districts",
+				"What locations are available on Redeal"
+			]
+		}
+	]
+}

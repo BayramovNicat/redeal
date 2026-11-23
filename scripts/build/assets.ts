@@ -19,6 +19,15 @@ export async function copyStaticAssets() {
 		Bun.file(`${dirs.frontend}/robots.txt`),
 	);
 	await Bun.write(
+		`${dirs.public}/llms.txt`,
+		Bun.file(`${dirs.frontend}/llms.txt`),
+	);
+	mkdirSync(`${dirs.public}/.well-known`, { recursive: true });
+	await Bun.write(
+		`${dirs.public}/.well-known/ard.json`,
+		Bun.file(`${dirs.frontend}/.well-known/ard.json`),
+	);
+	await Bun.write(
 		`${dirs.public}/favicon.svg`,
 		Bun.file(`${dirs.frontend}/favicon.svg`),
 	);

@@ -1,0 +1,13 @@
+# Redeal
+
+> Real estate deal-finding aggregator for the Baku, Azerbaijan market. Analyzes property listings against district price-per-square-meter averages to surface undervalued deals and market trends.
+
+## Pages
+
+- [Home](https://redeal.holmityd.com/): Interactive search, undervalued property listings, and market trend charts.
+
+## API Endpoints
+
+- [Undervalued Deals](https://redeal.holmityd.com/api/deals/undervalued): Public preview of undervalued property deals filtered by location and discount threshold.
+- [Locations](https://redeal.holmityd.com/api/deals/locations): Available Baku districts and neighborhoods.
+- [Health](https://redeal.holmityd.com/health): Service health and total indexed listing count.
