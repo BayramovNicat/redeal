@@ -5,6 +5,7 @@ import { fetchAuthUser } from "@/features/auth/api";
 import { initHeader } from "@/features/header";
 import { initProducts } from "@/features/products/index";
 import { initSearch } from "@/features/search";
+import { preloadInitialSearch } from "@/features/search/preload";
 import { initTrend } from "@/features/trend/index";
 import { Icons } from "@/ui/icons";
 import { initTooltip } from "@/ui/tooltip";
@@ -28,6 +29,7 @@ if (window.location.pathname === "/login") {
 	const { initLogin } = await import("@/features/login");
 	cleanups.push(initLogin(loginArea));
 } else {
+	preloadInitialSearch();
 	await fetchAuthUser();
 
 	const headerArea = html`<header></header>`;

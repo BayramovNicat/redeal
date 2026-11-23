@@ -13,6 +13,10 @@ import { SkeletonList } from "@/ui/skeleton";
 import { refreshFilterChips } from "./chips";
 import { getBooleanFilters, getNumericFilters } from "./constants";
 import { renderSearchFilters } from "./filters";
+import {
+	consumePreloadedDealsFetch,
+	consumePreloadedLocationsFetch,
+} from "./preload";
 import type { SearchUI } from "./types";
 import {
 	hasNonDefaultUrlFilters,
@@ -162,7 +166,9 @@ export function initSearch(container: HTMLElement): () => void {
 
 		try {
 			const searchParams = buildSearchParams(state.getFilters());
-			const response = await fetch(`/api/deals/undervalued?${searchParams}`);
+			const dealsUrl = `/api/deals/undervalued?${searchParams}`;
+			const response = await (consumePreloadedDealsFetch(dealsUrl) ??
+				fetch(dealsUrl));
 			const searchResults = (await response.json()) as {
 				error?: string;
 				code?: string;
@@ -400,7 +406,8 @@ export function initSearch(container: HTMLElement): () => void {
 		const searchPromise = executeSearch(false);
 
 		try {
-			const response = await fetch("/api/deals/locations");
+			const response = await (consumePreloadedLocationsFetch() ??
+				fetch("/api/deals/locations"));
 			const locationData = (await response.json()) as { data: string[] };
 			const locationOptions = [
 				{ value: "__all__", label: t("allLocations") },
