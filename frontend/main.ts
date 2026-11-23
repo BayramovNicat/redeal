@@ -1,12 +1,14 @@
 import { bus, EVENTS } from "@/core/events";
+import { initI18n } from "@/core/i18n";
 import { html, renderToastsContainer, trustScriptURL } from "@/core/utils";
-import { initAlerts } from "@/features/alerts/index";
 import { fetchAuthUser } from "@/features/auth/api";
 import { initHeader } from "@/features/header";
 import { initProducts } from "@/features/products/index";
 import { initSearch } from "@/features/search";
-import { preloadInitialSearch } from "@/features/search/preload";
-import { initTrend } from "@/features/trend/index";
+import {
+	getPreloadedTrendData,
+	preloadInitialSearch,
+} from "@/features/search/preload";
 import { Icons } from "@/ui/icons";
 import { initTooltip } from "@/ui/tooltip";
 
@@ -24,18 +26,38 @@ if (!root) throw new Error("Root element #app not found");
 const cleanups: (() => void)[] = [];
 
 if (window.location.pathname === "/login") {
+	await initI18n();
 	const loginArea = html`<main></main>`;
 	root.appendChild(loginArea);
 	const { initLogin } = await import("@/features/login");
 	cleanups.push(initLogin(loginArea));
 } else {
 	const preloadPromise = preloadInitialSearch();
-	await Promise.all([fetchAuthUser(), preloadPromise]);
+	await Promise.all([initI18n(), fetchAuthUser(), preloadPromise]);
 
 	const headerArea = html`<header></header>`;
 	const searchArea = html`<section></section>`;
 	const trendArea = html`<section></section>`;
 	const productsArea = html`<main id="products-area"></main>`;
+
+	const initialLoc = new URLSearchParams(window.location.search).get("location");
+	const hasPreloadedTrend =
+		!!initialLoc &&
+		initialLoc !== "__all__" &&
+		!initialLoc.includes(",") &&
+		!!getPreloadedTrendData(initialLoc);
+
+	if (hasPreloadedTrend) {
+		const { initTrend } = await import("@/features/trend/index");
+		cleanups.push(initTrend(trendArea));
+	} else {
+		bus.once(EVENTS.LOCATION_CHANGED, async (loc) => {
+			if (!loc || loc === "__all__") return;
+			const { initTrend } = await import("@/features/trend/index");
+			cleanups.push(initTrend(trendArea));
+			bus.emit(EVENTS.LOCATION_CHANGED, loc);
+		});
+	}
 
 	root.appendChild(html`
 		<div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-24">
@@ -48,15 +70,19 @@ if (window.location.pathname === "/login") {
 
 	cleanups.push(
 		initProducts(productsArea),
-		initTrend(trendArea),
 		initSearch(searchArea),
 		initHeader(headerArea),
 		initTooltip(root),
-		initAlerts(root),
 	);
 }
 
 // Heavy features are loaded on demand.
+
+bus.once(EVENTS.ALERTS_OPEN, async () => {
+	const { initAlerts } = await import("@/features/alerts/index");
+	cleanups.push(initAlerts(root));
+	bus.emit(EVENTS.ALERTS_OPEN);
+});
 
 let galleryReady = false;
 

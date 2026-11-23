@@ -15,16 +15,17 @@ import {
 // Lazy triggered via bus.emit(EVENTS.GALLERY_OPEN)
 // Map View is lazy loaded in setView()
 // Lazy triggered via bus.emit(EVENTS.PROPERTY_OPEN)
-import { getCachedAuthUser, isUserAuthenticated } from "@/features/auth/api";
-import { openLoginModal } from "@/features/auth/login-modal";
+import {
+	getCachedAuthUser,
+	isUserAuthenticated,
+	openLoginModal,
+} from "@/features/auth/api";
 import { RawButton } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
 import { Icons } from "@/ui/icons";
 import { renderProductsBar } from "./bar";
 import { appendSkeletons, renderList, updatePagination } from "./list";
 import {
-	deleteItem,
-	handleExport,
 	hideItem,
 	sortDeals,
 	syncStateToStorage,
@@ -114,7 +115,11 @@ export function initProducts(container: HTMLElement): () => void {
 		},
 		onViewChange: (view) => setView(view),
 		onExport: () => {
-			if (isAdminUser) handleExport(ui.sortSelect.value);
+			if (isAdminUser) {
+				void import("./logic").then(({ handleExport }) =>
+					handleExport(ui.sortSelect.value),
+				);
+			}
 		},
 		onValidate: (button) => void handleValidate(button),
 		onSavedClick: (e) => void handleSavedClick(e),
@@ -159,9 +164,11 @@ export function initProducts(container: HTMLElement): () => void {
 	if (isAdminUser) {
 		ui.adminActions.replaceChildren(ui.validateBtn, ui.exportBtn);
 		cardCallbacks.onDelete = (p) => {
-			void deleteItem(p).then((deleted) => {
-				if (deleted) updateSavedBadge();
-			});
+			void import("./logic").then(({ deleteItem }) =>
+				deleteItem(p).then((deleted) => {
+					if (deleted) updateSavedBadge();
+				}),
+			);
 		};
 	}
 
@@ -632,14 +639,16 @@ export function initProducts(container: HTMLElement): () => void {
 		const p = (e as CustomEvent<Property>).detail;
 		if (p) {
 			const dialog = e.target instanceof HTMLDialogElement ? e.target : null;
-			void deleteItem(p).then((deleted) => {
-				if (deleted) {
-					updateSavedBadge();
-					if (dialog?.open) {
-						dialog.close();
+			void import("./logic").then(({ deleteItem }) =>
+				deleteItem(p).then((deleted) => {
+					if (deleted) {
+						updateSavedBadge();
+						if (dialog?.open) {
+							dialog.close();
+						}
 					}
-				}
-			});
+				}),
+			);
 		}
 	};
 	add(document, "pd:bmark", onPdBmark);

@@ -6,8 +6,8 @@ import {
 	getCachedAuthUser,
 	isUserAuthenticated,
 	logoutUser,
+	openLoginModal,
 } from "@/features/auth/api";
-import { openLoginModal } from "@/features/auth/login-modal";
 import { Button } from "@/ui/button";
 import { Icons } from "@/ui/icons";
 import { HealthStatus } from "./health-status";

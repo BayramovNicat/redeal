@@ -2,7 +2,7 @@ import { state as globalState } from "@/core/state";
 import type { MapPin } from "@/core/types";
 import { toast } from "@/core/utils";
 import { isUserAuthenticated } from "@/features/auth/api";
-import { openLoginModal } from "@/features/auth/login-modal";
+import { openLoginModal } from "@/features/auth/api";
 import type { MapViewState } from "./types";
 
 /**

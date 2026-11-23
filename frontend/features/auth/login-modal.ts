@@ -1,5 +1,6 @@
 import { t } from "@/core/i18n";
 import { fmt, html } from "@/core/utils";
+import { buildGoogleLoginHref } from "@/features/auth/api";
 import { Dialog } from "@/ui/dialog";
 import { Icons } from "@/ui/icons";
 
@@ -64,12 +65,7 @@ function getReasonText(
 	}
 }
 
-export function buildGoogleLoginHref(returnTo?: string): string {
-	if (returnTo?.startsWith("/") && !returnTo.startsWith("//")) {
-		return `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
-	}
-	return "/api/auth/google";
-}
+export { buildGoogleLoginHref };
 
 function ensureLoginDialog(): HTMLDialogElement {
 	if (loginDialog && document.body.contains(loginDialog)) {

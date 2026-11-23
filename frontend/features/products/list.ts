@@ -3,7 +3,7 @@ import { t } from "@/core/i18n";
 import { state } from "@/core/state";
 import type { CardCallbacks, Property } from "@/core/types";
 import { fmt, hide, html, show } from "@/core/utils";
-import { buildGoogleLoginHref } from "@/features/auth/login-modal";
+import { buildGoogleLoginHref } from "@/features/auth/api";
 import { Icons } from "@/ui/icons";
 import { Product } from "@/ui/product";
 import { SkeletonList } from "@/ui/skeleton";

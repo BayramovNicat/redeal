@@ -1,6 +1,6 @@
 import { t } from "@/core/i18n";
 import { html } from "@/core/utils";
-import { buildGoogleLoginHref } from "@/features/auth/login-modal";
+import { buildGoogleLoginHref } from "@/features/auth/api";
 import { Icons } from "@/ui/icons";
 
 export function initLogin(container: HTMLElement): () => void {

@@ -200,3 +200,17 @@ export async function dismissAccessRequestApi(email: string): Promise<void> {
 		throw new Error(err.error || `Failed to dismiss request (${res.status})`);
 	}
 }
+
+export function buildGoogleLoginHref(returnTo?: string): string {
+	if (returnTo?.startsWith("/") && !returnTo.startsWith("//")) {
+		return `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
+	}
+	return "/api/auth/google";
+}
+
+export function openLoginModal(
+	reason: import("./login-modal").LoginPromptReason = "general",
+	opts?: import("./login-modal").LoginPromptOptions,
+): void {
+	void import("./login-modal").then((m) => m.openLoginModal(reason, opts));
+}
