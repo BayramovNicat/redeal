@@ -171,6 +171,7 @@ export function initProducts(container: HTMLElement): () => void {
 		if (state.currentView === "map") {
 			show(ui.resultsBarInner);
 			updateResultsMeta(list.length);
+			syncScrollUI();
 			return;
 		}
 
@@ -185,6 +186,7 @@ export function initProducts(container: HTMLElement): () => void {
 			}
 			show(ui.emptyState);
 			ui.cardsContainer.replaceChildren();
+			syncScrollUI();
 			return;
 		}
 
@@ -194,7 +196,7 @@ export function initProducts(container: HTMLElement): () => void {
 		updateResultsMeta(list.length, list);
 		updatePagination(ui);
 		updateSavedBadge();
-		scheduleScrollSync();
+		syncScrollUI();
 	}
 
 	function updateResultsMeta(count: number, list: Property[] = []): void {
@@ -496,7 +498,7 @@ export function initProducts(container: HTMLElement): () => void {
 
 	let scrollRafId: number | null = null;
 
-	const syncScrollUI = () => {
+	function syncScrollUI() {
 		const scrollY = window.scrollY;
 		const maxScroll = Math.max(
 			0,
@@ -507,7 +509,11 @@ export function initProducts(container: HTMLElement): () => void {
 		backToTop.update(isVisible, progress);
 
 		if (ui.resultsBarInner) {
-			const stuck = ui.resultsBarContainer.getBoundingClientRect().top <= 12;
+			const barVisible =
+				ui.resultsBarContainer.isConnected &&
+				ui.resultsBarInner.style.display !== "none";
+			const stuck =
+				barVisible && ui.resultsBarContainer.getBoundingClientRect().top <= 12;
 			ui.resultsBarInner.classList.toggle("glass-panel", stuck);
 			ui.resultsBarInner.classList.toggle("bg-(--surface-glass-strong)", stuck);
 			ui.resultsBarInner.classList.toggle("border-(--border-h)", stuck);
@@ -516,12 +522,8 @@ export function initProducts(container: HTMLElement): () => void {
 				"shadow-[var(--shadow-float)]",
 				stuck,
 			);
-			ui.resultsBarInner.classList.toggle("px-4", stuck);
-			ui.resultsBarInner.classList.toggle("py-2", stuck);
-			ui.resultsBarInner.classList.toggle("px-0.5", !stuck);
-			ui.resultsBarInner.classList.toggle("py-1.5", !stuck);
 		}
-	};
+	}
 
 	function scheduleScrollSync() {
 		if (scrollRafId !== null) return;

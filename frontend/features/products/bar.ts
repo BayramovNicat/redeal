@@ -128,7 +128,7 @@ export function renderProductsBar(
 
 	ui.resultsBarInner = html`
 		<div
-			class="flex items-center justify-between gap-3 flex-wrap rounded-(--r-lg) sm:rounded-full border border-transparent px-0.5 py-1.5 mb-3 transition-[background-color,border-color,box-shadow,padding] duration-200 ease-out"
+			class="flex items-center justify-between gap-3 flex-wrap rounded-(--r-lg) sm:rounded-full border border-transparent px-4 py-2 mb-3 transition-[background-color,border-color,box-shadow] duration-200 ease-out"
 			style="display: none"
 		>
 			${ui.resultsMeta}
