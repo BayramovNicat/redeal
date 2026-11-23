@@ -24,7 +24,7 @@ export function renderTrendUI(ui: TrendUI): HTMLElement {
 
 	ui.panel = html`<div class="hidden">
 		<div
-			class="bg-(--surface) border border-(--border) rounded-(--r-lg) pt-4.5 px-5 pb-3.5 mb-4 surface-specular animate-[fadeUp_0.22s_ease-out]"
+			class="bg-(--surface) border border-(--border) rounded-(--r-lg) pt-4.5 px-5 pb-3.5 mb-4 min-h-[212px] surface-specular animate-[fadeUp_0.22s_ease-out]"
 		>
 			<div class="flex items-start justify-between mb-4 gap-3 flex-wrap">
 				<div>

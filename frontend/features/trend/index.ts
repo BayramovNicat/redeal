@@ -30,6 +30,13 @@ export function initTrend(container: HTMLElement): () => void {
 	container.appendChild(layout);
 
 	async function updateTrend(location: string): Promise<void> {
+		if (!location || location === "__all__") {
+			hide(ui.panel);
+			return;
+		}
+		ui.locEl.textContent = location;
+		show(ui.panel);
+
 		const data = await fetchTrendData(location, state);
 		if (!data) {
 			hide(ui.panel);

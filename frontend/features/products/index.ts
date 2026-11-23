@@ -15,7 +15,7 @@ import {
 // Lazy triggered via bus.emit(EVENTS.GALLERY_OPEN)
 // Map View is lazy loaded in setView()
 // Lazy triggered via bus.emit(EVENTS.PROPERTY_OPEN)
-import { isUserAuthenticated } from "@/features/auth/api";
+import { getCachedAuthUser, isUserAuthenticated } from "@/features/auth/api";
 import { openLoginModal } from "@/features/auth/login-modal";
 import { RawButton } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
@@ -83,7 +83,7 @@ export function initProducts(container: HTMLElement): () => void {
 		}),
 		title: t("welcome"),
 		subtitle: t("welcomeSub"),
-		hidden: false,
+		hidden: true,
 		padTop: true,
 	});
 
@@ -141,22 +141,6 @@ export function initProducts(container: HTMLElement): () => void {
 	);
 	document.body.appendChild(ui.backToTopBtn);
 
-	let isAdminUser = false;
-	void import("@/features/auth/api").then(({ isCurrentUserAdmin }) => {
-		void isCurrentUserAdmin().then((isAdmin) => {
-			if (isAdmin) {
-				isAdminUser = true;
-				ui.adminActions.replaceChildren(ui.validateBtn, ui.exportBtn);
-				cardCallbacks.onDelete = (p) => {
-					void deleteItem(p).then((deleted) => {
-						if (deleted) updateSavedBadge();
-					});
-				};
-				render();
-			}
-		});
-	});
-
 	const cardCallbacks: CardCallbacks = {
 		onBM: (p) => {
 			toggleBM(p);
@@ -170,6 +154,16 @@ export function initProducts(container: HTMLElement): () => void {
 		onGallery: (urls, index) => bus.emit(EVENTS.GALLERY_OPEN, { urls, index }),
 		onDetail: (p) => bus.emit(EVENTS.PROPERTY_OPEN, p),
 	};
+
+	const isAdminUser = getCachedAuthUser()?.role === "admin";
+	if (isAdminUser) {
+		ui.adminActions.replaceChildren(ui.validateBtn, ui.exportBtn);
+		cardCallbacks.onDelete = (p) => {
+			void deleteItem(p).then((deleted) => {
+				if (deleted) updateSavedBadge();
+			});
+		};
+	}
 
 	function render(): void {
 		let list = state.showingSaved

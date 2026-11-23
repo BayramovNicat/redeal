@@ -3,7 +3,8 @@ import { getLang, setLang, t } from "@/core/i18n";
 import { cn, html, makeEventManager } from "@/core/utils";
 import {
 	fetchAccessRequests,
-	fetchAuthUser,
+	getCachedAuthUser,
+	isUserAuthenticated,
 	logoutUser,
 } from "@/features/auth/api";
 import { openLoginModal } from "@/features/auth/login-modal";
@@ -219,7 +220,7 @@ export function initHeader(container: HTMLElement): () => void {
 	});
 
 	const adminActions = html`<div class="inline-flex items-center gap-0.5 empty:hidden"></div>`;
-	const userActions = html`<span class="empty:hidden"></span>`;
+	const userActions = html`<div class="flex items-center empty:hidden"></div>`;
 
 	const utilityCapsule = html`
 		<div
@@ -246,75 +247,85 @@ export function initHeader(container: HTMLElement): () => void {
 
 	let unsubscribeRequests: (() => void) | null = null;
 
-	void fetchAuthUser().then(({ authenticated, user }) => {
-		if (authenticated && user) {
-			if (user.role === "admin") {
-				const whitelistBtn = WhitelistButton();
-				adminActions.replaceChildren(whitelistBtn.button, ScrapeOpsButton());
-				unsubscribeRequests = bus.on(EVENTS.ACCESS_REQUESTS_CHANGED, (count) =>
-					whitelistBtn.setPendingCount(count),
-				);
-				void fetchAccessRequests()
-					.then((reqs) => whitelistBtn.setPendingCount(reqs.length))
-					.catch(() => {});
-			}
+	const authenticated = isUserAuthenticated();
+	const user = getCachedAuthUser();
 
-			const avatarEl = user.avatar
-				? html`<img src="${user.avatar}" alt="${user.name || user.email}" class="size-6.5 rounded-full object-cover ring-1 ring-white/15" />`
-				: html`<div class="size-6.5 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center ring-1 ring-(--accent-b)">${(user.name || user.email || "U")[0].toUpperCase()}</div>`;
-
-			const roleDot =
-				user.role === "admin"
-					? html`<span class="max-[640px]:hidden text-[10px] font-semibold text-(--accent) tracking-wide">· admin</span>`
-					: "";
-
-			const logoutBtn = Button({
-				title: "Sign out",
-				ariaLabel: "Sign out",
-				color: "red",
-				variant: "square",
-				content: Icons.logOut(13),
-				className:
-					"size-7 rounded-full border-none bg-transparent text-(--muted) hover:text-(--red) hover:bg-(--red-dim)",
-				onclick: () => void logoutUser(),
-			});
-
-			const userBlock = html`
-				<div
-					class="inline-flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-full bg-(--surface) border border-(--border) surface-specular"
-				>
-					<div class="flex items-center gap-2 pr-0.5" title="${user.email}">
-						${avatarEl}
-						<span class="text-xs font-medium text-(--text) max-w-[130px] truncate max-[640px]:hidden">
-							${user.name || user.email.split("@")[0]}
-						</span>
-						${roleDot}
-					</div>
-					<div class="w-px h-3.5 bg-(--border) shrink-0"></div>
-					${logoutBtn}
-				</div>
-			`;
-			userActions.replaceChildren(userBlock);
-		} else {
-			const signInBtn = Button({
-				id: "header-signin-btn",
-				title: t("signIn"),
-				ariaLabel: t("signIn"),
-				color: "indigo",
-				variant: "padded",
-				content: html`
-					<span class="flex items-center gap-1.5">
-						${Icons.logIn(13)}
-						<span>${t("signIn")}</span>
-					</span>
-				`,
-				className:
-					"h-9.5 px-3.75 rounded-full bg-(--accent-solid) hover:bg-(--accent) border border-(--accent-b) text-white text-xs font-semibold shadow-[0_0_20px_rgba(88,101,242,0.28),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-180",
-				onclick: () => openLoginModal("general"),
-			});
-			userActions.replaceChildren(signInBtn);
+	if (authenticated && user) {
+		if (user.role === "admin") {
+			const whitelistBtn = WhitelistButton();
+			adminActions.replaceChildren(whitelistBtn.button, ScrapeOpsButton());
+			unsubscribeRequests = bus.on(EVENTS.ACCESS_REQUESTS_CHANGED, (count) =>
+				whitelistBtn.setPendingCount(count),
+			);
+			void fetchAccessRequests()
+				.then((reqs) => whitelistBtn.setPendingCount(reqs.length))
+				.catch(() => {});
 		}
-	});
+
+		const initial = (user.name || user.email || "U")[0].toUpperCase();
+		const fallbackAvatar = () =>
+			html`<div class="size-6.5 shrink-0 rounded-full bg-(--accent-dim) text-(--accent) text-[11px] font-bold flex items-center justify-center ring-1 ring-(--accent-b)">${initial}</div>`;
+
+		let avatarEl: HTMLElement;
+		if (user.avatar) {
+			const img = html`<img src="${user.avatar}" alt="" referrerpolicy="no-referrer" width="26" height="26" class="size-6.5 shrink-0 block rounded-full object-cover ring-1 ring-white/15" />` as HTMLImageElement;
+			img.onerror = () => img.replaceWith(fallbackAvatar());
+			avatarEl = img;
+		} else {
+			avatarEl = fallbackAvatar();
+		}
+
+		const roleDot =
+			user.role === "admin"
+				? html`<span class="max-[640px]:hidden text-[10px] font-semibold text-(--accent) tracking-wide">· admin</span>`
+				: "";
+
+		const logoutBtn = Button({
+			title: "Sign out",
+			ariaLabel: "Sign out",
+			color: "red",
+			variant: "square",
+			content: Icons.logOut(13),
+			className:
+				"size-7 rounded-full border-none bg-transparent text-(--muted) hover:text-(--red) hover:bg-(--red-dim)",
+			onclick: () => void logoutUser(),
+		});
+
+		const userBlock = html`
+			<div
+				class="inline-flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-full bg-(--surface) border border-(--border) surface-specular"
+			>
+				<div class="flex items-center gap-2 pr-0.5" title="${user.email}">
+					${avatarEl}
+					<span class="text-xs font-medium text-(--text) max-w-[130px] truncate max-[640px]:hidden">
+						${user.name || user.email.split("@")[0]}
+					</span>
+					${roleDot}
+				</div>
+				<div class="w-px h-3.5 bg-(--border) shrink-0"></div>
+				${logoutBtn}
+			</div>
+		`;
+		userActions.replaceChildren(userBlock);
+	} else {
+		const signInBtn = Button({
+			id: "header-signin-btn",
+			title: t("signIn"),
+			ariaLabel: t("signIn"),
+			color: "indigo",
+			variant: "padded",
+			content: html`
+				<span class="flex items-center gap-1.5">
+					${Icons.logIn(13)}
+					<span>${t("signIn")}</span>
+				</span>
+			`,
+			className:
+				"h-9.5 px-3.75 rounded-full bg-(--accent-solid) hover:bg-(--accent) border border-(--accent-b) text-white text-xs font-semibold shadow-[0_0_20px_rgba(88,101,242,0.28),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-180",
+			onclick: () => openLoginModal("general"),
+		});
+		userActions.replaceChildren(signInBtn);
+	}
 
 	return () => {
 		unsubscribeRequests?.();

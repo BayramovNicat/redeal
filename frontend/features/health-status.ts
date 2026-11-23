@@ -9,7 +9,7 @@ export type HealthStatusProps = Partial<HTMLDivElement>;
  * Fetches data from the `/health` endpoint on initialization.
  */
 export function HealthStatus(props: HealthStatusProps = {}): HTMLDivElement {
-	const text = html`<span class="health-txt font-mono-num">${t("statusLive")}</span>`;
+	const text = html`<span class="health-txt font-mono-num inline-block min-w-22">${t("statusLive")}</span>`;
 	const dot = html`<span class="relative flex size-1.75 shrink-0">
 		<span
 			class="health-ping absolute inline-flex h-full w-full rounded-full bg-(--green) opacity-55 animate-[livepulse_2.2s_ease-in-out_infinite]"

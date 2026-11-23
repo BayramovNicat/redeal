@@ -356,13 +356,9 @@ export function Product({
 						${t("rooms_")} · ${floorStr}
 					</div>
 
-					${
-						tags.length
-							? html`<div class="flex flex-wrap gap-1.25 max-[520px]:hidden">
-								${tags}
-							</div>`
-							: ""
-					}
+					<div class="flex flex-wrap gap-1.25 min-h-5.5 max-[520px]:hidden">
+						${tags}
+					</div>
 				</div>
 
 				<!-- Minimal Footer -->
