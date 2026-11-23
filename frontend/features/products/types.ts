@@ -29,5 +29,4 @@ export interface ProductsCallbacks {
 	onValidate: (button: HTMLButtonElement) => void;
 	onSavedClick: (e: MouseEvent) => void;
 	onAlertsOpen: () => void;
-	onBackToTop: () => void;
 }

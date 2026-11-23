@@ -259,19 +259,25 @@ export const frag = (
  * Tracks all added listeners and provides a single cleanup method.
  */
 export function makeEventManager() {
-	const handlers: [Element | Document | Window, string, EventListener][] = [];
+	const handlers: [
+		Element | Document | Window,
+		string,
+		EventListener,
+		boolean | AddEventListenerOptions | undefined,
+	][] = [];
 	const add = <T extends Event>(
 		el: Element | Document | Window,
 		ev: string,
 		fn: (e: T) => void,
+		options?: boolean | AddEventListenerOptions,
 	) => {
 		const listener = fn as EventListener;
-		el.addEventListener(ev, listener);
-		handlers.push([el, ev, listener]);
+		el.addEventListener(ev, listener, options);
+		handlers.push([el, ev, listener, options]);
 	};
 	const cleanup = () => {
-		handlers.forEach(([el, ev, fn]) => {
-			el.removeEventListener(ev, fn);
+		handlers.forEach(([el, ev, fn, options]) => {
+			el.removeEventListener(ev, fn, options);
 		});
 		handlers.length = 0;
 	};

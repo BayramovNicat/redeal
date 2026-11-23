@@ -20,9 +20,9 @@ import {
 	isUserAuthenticated,
 	openLoginModal,
 } from "@/features/auth/api";
-import { RawButton } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
 import { Icons } from "@/ui/icons";
+import { BackToTopButton } from "@/ui/scroll-top";
 import { renderProductsBar } from "./bar";
 import { appendSkeletons, renderList, updatePagination } from "./list";
 import {
@@ -130,16 +130,10 @@ export function initProducts(container: HTMLElement): () => void {
 			}
 			bus.emit(EVENTS.ALERTS_OPEN);
 		},
-		onBackToTop: () => window.scrollTo({ top: 0, behavior: "instant" }),
 	});
 
-	ui.backToTopBtn = RawButton({
-		ariaLabel: t("backToTop"),
-		className:
-			"fixed bottom-6 right-6 z-40 size-10 rounded-full glass-panel bg-(--surface-glass-strong) border border-(--border-h) text-(--text-2) flex items-center justify-center shadow-[var(--shadow-float)] transition-[opacity,color,border-color,background-color] duration-200 hover:text-(--text) hover:border-(--accent-b) hover:bg-(--surface-3) opacity-0 pointer-events-none text-sm font-semibold",
-		content: "↑",
-		onclick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
-	});
+	const backToTop = BackToTopButton();
+	ui.backToTopBtn = backToTop.element;
 
 	container.appendChild(
 		frag`${productsBar}${ui.loadingState}${ui.emptyState}${ui.welcomeState}${ui.cardsContainer}${ui.sentinel}${ui.loadMoreContainer}${ui.mapViewContainer}`,
@@ -205,6 +199,7 @@ export function initProducts(container: HTMLElement): () => void {
 		updateResultsMeta(list.length, list);
 		updatePagination(ui);
 		updateSavedBadge();
+		scheduleScrollSync();
 	}
 
 	function updateResultsMeta(count: number, list: Property[] = []): void {
@@ -280,6 +275,7 @@ export function initProducts(container: HTMLElement): () => void {
 			state.renderedSet.clear();
 			render();
 		}
+		scheduleScrollSync();
 	}
 
 	async function handleSavedClick(e: MouseEvent) {
@@ -502,10 +498,18 @@ export function initProducts(container: HTMLElement): () => void {
 		);
 	};
 
-	const onScroll = () => {
-		const isScrolled = window.scrollY > 450;
-		ui.backToTopBtn.style.opacity = isScrolled ? "1" : "0";
-		ui.backToTopBtn.style.pointerEvents = isScrolled ? "auto" : "none";
+	let scrollRafId: number | null = null;
+
+	const syncScrollUI = () => {
+		const scrollY = window.scrollY;
+		const maxScroll = Math.max(
+			0,
+			document.documentElement.scrollHeight - window.innerHeight,
+		);
+		const progress = maxScroll > 0 ? scrollY / maxScroll : 0;
+		const isVisible = state.currentView !== "map" && scrollY > 450;
+		backToTop.update(isVisible, progress);
+
 		if (ui.resultsBarInner) {
 			const stuck = ui.resultsBarContainer.getBoundingClientRect().top <= 12;
 			ui.resultsBarInner.classList.toggle("glass-panel", stuck);
@@ -522,7 +526,18 @@ export function initProducts(container: HTMLElement): () => void {
 			ui.resultsBarInner.classList.toggle("py-1.5", !stuck);
 		}
 	};
-	add(window, "scroll", onScroll);
+
+	function scheduleScrollSync() {
+		if (scrollRafId !== null) return;
+		scrollRafId = requestAnimationFrame(() => {
+			scrollRafId = null;
+			syncScrollUI();
+		});
+	}
+
+	add(window, "scroll", scheduleScrollSync, { passive: true });
+	add(window, "resize", scheduleScrollSync, { passive: true });
+	syncScrollUI();
 
 	const getColumnCount = () => {
 		const wrap = ui.cardsContainer.firstElementChild as HTMLElement;
@@ -697,6 +712,10 @@ export function initProducts(container: HTMLElement): () => void {
 
 	return () => {
 		cleanupHandlers();
+		if (scrollRafId !== null) {
+			cancelAnimationFrame(scrollRafId);
+			scrollRafId = null;
+		}
 		if (jumpTimer) clearTimeout(jumpTimer);
 		if (hideJumpTimer) clearTimeout(hideJumpTimer);
 		if (invalidJumpTimer) clearTimeout(invalidJumpTimer);
