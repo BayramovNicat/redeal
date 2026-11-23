@@ -35,6 +35,8 @@ async function precompressStatic(dir: string): Promise<void> {
 	const entries: Array<{ file: string; mime: string }> = [
 		{ file: "main.js", mime: "application/javascript; charset=utf-8" },
 		{ file: "styles.css", mime: "text/css; charset=utf-8" },
+		{ file: "manifest.json", mime: "application/json; charset=utf-8" },
+		{ file: ".well-known/ard.json", mime: "application/json; charset=utf-8" },
 	];
 	await Promise.all(
 		entries.map(async ({ file, mime }) => {
