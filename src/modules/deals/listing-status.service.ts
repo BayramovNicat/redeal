@@ -13,12 +13,6 @@ import { normalizePropertyCategory } from "@/utils/property-category.js";
 
 const BINA_GRAPHQL_URL = "https://bina.az/graphql";
 const BINA_ITEM_RE = /^https:\/\/(?:www\.)?bina\.az\/items\/(\d+)(?:[/?#].*)?$/;
-const ENDED_MARKERS = [
-	"Bu elanın müddəti başa çatıb",
-	"Bu elanin muddeti basa catib",
-	"Müddəti başa çatıb:",
-	'"isSoftError":true',
-];
 
 export type ListingStatus = {
 	url: string;
@@ -26,7 +20,7 @@ export type ListingStatus = {
 	deleted: boolean;
 	updated: boolean;
 	expiresAt: string | null;
-	source: "graphql" | "html" | "missing";
+	source: "graphql" | "missing";
 };
 
 type BatchListingStatus = {
@@ -131,18 +125,6 @@ export async function checkAndDeleteEndedListing(
 			updated: false,
 			expiresAt: gql.item.expiresAt,
 			source: "graphql",
-		});
-	}
-
-	const htmlEnded = await fetchBinaHtmlEnded(canonicalUrl, headerProfile);
-	if (htmlEnded) {
-		return deleteIfNeeded({
-			url: canonicalUrl,
-			ended: true,
-			deleted: false,
-			updated: false,
-			expiresAt: gql.item.expiresAt,
-			source: "html",
 		});
 	}
 
@@ -707,18 +689,4 @@ function chunk<T>(items: T[], size: number): T[][] {
 		chunks.push(items.slice(i, i + size));
 	}
 	return chunks;
-}
-
-async function fetchBinaHtmlEnded(
-	url: string,
-	headerProfile: BinaHeaderProfile,
-): Promise<boolean> {
-	const resp = await fetch(url, {
-		headers: headerProfile.html(),
-		signal: AbortSignal.timeout(10_000),
-	});
-
-	if (!resp.ok) return resp.status === 404 || resp.status === 410;
-	const html = await resp.text();
-	return ENDED_MARKERS.some((marker) => html.includes(marker));
 }
