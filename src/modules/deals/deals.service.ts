@@ -44,7 +44,24 @@ let locationsCache: { data: string[]; at: number } | null = null;
 
 const AVG_CACHE_TTL = 30 * 60_000;
 const avgCache = new Map<string, { avg: number; at: number }>();
+const allAvgCache = new Map<
+	string,
+	{ data: Map<string, number>; at: number }
+>();
 const avgPromises = new Map<string, Promise<Map<string, number>>>();
+
+const UNDERVALUED_CACHE_TTL = 5 * 60_000;
+const UNDERVALUED_CACHE_MAX = 100;
+type UndervaluedResult = {
+	total: number;
+	data: (PropertyRow & { tier: DealTier })[];
+};
+const undervaluedCache = new Map<
+	string,
+	{ data: UndervaluedResult; at: number }
+>();
+const undervaluedPromises = new Map<string, Promise<UndervaluedResult>>();
+
 let cacheGeneration = 0;
 const cacheInvalidators: Array<() => void> = [];
 
@@ -55,11 +72,16 @@ export function onDealsCacheInvalidated(fn: () => void): void {
 export function invalidateDealsCaches(): void {
 	cacheGeneration++;
 	avgCache.clear();
+	allAvgCache.clear();
 	avgPromises.clear();
+	undervaluedCache.clear();
+	undervaluedPromises.clear();
 	locationsCache = null;
 	locationsPromise = null;
 	for (const fn of cacheInvalidators) fn();
 }
+
+const VALID_CATEGORIES = new Set(["new", "old", "house"]);
 
 function effectiveCategory(filters: PropertyFilters = {}): string {
 	return filters.category ?? "new";
@@ -70,14 +92,17 @@ function effectiveListingType(filters: PropertyFilters = {}): "sale" | "rent" {
 }
 
 function categoryCondition(category: string, alias = "p"): Prisma.Sql {
-	return Prisma.sql`${Prisma.raw(alias)}.category::text = ${category}`;
+	if (!VALID_CATEGORIES.has(category)) {
+		return Prisma.sql`FALSE`;
+	}
+	return Prisma.sql`${Prisma.raw(alias)}.category = ${category}::"PropertyCategory"`;
 }
 
 function listingTypeCondition(
 	listingType: "sale" | "rent",
 	alias = "p",
 ): Prisma.Sql {
-	return Prisma.sql`${Prisma.raw(alias)}.listing_type::text = ${listingType}`;
+	return Prisma.sql`${Prisma.raw(alias)}.listing_type = ${listingType}::"ListingType"`;
 }
 
 function getUndervaluedOrderBy(sort: DealSort = "disc"): Prisma.Sql {
@@ -107,8 +132,8 @@ export async function getPriceTrend(location: string): Promise<TrendPoint[]> {
 			COUNT(*)                                              AS listing_count
 		FROM "Property"
 		WHERE location_name = ${location}
-			AND listing_type::text = 'sale'
-			AND category::text = 'new'
+			AND listing_type = 'sale'::"ListingType"
+			AND category = 'new'::"PropertyCategory"
 			AND price_per_sqm > 0
 			AND (floor IS NULL OR floor <> 1)
 			AND (floor IS NULL OR total_floors IS NULL OR floor <> total_floors)
@@ -182,8 +207,16 @@ async function getLocationAverages(
 		}
 		if (allInCache) return cached;
 	} else {
+		const allCached = allAvgCache.get(promiseKey);
+		if (allCached && now - allCached.at < AVG_CACHE_TTL) {
+			return allCached.data;
+		}
 		const avgPromise = avgPromises.get(promiseKey);
 		if (avgPromise) return avgPromise;
+	}
+
+	if (!VALID_CATEGORIES.has(category)) {
+		return new Map();
 	}
 
 	const gen = cacheGeneration;
@@ -197,8 +230,8 @@ async function getLocationAverages(
 			SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
 			FROM "Property"
 			WHERE ${avgLocCondition}
-				AND listing_type::text = ${listingType}
-				AND category::text = ${category}
+				AND listing_type = ${listingType}::"ListingType"
+				AND category = ${category}::"PropertyCategory"
 				${locAvgBaseConditions()}
 			GROUP BY location_name
 			HAVING COUNT(*) >= 3
@@ -212,6 +245,9 @@ async function getLocationAverages(
 			if (gen === cacheGeneration) {
 				avgCache.set(cacheKey(r.location_name), { avg, at: now });
 			}
+		}
+		if (isAll && gen === cacheGeneration) {
+			allAvgCache.set(promiseKey, { data: result, at: now });
 		}
 		return result;
 	})();
@@ -253,8 +289,8 @@ export async function getHeatmapData(): Promise<HeatmapPoint[]> {
 							THEN price_per_sqm END))::int                                        AS prior_avg
 		FROM "Property"
 		WHERE location_name IS NOT NULL
-			AND listing_type::text = 'sale'
-			AND category::text = 'new'
+			AND listing_type = 'sale'::"ListingType"
+			AND category = 'new'::"PropertyCategory"
 			AND price_per_sqm > 0
 			AND (floor IS NULL OR floor <> 1)
 			AND (floor IS NULL OR total_floors IS NULL OR floor <> total_floors)
@@ -349,9 +385,8 @@ export async function getMapPins(options: {
 		? Prisma.sql`p.location_name IS NOT NULL`
 		: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
 
-	const avgEntries = Array.from(avgsMap.entries()).map(
-		([loc, avg]) => Prisma.sql`(${loc}, ${avg}::numeric)`,
-	);
+	const avgLocs = Array.from(avgsMap.keys());
+	const avgVals = Array.from(avgsMap.values());
 
 	const conditions: Prisma.Sql[] = [
 		locCondition,
@@ -370,8 +405,9 @@ export async function getMapPins(options: {
 	];
 
 	const rows = await queryRaw<MapPinRow[]>(Prisma.sql`
-		WITH loc_avg(location_name, avg_ppsm) AS (
-			VALUES ${Prisma.join(avgEntries)}
+		WITH loc_avg AS MATERIALIZED (
+			SELECT location_name, avg_ppsm
+			FROM unnest(${avgLocs}::text[], ${avgVals}::numeric[]) AS t(location_name, avg_ppsm)
 		)
 		SELECT
 			p.source_url,
@@ -415,73 +451,135 @@ export async function getUndervalued(
 	thresholdPercent = 10,
 	filters: PropertyFilters = {},
 	pagination: PaginationOptions = {},
-): Promise<{ total: number; data: (PropertyRow & { tier: DealTier })[] }> {
+): Promise<UndervaluedResult> {
 	const { limit = 200, offset = 0, sort = "disc" } = pagination;
-	const category = effectiveCategory(filters);
-	const listingType = effectiveListingType(filters);
-	const orderBy = getUndervaluedOrderBy(sort);
+	const cacheKey = JSON.stringify({
+		locations,
+		thresholdPercent,
+		filters,
+		limit,
+		offset,
+		sort,
+	});
+	const now = Date.now();
+	const cached = undervaluedCache.get(cacheKey);
+	if (cached && now - cached.at < UNDERVALUED_CACHE_TTL) {
+		return cached.data;
+	}
+	const inFlight = undervaluedPromises.get(cacheKey);
+	if (inFlight) return inFlight;
 
-	const avgsMap = await getLocationAverages(locations, category, listingType);
-	if (avgsMap.size === 0) return { total: 0, data: [] };
+	const gen = cacheGeneration;
+	const promise = (async (): Promise<UndervaluedResult> => {
+		const category = effectiveCategory(filters);
+		const listingType = effectiveListingType(filters);
+		const orderBy = getUndervaluedOrderBy(sort);
 
-	const isAll = locations === "__all__";
-	const pLocCondition = isAll
-		? Prisma.sql`p.location_name IS NOT NULL`
-		: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
+		const avgsMap = await getLocationAverages(locations, category, listingType);
+		if (avgsMap.size === 0) return { total: 0, data: [] };
 
-	const avgEntries = Array.from(avgsMap.entries()).map(
-		([loc, avg]) => Prisma.sql`(${loc}, ${avg}::numeric)`,
-	);
+		const isAll = locations === "__all__";
+		const pLocCondition = isAll
+			? Prisma.sql`p.location_name IS NOT NULL`
+			: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
 
-	const conditions = [
-		pLocCondition,
-		Prisma.sql`p.price_per_sqm > 0`,
-		listingTypeCondition(listingType),
-		categoryCondition(category),
-		maxDiscountCondition(),
-		...(thresholdPercent > 0
-			? [
-					Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ((100 - ${thresholdPercent})::numeric / 100)`,
-				]
-			: []),
-		...applyFilters(filters),
-	];
+		const avgLocs = Array.from(avgsMap.keys());
+		const avgVals = Array.from(avgsMap.values());
 
-	const baseQuery = Prisma.sql`
-		FROM "Property" p
-		JOIN loc_avg ON p.location_name = loc_avg.location_name
-		WHERE ${Prisma.join(conditions, " AND ")}
-	`;
+		const conditions = [
+			pLocCondition,
+			Prisma.sql`p.price_per_sqm > 0`,
+			listingTypeCondition(listingType),
+			categoryCondition(category),
+			maxDiscountCondition(),
+			...(thresholdPercent > 0
+				? [
+						Prisma.sql`p.price_per_sqm <= loc_avg.avg_ppsm * ((100 - ${thresholdPercent})::numeric / 100)`,
+					]
+				: []),
+			...applyFilters(filters),
+		];
 
-	const [totalRows, dataRows] = await Promise.all([
-		queryRaw<{ count: bigint }[]>(Prisma.sql`
-			WITH loc_avg(location_name, avg_ppsm) AS (
-				VALUES ${Prisma.join(avgEntries)}
+		const locAvgCte = Prisma.sql`
+			loc_avg AS MATERIALIZED (
+				SELECT location_name, avg_ppsm
+				FROM unnest(${avgLocs}::text[], ${avgVals}::numeric[]) AS t(location_name, avg_ppsm)
 			)
-			SELECT COUNT(*)::bigint AS count
-			${baseQuery}
-		`),
-		queryRaw<PropertyRow[]>(Prisma.sql`
-			WITH loc_avg(location_name, avg_ppsm) AS (
-				VALUES ${Prisma.join(avgEntries)}
-			)
-			SELECT
-				p.*,
-				ROUND(loc_avg.avg_ppsm::numeric, 2)                                                AS location_avg_price_per_sqm,
-				ROUND(((loc_avg.avg_ppsm - p.price_per_sqm) / loc_avg.avg_ppsm * 100)::numeric, 2) AS discount_percent
-			${baseQuery}
-			ORDER BY ${orderBy}
-			LIMIT ${limit} OFFSET ${offset}
-		`),
-	]);
+		`;
 
-	return {
-		total: Number(totalRows[0]?.count || 0),
-		data: dataRows.map((p) => ({
-			...p,
-			tier: classifyDeal(Number(p.discount_percent)),
-		})),
-	};
+		const baseQuery = Prisma.sql`
+			FROM "Property" p
+			JOIN loc_avg ON p.location_name = loc_avg.location_name
+			WHERE ${Prisma.join(conditions, " AND ")}
+		`;
+
+		const dataRows = await queryRaw<(PropertyRow & { total_count: bigint })[]>(
+			Prisma.sql`
+				WITH ${locAvgCte},
+				paged AS (
+					SELECT
+						sub.id,
+						sub.location_avg_price_per_sqm,
+						sub.discount_percent,
+						sub.total_count,
+						ROW_NUMBER() OVER () AS rn
+					FROM (
+						SELECT
+							p.id,
+							ROUND(loc_avg.avg_ppsm::numeric, 2)                                                AS location_avg_price_per_sqm,
+							ROUND(((loc_avg.avg_ppsm - p.price_per_sqm) / loc_avg.avg_ppsm * 100)::numeric, 2) AS discount_percent,
+							COUNT(*) OVER()::bigint                                                            AS total_count
+						${baseQuery}
+						ORDER BY ${orderBy}
+						LIMIT ${limit} OFFSET ${offset}
+					) sub
+				)
+				SELECT
+					p.*,
+					paged.location_avg_price_per_sqm,
+					paged.discount_percent,
+					paged.total_count
+				FROM paged
+				JOIN "Property" p ON p.id = paged.id
+				ORDER BY paged.rn
+			`,
+		);
+
+		let total = Number(dataRows[0]?.total_count || 0);
+		if (dataRows.length === 0 && offset > 0) {
+			const totalRows = await queryRaw<{ count: bigint }[]>(Prisma.sql`
+				WITH ${locAvgCte}
+				SELECT COUNT(*)::bigint AS count
+				${baseQuery}
+			`);
+			total = Number(totalRows[0]?.count || 0);
+		}
+
+		const result: UndervaluedResult = {
+			total,
+			data: dataRows.map(({ total_count: _totalCount, ...p }) => ({
+				...p,
+				tier: classifyDeal(Number(p.discount_percent)),
+			})),
+		};
+
+		if (gen === cacheGeneration) {
+			if (undervaluedCache.size >= UNDERVALUED_CACHE_MAX) {
+				const oldestKey = undervaluedCache.keys().next().value;
+				if (oldestKey !== undefined) undervaluedCache.delete(oldestKey);
+			}
+			undervaluedCache.set(cacheKey, { data: result, at: Date.now() });
+		}
+
+		return result;
+	})();
+
+	undervaluedPromises.set(cacheKey, promise);
+	try {
+		return await promise;
+	} finally {
+		undervaluedPromises.delete(cacheKey);
+	}
 }
 
 export async function getUndervaluedUrlTiers(
@@ -503,9 +601,8 @@ export async function getUndervaluedUrlTiers(
 		? Prisma.sql`p.location_name IS NOT NULL`
 		: Prisma.sql`p.location_name IN (${Prisma.join(locations)})`;
 
-	const avgEntries = Array.from(avgsMap.entries()).map(
-		([loc, avg]) => Prisma.sql`(${loc}, ${avg}::numeric)`,
-	);
+	const avgLocs = Array.from(avgsMap.keys());
+	const avgVals = Array.from(avgsMap.values());
 
 	const conditions = [
 		pLocCondition,
@@ -531,8 +628,9 @@ export async function getUndervaluedUrlTiers(
 			expires_at: Date | null;
 		}[]
 	>(Prisma.sql`
-		WITH loc_avg(location_name, avg_ppsm) AS (
-			VALUES ${Prisma.join(avgEntries)}
+		WITH loc_avg AS MATERIALIZED (
+			SELECT location_name, avg_ppsm
+			FROM unnest(${avgLocs}::text[], ${avgVals}::numeric[]) AS t(location_name, avg_ppsm)
 		)
 		SELECT
 			p.source_url,
@@ -715,10 +813,9 @@ function applyFilters(filters: PropertyFilters): Prisma.Sql[] {
 		);
 	if (hasActiveMortgage !== undefined)
 		conditions.push(Prisma.sql`p.has_active_mortgage = ${hasActiveMortgage}`);
-	if (category !== undefined)
-		conditions.push(Prisma.sql`p.category::text = ${category}`);
+	if (category !== undefined) conditions.push(categoryCondition(category));
 	if (listingType !== undefined)
-		conditions.push(Prisma.sql`p.listing_type::text = ${listingType}`);
+		conditions.push(listingTypeCondition(listingType));
 	if (since !== undefined) conditions.push(Prisma.sql`p.created_at > ${since}`);
 	if (descriptionSearch !== undefined && descriptionSearch.trim() !== "") {
 		const escaped = descriptionSearch
