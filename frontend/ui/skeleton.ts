@@ -1,6 +1,9 @@
 import { html } from "@/core/utils";
 
-export function SkeletonList(count: number, view: "grid" | "row"): HTMLElement {
+export function SkeletonList(
+	view: "grid" | "row" = "grid",
+	count = 8,
+): HTMLElement {
 	const wrap = document.createElement("div");
 	wrap.className =
 		view === "grid"

@@ -188,7 +188,7 @@ export function appendSkeletons(ui: ProductsUI): void {
 		wrap &&
 		!Array.from(wrap.children).some((c) => c.classList.contains("re-skeleton"))
 	) {
-		const skeletons = SkeletonList(3, state.currentView as "grid" | "row");
+		const skeletons = SkeletonList(state.currentView as "grid" | "row", 3);
 		Array.from(skeletons.children).forEach((child) => {
 			wrap.appendChild(child);
 		});

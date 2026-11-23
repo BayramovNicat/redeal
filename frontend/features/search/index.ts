@@ -113,7 +113,7 @@ export function initSearch(container: HTMLElement): () => void {
 			show(globalElements.loadingIndicator);
 		} else {
 			globalElements.resultsContainer.appendChild(
-				SkeletonList(6, state.currentView as "grid" | "row"),
+				SkeletonList(state.currentView as "grid" | "row"),
 			);
 		}
 	}
