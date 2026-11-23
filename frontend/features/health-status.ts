@@ -37,6 +37,7 @@ export function HealthStatus(props: HealthStatusProps = {}): HTMLDivElement {
 	void (async () => {
 		try {
 			const r = await fetch("/health");
+			if (!r.ok) throw new Error(`Health check failed (${r.status})`);
 			const d = (await r.json()) as { properties?: number };
 			text.textContent = d.properties
 				? `${d.properties.toLocaleString()} ${t(

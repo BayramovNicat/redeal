@@ -275,18 +275,23 @@ export async function getPropertiesByUrls(
 ): Promise<(PropertyRow & { tier: DealTier })[]> {
 	const rows = await queryRaw<PropertyRow[]>(Prisma.sql`
 		WITH needed AS (
-			SELECT DISTINCT location_name
+			SELECT DISTINCT location_name, listing_type, category
 			FROM "Property"
-			WHERE source_url = ANY(${urls}) AND location_name IS NOT NULL
+			WHERE source_url = ANY(${urls})
+				AND location_name IS NOT NULL
+				AND category IS NOT NULL
 		),
 		avgs AS (
-			SELECT location_name, AVG(price_per_sqm) AS avg_ppsm
-			FROM "Property"
-			WHERE location_name IN (SELECT location_name FROM needed)
-				AND listing_type::text = 'sale'
-				AND category::text = 'new'
-				${locAvgBaseConditions()}
-			GROUP BY location_name
+			SELECT p.location_name, p.listing_type, p.category, AVG(p.price_per_sqm) AS avg_ppsm
+			FROM "Property" p
+			JOIN needed n
+				ON n.location_name = p.location_name
+				AND n.listing_type = p.listing_type
+				AND n.category = p.category
+			WHERE p.price_per_sqm > 0
+				AND (p.floor IS NULL OR p.floor <> 1)
+				AND (p.floor IS NULL OR p.total_floors IS NULL OR p.floor <> p.total_floors)
+			GROUP BY p.location_name, p.listing_type, p.category
 			HAVING COUNT(*) >= 3
 		)
 		SELECT
@@ -297,7 +302,10 @@ export async function getPropertiesByUrls(
 				ELSE 0
 			END AS discount_percent
 		FROM "Property" p
-		LEFT JOIN avgs a ON a.location_name = p.location_name
+		LEFT JOIN avgs a
+			ON a.location_name = p.location_name
+			AND a.listing_type = p.listing_type
+			AND a.category = p.category
 		WHERE p.source_url = ANY(${urls})
 	`);
 

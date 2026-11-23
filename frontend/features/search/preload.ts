@@ -28,7 +28,10 @@ export function preloadInitialSearch(): Promise<void> {
 			location: loc,
 			data: null,
 			promise: fetch(`/api/deals/trend?location=${encodeURIComponent(loc)}`)
-				.then((r) => r.json() as Promise<{ data?: import("@/core/types").TrendPoint[] }>)
+				.then(
+					(r) =>
+						r.json() as Promise<{ data?: import("@/core/types").TrendPoint[] }>,
+				)
 				.then((d) => {
 					const pts = d.data && d.data.length >= 2 ? d.data : null;
 					entry.data = pts;
@@ -51,7 +54,9 @@ export function preloadInitialSearch(): Promise<void> {
 		};
 	}
 
-	return preloadedTrend ? preloadedTrend.promise.then(() => undefined) : Promise.resolve();
+	return preloadedTrend
+		? preloadedTrend.promise.then(() => undefined)
+		: Promise.resolve();
 }
 
 /** Returns preloaded trend data if already resolved for this location. */

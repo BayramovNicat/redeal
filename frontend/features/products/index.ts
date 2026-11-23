@@ -25,12 +25,7 @@ import { Icons } from "@/ui/icons";
 import { BackToTopButton } from "@/ui/scroll-top";
 import { renderProductsBar } from "./bar";
 import { appendSkeletons, renderList, updatePagination } from "./list";
-import {
-	hideItem,
-	sortDeals,
-	syncStateToStorage,
-	toggleBM,
-} from "./logic";
+import { hideItem, sortDeals, syncStateToStorage, toggleBM } from "./logic";
 import type { ProductsUI } from "./types";
 
 export function initProducts(container: HTMLElement): () => void {
@@ -375,9 +370,7 @@ export function initProducts(container: HTMLElement): () => void {
 				throw new Error(result.error ?? `Request failed (${response.status})`);
 			}
 
-			state.allResults = result.data.filter(
-				(p) => !state.hidden.has(p.source_url),
-			);
+			state.allResults = result.data;
 			state.currentTotal = result.total;
 			state.currentOffset = result.data.length;
 			state.renderedSet.clear();

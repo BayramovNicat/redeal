@@ -1,18 +1,14 @@
 import { getUndervalued } from "@/modules/deals/deals.service.js";
-import { sendMessage } from "@/modules/telegram/telegram.service.js";
+import {
+	escapeTelegramHtml,
+	sendMessage,
+} from "@/modules/telegram/telegram.service.js";
 import type { AlertFilters, PaginationOptions } from "@/types/index.js";
 import { classifyDeal } from "@/utils/deals.js";
 import { prisma } from "@/utils/prisma.js";
 
 function fmt(n: number, d = 0): string {
 	return Number(n).toLocaleString("az-AZ", { maximumFractionDigits: d });
-}
-
-function escapeTelegramHtml(value: string): string {
-	return value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;");
 }
 
 export function formatListing(p: {
@@ -96,19 +92,39 @@ export async function runAlerts(): Promise<void> {
 				pageArgs,
 			);
 
-			await prisma.alert.update({
-				where: { id: alert.id },
-				data: { last_run_at: new Date() },
-			});
+			const runAt = new Date();
 
-			if (data.length === 0) continue;
+			if (data.length === 0) {
+				await prisma.alert.update({
+					where: { id: alert.id },
+					data: { last_run_at: runAt },
+				});
+				continue;
+			}
 
 			const label = escapeTelegramHtml(alert.label ?? "your alert");
 			const header = `🔔 <b>${data.length} new deal${data.length !== 1 ? "s" : ""}</b> matching "${label}"`;
-			const body = data.map(formatListing).join("\n\n");
 			const footer = `\n\nSend /stop to stop all alerts.`;
+			const maxBodyLen = 4096 - header.length - footer.length - 4;
+			const formattedItems = data.map(formatListing);
+			let body = "";
+			for (const item of formattedItems) {
+				const candidate = body ? `${body}\n\n${item}` : item;
+				if (candidate.length > maxBodyLen) break;
+				body = candidate;
+			}
+			if (!body) body = formattedItems[0]?.slice(0, maxBodyLen) ?? "";
 
-			await sendMessage(alert.chat_id, `${header}\n\n${body}${footer}`);
+			const sent = await sendMessage(
+				alert.chat_id,
+				`${header}\n\n${body}${footer}`,
+			);
+			if (!sent) continue;
+
+			await prisma.alert.update({
+				where: { id: alert.id },
+				data: { last_run_at: runAt },
+			});
 
 			console.log(
 				`[Alerts] Sent ${data.length} listing(s) to chat ${alert.chat_id} for alert "${label}"`,

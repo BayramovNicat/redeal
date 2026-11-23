@@ -55,9 +55,7 @@ export function Product({
 		const dropCount = property.price_drop_count ?? 0;
 		const history = property.price_history;
 		const originalPrice =
-			history && history.length > 0
-				? Number(history[history.length - 1]?.price)
-				: null;
+			history && history.length > 0 ? Number(history[0]?.price) : null;
 		const dropTip =
 			dropCount > 0 && originalPrice !== null
 				? `₼${fmt(originalPrice, 0)} → ₼${fmt(property.price, 0)}`
@@ -388,9 +386,7 @@ export function Product({
 		const rowDropCount = property.price_drop_count ?? 0;
 		const rowHistory = property.price_history;
 		const rowOriginalPrice =
-			rowHistory && rowHistory.length > 0
-				? Number(rowHistory[rowHistory.length - 1]?.price)
-				: null;
+			rowHistory && rowHistory.length > 0 ? Number(rowHistory[0]?.price) : null;
 		const rowDropTip =
 			rowDropCount > 0 && rowOriginalPrice !== null
 				? `₼${fmt(rowOriginalPrice, 0)} → ₼${fmt(property.price, 0)}`
@@ -697,6 +693,14 @@ function attachActionListeners({
 	element.setAttribute("tabindex", "0");
 	element.addEventListener("keydown", (e: KeyboardEvent) => {
 		if (e.key === "Enter" || e.key === " ") {
+			const target = e.target as HTMLElement | null;
+			if (
+				target &&
+				target !== element &&
+				target.closest("button, a, input, select, textarea")
+			) {
+				return;
+			}
 			e.preventDefault();
 			callbacks.onDetail(property);
 		}

@@ -20,7 +20,9 @@ describe("br compression middleware", () => {
 		expect(res.headers.get("Content-Length")).toBeNull();
 
 		const decompressed = JSON.parse(
-			brotliDecompressSync(Buffer.from(await res.arrayBuffer())).toString("utf8"),
+			brotliDecompressSync(Buffer.from(await res.arrayBuffer())).toString(
+				"utf8",
+			),
 		);
 		expect(decompressed).toEqual(payload);
 	});
@@ -108,7 +110,9 @@ describe("routes compression coverage", () => {
 		expect(res.status).toBe(401);
 		expect(res.headers.get("Content-Encoding")).toBe("br");
 		const body = JSON.parse(
-			brotliDecompressSync(Buffer.from(await res.arrayBuffer())).toString("utf8"),
+			brotliDecompressSync(Buffer.from(await res.arrayBuffer())).toString(
+				"utf8",
+			),
 		) as { error?: string };
 		expect(body.error).toContain("Unauthorized");
 	});

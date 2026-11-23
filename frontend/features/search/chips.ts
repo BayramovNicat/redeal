@@ -4,16 +4,29 @@ import { CloseableChip } from "@/ui/chip";
 import { getBooleanFilters, getNumericFilters } from "./constants";
 import type { SearchUI } from "./types";
 
-const categoryLabels: Record<string, string> = {
-	new: t("newBuild"),
-	old: t("secondary"),
-	house: t("house"),
-};
+function getCategoryLabel(value: string): string {
+	switch (value) {
+		case "new":
+			return t("newBuild");
+		case "old":
+			return t("secondary");
+		case "house":
+			return t("house");
+		default:
+			return value;
+	}
+}
 
-const listingTypeLabels: Record<string, string> = {
-	sale: t("sale"),
-	rent: t("rent"),
-};
+function getListingTypeLabel(value: string): string {
+	switch (value) {
+		case "sale":
+			return t("sale");
+		case "rent":
+			return t("rent");
+		default:
+			return value;
+	}
+}
 
 /**
  * Updates the filter chips display based on current UI state.
@@ -60,8 +73,7 @@ export function refreshFilterChips(ui: SearchUI, onSearch: () => void): void {
 	}
 
 	if (ui.categorySelect.value) {
-		const label =
-			categoryLabels[ui.categorySelect.value] ?? ui.categorySelect.value;
+		const label = getCategoryLabel(ui.categorySelect.value);
 		activeChips.push(
 			createChip(`${t("chipCategory")}: ${label}`, () => {
 				ui.categorySelect.value = "";
@@ -70,9 +82,7 @@ export function refreshFilterChips(ui: SearchUI, onSearch: () => void): void {
 	}
 
 	if (ui.listingTypeSelect.value && ui.listingTypeSelect.value !== "sale") {
-		const label =
-			listingTypeLabels[ui.listingTypeSelect.value] ??
-			ui.listingTypeSelect.value;
+		const label = getListingTypeLabel(ui.listingTypeSelect.value);
 		activeChips.push(
 			createChip(`${t("listingType")}: ${label}`, () => {
 				ui.listingTypeSelect.value = "sale";

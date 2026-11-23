@@ -244,8 +244,9 @@ export class BinaScraper extends BaseScraper {
 					if (price <= 0 || area <= 0) continue;
 
 					const detail = details[node.id];
-					const urgencyText = `${detail?.title ?? ""} ${detail?.description ?? ""}`;
-					const mortgageText = detail?.description ?? "";
+					if (!detail) continue;
+					const urgencyText = `${detail.title ?? ""} ${detail.description ?? ""}`;
+					const mortgageText = detail.description ?? "";
 
 					const normalizedDistrict = slugToDistrict(node.location.slug);
 					// Fall back to the exact location name from the API when district can't be resolved

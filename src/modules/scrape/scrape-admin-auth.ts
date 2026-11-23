@@ -165,7 +165,27 @@ function sameOrigin(req: Request): boolean {
 	const origin = req.headers.get("origin");
 	if (!origin) return IS_DEV;
 	try {
-		return new URL(origin).origin === new URL(req.url).origin;
+		const reqUrl = new URL(req.url);
+		const originUrl = new URL(origin);
+		if (originUrl.origin === reqUrl.origin) return true;
+
+		const forwardedProto = req.headers
+			.get("x-forwarded-proto")
+			?.split(",")[0]
+			?.trim();
+		const forwardedHost = req.headers
+			.get("x-forwarded-host")
+			?.split(",")[0]
+			?.trim();
+		const host = forwardedHost || req.headers.get("host")?.trim();
+		if (
+			host &&
+			(forwardedProto === "http" || forwardedProto === "https") &&
+			originUrl.origin === `${forwardedProto}://${host}`
+		) {
+			return true;
+		}
+		return false;
 	} catch {
 		return false;
 	}

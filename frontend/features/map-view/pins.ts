@@ -1,7 +1,8 @@
 import { type CircleMarker, circleMarker, type Renderer } from "leaflet";
 import { bus, EVENTS } from "@/core/events";
 import type { MapPin, Property } from "@/core/types";
-import { fmt, fmtFloor, toast, tTier } from "@/core/utils";
+import { fmt, fmtFloor, html, toast, tTier } from "@/core/utils";
+import { openLoginModal } from "@/features/auth/api";
 import { ts } from "@/ui/tier";
 import type { MapViewState } from "./types";
 
@@ -33,7 +34,7 @@ export function createPinMarker(
 		opacity: 0.95,
 	});
 
-	let tipContent: string | null = null;
+	let tipContent: HTMLElement | null = null;
 
 	cm.on("mouseover", () => {
 		cm.bringToFront();
@@ -73,7 +74,19 @@ export function createPinMarker(
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ urls: [pin.source_url] }),
 			});
-			const json = (await r.json()) as { data?: Property[] };
+			const json = (await r.json()) as {
+				data?: Property[];
+				error?: string;
+				code?: string;
+			};
+			if (r.status === 401 || json.code === "AUTH_REQUIRED") {
+				openLoginModal("general");
+				return;
+			}
+			if (!r.ok || json.error) {
+				toast(json.error ?? `Request failed (${r.status})`, true);
+				return;
+			}
 			if (json.data?.[0]) bus.emit(EVENTS.PROPERTY_OPEN, json.data[0]);
 		} catch (e) {
 			if ((e as Error).name !== "AbortError") toast((e as Error).message, true);
@@ -89,7 +102,7 @@ export function createPinMarker(
 function getTooltipContent(
 	pin: MapPin,
 	tStyle: { hex: string; c: string; bg: string; b: string },
-) {
+): HTMLElement {
 	const discSign = pin.discount_percent >= 0 ? "-" : "+";
 	const discAbs = Math.abs(Math.round(pin.discount_percent));
 	const floorStr = fmtFloor(pin.floor, pin.total_floors);
@@ -101,17 +114,19 @@ function getTooltipContent(
 		.filter(Boolean)
 		.join(" · ");
 
-	const thumbHtml = pin.image_url
-		? `<img src="${pin.image_url}" style="width:62px;height:62px;object-fit:cover;flex-shrink:0;border-radius:9px;border:1px solid rgba(255,255,255,0.1)">`
+	const safeImageUrl =
+		pin.image_url && /^https?:\/\//i.test(pin.image_url) ? pin.image_url : null;
+	const thumbEl = safeImageUrl
+		? html`<img src="${safeImageUrl}" style="width:62px;height:62px;object-fit:cover;flex-shrink:0;border-radius:9px;border:1px solid rgba(255,255,255,0.1)" alt="">`
 		: "";
 
-	const locHtml = pin.location_name
-		? `<div style="font-size:10.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${pin.location_name}</div>`
+	const locEl = pin.location_name
+		? html`<div style="font-size:10.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${pin.location_name}</div>`
 		: "";
 
-	return /*html*/ `<div style="padding:10px 13px;min-width:235px;max-width:305px">
+	return html`<div style="padding:10px 13px;min-width:235px;max-width:305px">
 		<div style="display:flex;align-items:center;gap:10px">
-			${thumbHtml}
+			${thumbEl}
 			<div style="min-width:0;flex:1">
 				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
 					<span style="font-size:15px;font-weight:800;font-family:var(--font-mono);color:var(--text);line-height:1.1">
@@ -125,8 +140,8 @@ function getTooltipContent(
 					<span>₼${fmt(pin.price_per_sqm, 0)}/m²</span>
 					<span style="font-size:10px;color:${tStyle.c};font-family:var(--font-sans);font-weight:600">${tTier(pin.tier, true)}</span>
 				</div>
-				${meta ? `<div style="font-size:10.5px;font-family:var(--font-mono);color:var(--muted);margin-top:2px">${meta}</div>` : ""}
-				${locHtml}
+				${meta ? html`<div style="font-size:10.5px;font-family:var(--font-mono);color:var(--muted);margin-top:2px">${meta}</div>` : ""}
+				${locEl}
 			</div>
 		</div>
 	</div>`;

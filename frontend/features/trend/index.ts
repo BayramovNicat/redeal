@@ -91,7 +91,8 @@ export function initTrend(container: HTMLElement): () => void {
 
 		const preloaded = getPreloadedTrendData(location);
 		if (preloaded !== undefined) {
-			if (preloaded) state.cache[location] = { data: preloaded, at: Date.now() };
+			if (preloaded)
+				state.cache[location] = { data: preloaded, at: Date.now() };
 			renderTrend(location, preloaded);
 			return;
 		}
@@ -101,7 +102,9 @@ export function initTrend(container: HTMLElement): () => void {
 	}
 
 	// Render preloaded trend synchronously before initial paint if URL has a single location
-	const initialLoc = new URLSearchParams(window.location.search).get("location");
+	const initialLoc = new URLSearchParams(window.location.search).get(
+		"location",
+	);
 	if (initialLoc && initialLoc !== "__all__" && !initialLoc.includes(",")) {
 		const preloaded = getPreloadedTrendData(initialLoc);
 		if (preloaded) {

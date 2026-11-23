@@ -1,8 +1,7 @@
 import { state as globalState } from "@/core/state";
 import type { MapPin } from "@/core/types";
 import { toast } from "@/core/utils";
-import { isUserAuthenticated } from "@/features/auth/api";
-import { openLoginModal } from "@/features/auth/api";
+import { isUserAuthenticated, openLoginModal } from "@/features/auth/api";
 import type { MapViewState } from "./types";
 
 /**
@@ -24,11 +23,12 @@ export async function fetchMapPins(
 	}
 
 	if (state.abortController) state.abortController.abort();
-	state.abortController = new AbortController();
+	const controller = new AbortController();
+	state.abortController = controller;
 
 	try {
 		const res = await fetch(`/api/deals/map-pins?${params}`, {
-			signal: state.abortController.signal,
+			signal: controller.signal,
 		});
 		const d = (await res.json()) as {
 			error?: string;
@@ -53,6 +53,8 @@ export async function fetchMapPins(
 		}
 		return null;
 	} finally {
-		state.abortController = null;
+		if (state.abortController === controller) {
+			state.abortController = null;
+		}
 	}
 }

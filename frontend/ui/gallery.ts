@@ -197,9 +197,11 @@ export function Gallery({
 
 	eventManager.add<KeyboardEvent>(rootElm, "keydown", (e) => {
 		if (e.key === "ArrowLeft") {
+			e.preventDefault();
 			e.stopPropagation();
 			_navigate(-1);
 		} else if (e.key === "ArrowRight" || e.key === " ") {
+			e.preventDefault();
 			e.stopPropagation();
 			_navigate(1);
 		}

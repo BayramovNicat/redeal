@@ -96,8 +96,7 @@ export default {
 	// States
 	searching: "Searching for deals…",
 	noResults: "No results found",
-	noResultsSub:
-		"Try lowering the discount threshold or removing some filters.",
+	noResultsSub: "Try lowering the discount threshold or removing some filters.",
 	welcome: "Discover undervalued properties",
 	welcomeSub:
 		"Pick a location and discount threshold to find listings priced below the local market average.",
@@ -319,8 +318,7 @@ export default {
 	whitelistNotePlaceholder: "Optional note / name",
 	whitelistAddBtn: "Add Email",
 	whitelistLoading: "Loading whitelist…",
-	whitelistEmpty:
-		"No emails on whitelist yet. Add one above to grant access.",
+	whitelistEmpty: "No emails on whitelist yet. Add one above to grant access.",
 	whitelistLoadError: "Failed to load whitelist",
 	whitelistAddedFeedback: "Added {email} to whitelist",
 	whitelistRemovedFeedback: "Removed {email}",

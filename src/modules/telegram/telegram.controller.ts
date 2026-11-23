@@ -1,7 +1,7 @@
 import { TELEGRAM_WEBHOOK_SECRET } from "@/config.js";
 import { readJsonBody } from "@/utils/json-body.js";
 import { prisma } from "@/utils/prisma.js";
-import { sendMessage } from "./telegram.service.js";
+import { escapeTelegramHtml, sendMessage } from "./telegram.service.js";
 
 export async function handleWebhook(req: Request): Promise<Response> {
 	if (
@@ -24,7 +24,7 @@ export async function handleWebhook(req: Request): Promise<Response> {
 	if (text.startsWith("/start")) {
 		await sendMessage(
 			chatId,
-			`Welcome to <b>Redeal</b>!\n\nYour Chat ID is: <code>${chatId}</code>\n\nCopy this and paste it into the <b>Alert me</b> form on the website to receive deal notifications.`,
+			`Welcome to <b>Redeal</b>!\n\nYour Chat ID is: <code>${escapeTelegramHtml(chatId)}</code>\n\nCopy this and paste it into the <b>Alert me</b> form on the website to receive deal notifications.`,
 		);
 	} else if (text.startsWith("/stop")) {
 		try {
@@ -53,7 +53,7 @@ export async function handleWebhook(req: Request): Promise<Response> {
 				);
 			} else {
 				const lines = alerts.map((a, i) => {
-					const name = a.label ?? "Unnamed";
+					const name = escapeTelegramHtml(a.label ?? "Unnamed");
 					const since = a.created_at.toLocaleDateString("en-GB");
 					return `${i + 1}. ${name} (since ${since})`;
 				});

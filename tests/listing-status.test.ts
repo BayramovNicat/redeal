@@ -119,4 +119,37 @@ describe("listing-status service", () => {
 			"https://www.bina.az/items/102",
 		]);
 	});
+
+	test("checkAndDeleteEndedListings treats GraphQL field errors with null data as failed, not ended", async () => {
+		globalThis.fetch = (async () =>
+			Response.json({
+				data: {
+					i201: null,
+					i202: {
+						id: "202",
+						state: "PUBLISHED",
+						isExpiredManually: false,
+						expiresAt: null,
+					},
+				},
+				errors: [{ message: "Upstream timeout", path: ["i201"] }],
+			})) as typeof fetch;
+
+		const deletedUrls: string[] = [];
+		const result = await checkAndDeleteEndedListings(
+			["https://bina.az/items/201", "https://bina.az/items/202"],
+			async (urlBatch) => {
+				deletedUrls.push(...urlBatch);
+				return urlBatch.length;
+			},
+		);
+
+		expect(result).toEqual({
+			checked: 1,
+			ended: 0,
+			deleted: 0,
+			failed: 1,
+		});
+		expect(deletedUrls).toEqual([]);
+	});
 });

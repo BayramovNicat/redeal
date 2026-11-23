@@ -40,7 +40,9 @@ if (window.location.pathname === "/login") {
 	const trendArea = html`<section></section>`;
 	const productsArea = html`<main id="products-area"></main>`;
 
-	const initialLoc = new URLSearchParams(window.location.search).get("location");
+	const initialLoc = new URLSearchParams(window.location.search).get(
+		"location",
+	);
 	const hasPreloadedTrend =
 		!!initialLoc &&
 		initialLoc !== "__all__" &&

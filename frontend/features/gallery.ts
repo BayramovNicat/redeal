@@ -40,9 +40,17 @@ export function initGallery(root: HTMLElement): () => void {
 
 	add(modal, "keydown", (e: Event) => {
 		const evt = e as KeyboardEvent;
-		if (evt.key === "ArrowLeft" || evt.key === "ArrowUp") gallery.navigate(-1);
-		if (evt.key === "ArrowRight" || evt.key === "ArrowDown" || evt.key === " ")
+		if (evt.key === "ArrowLeft" || evt.key === "ArrowUp") {
+			evt.preventDefault();
+			gallery.navigate(-1);
+		} else if (
+			evt.key === "ArrowRight" ||
+			evt.key === "ArrowDown" ||
+			evt.key === " "
+		) {
+			evt.preventDefault();
 			gallery.navigate(1);
+		}
 	});
 
 	root.appendChild(modal);

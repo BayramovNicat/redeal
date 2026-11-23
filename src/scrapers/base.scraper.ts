@@ -72,7 +72,7 @@ export interface IScraper {
 }
 
 const ACTIVE_MORTGAGE_RE =
-	/haz[ıi]\s+(?:ipoteka|kredit)|d[öo]vl[əe]t\s+ipoteka(?:s[ıi])?|[iİ]lkin\s+[öo]d[əe]ni[şs]|ipoteka\s+borcu|bank\s+borcu|kredit\s+borcu|üzərində\s+borc|borclu|girov|qal[ıi]q\s+m[əe]bl[əe][ğg]|daxili\s+kredit/i;
+	/haz[ıiIİ]r\s+(?:[iİ]poteka|kred[iİ]t)|d[öo]vl[əe]t\s+[iİ]poteka(?:s[ıiIİ])?|[iİ]lk[iİ]n\s+[öo]d[əe]n[iİ][şs]|[iİ]poteka\s+borcu|bank\s+borcu|kred[iİ]t\s+borcu|[üu]z[əe]r[iİ]nd[əe]\s+borc|borclu|g[iİ]rov|qal[ıiIİ]q\s+m[əe]bl[əe][ğg]|dax[iİ]l[iİ]\s+kred[iİ]t/i;
 
 export function detectActiveMortgage(text: string): boolean {
 	return ACTIVE_MORTGAGE_RE.test(text);

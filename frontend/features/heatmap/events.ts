@@ -62,6 +62,7 @@ export function setupCircleEvents(
 
 	c.on("contextmenu", (e: LeafletMouseEvent) => {
 		DomEvent.stopPropagation(e);
+		DomEvent.preventDefault(e.originalEvent);
 		onSelect(d.location_name, true);
 		toast(d.location_name);
 	});
@@ -99,9 +100,9 @@ export async function setupMapDragSelection(
 		selection.setBounds(latLngBounds(start, e.latlng));
 	};
 
-	const onMouseUp = (e: LeafletMouseEvent) => {
+	const finishSelection = (endLatLng: LatLng) => {
 		if (!start || !selection) return;
-		const bounds = latLngBounds(start, e.latlng);
+		const bounds = latLngBounds(start, endLatLng);
 		const selected: string[] = [];
 
 		group.eachLayer((layer) => {
@@ -120,9 +121,19 @@ export async function setupMapDragSelection(
 		if (selected.length > 0) onSelectMany(selected);
 	};
 
+	const onMouseUp = (e: LeafletMouseEvent) => {
+		finishSelection(e.latlng);
+	};
+
+	const onWindowMouseUp = (e: MouseEvent) => {
+		if (!start || !selection) return;
+		finishSelection(lmap.mouseEventToLatLng(e));
+	};
+
 	lmap.on("mousedown", onMouseDown);
 	lmap.on("mousemove", onMouseMove);
 	lmap.on("mouseup", onMouseUp);
+	window.addEventListener("mouseup", onWindowMouseUp);
 
 	return () => {
 		selection?.remove();
@@ -131,5 +142,6 @@ export async function setupMapDragSelection(
 		lmap.off("mousedown", onMouseDown);
 		lmap.off("mousemove", onMouseMove);
 		lmap.off("mouseup", onMouseUp);
+		window.removeEventListener("mouseup", onWindowMouseUp);
 	};
 }

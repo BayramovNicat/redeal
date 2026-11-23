@@ -88,4 +88,16 @@ describe("BinaScraper", () => {
 			"https://bina.az/baki/alqi-satqi/menziller",
 		]);
 	});
+
+	test("detectActiveMortgage matches hazir ipoteka/kredit and uppercase Azerbaijani İ", async () => {
+		const { detectActiveMortgage } = await import(
+			"../src/scrapers/base.scraper.js"
+		);
+		expect(detectActiveMortgage("Mənzil hazır ipoteka ilə satılır")).toBe(true);
+		expect(detectActiveMortgage("hazir kredit var")).toBe(true);
+		expect(detectActiveMortgage("DÖVLƏT İPOTEKASI")).toBe(true);
+		expect(detectActiveMortgage("İLKİN ÖDƏNİŞ 30000")).toBe(true);
+		expect(detectActiveMortgage("ÜZƏRİNDƏ BORC VAR")).toBe(true);
+		expect(detectActiveMortgage("Təmirli kupçalı mənzil")).toBe(false);
+	});
 });

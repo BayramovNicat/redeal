@@ -33,9 +33,24 @@ import { ResponseHelper } from "@/utils/response.js";
 function sanitizeReturnTo(raw: string | null): string {
 	if (!raw) return "/";
 	const trimmed = raw.trim();
-	if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "/";
-	if (trimmed.startsWith("/login") || trimmed.startsWith("/api/")) return "/";
-	return trimmed;
+	if (
+		!trimmed.startsWith("/") ||
+		trimmed.startsWith("//") ||
+		trimmed.includes("\\")
+	) {
+		return "/";
+	}
+	try {
+		const parsed = new URL(trimmed, "https://redeal.invalid");
+		if (parsed.origin !== "https://redeal.invalid") return "/";
+		const normalized = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+		if (normalized.startsWith("/login") || normalized.startsWith("/api/")) {
+			return "/";
+		}
+		return normalized;
+	} catch {
+		return "/";
+	}
 }
 
 function encodeOAuthStatePayload(nonce: string, returnTo: string): string {

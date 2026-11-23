@@ -142,8 +142,13 @@ export function initSearch(container: HTMLElement): () => void {
 		return searchParams;
 	}
 
+	let searchAbortController: AbortController | null = null;
+
 	async function executeSearch(isPagination = false): Promise<void> {
-		if (state.loading) return;
+		if (state.loading) {
+			if (isPagination) return;
+			searchAbortController?.abort();
+		}
 
 		const isGuest = !isUserAuthenticated();
 		if (isGuest && isPagination) {
@@ -160,6 +165,8 @@ export function initSearch(container: HTMLElement): () => void {
 			return;
 		}
 
+		const controller = new AbortController();
+		searchAbortController = controller;
 		state.loading = true;
 		if (!isPagination) resetUIForSearch();
 
@@ -167,7 +174,9 @@ export function initSearch(container: HTMLElement): () => void {
 			const searchParams = buildSearchParams(state.getFilters());
 			const dealsUrl = `/api/deals/undervalued?${searchParams}`;
 			const response = await (consumePreloadedDealsFetch(dealsUrl) ??
-				fetch(dealsUrl));
+				fetch(dealsUrl, { signal: controller.signal }));
+			if (controller.signal.aborted) return;
+
 			const searchResults = (await response.json()) as {
 				error?: string;
 				code?: string;
@@ -176,10 +185,12 @@ export function initSearch(container: HTMLElement): () => void {
 				data: Property[];
 				total: number;
 			};
+			if (controller.signal.aborted) return;
 
 			hide(globalElements.loadingIndicator);
 
 			if (response.status === 401 || searchResults.code === "AUTH_REQUIRED") {
+				if (!isPagination) globalElements.resultsContainer.replaceChildren();
 				if (isGuest) {
 					resetGatedFiltersToDefault(ui);
 					openLoginModal("filter");
@@ -189,8 +200,12 @@ export function initSearch(container: HTMLElement): () => void {
 				return;
 			}
 
-			if (searchResults.error) {
-				toast(searchResults.error, true);
+			if (!response.ok || searchResults.error) {
+				if (!isPagination) globalElements.resultsContainer.replaceChildren();
+				toast(
+					searchResults.error ?? `Request failed (${response.status})`,
+					true,
+				);
 				return;
 			}
 
@@ -211,10 +226,13 @@ export function initSearch(container: HTMLElement): () => void {
 					syncStateToUrl(searchParams);
 				}
 
-				// Location broadcast
-				if (locations.length === 1 && locations[0] !== "__all__") {
-					bus.emit(EVENTS.LOCATION_CHANGED, locations[0]);
-				}
+				// Location broadcast (always notify so Trend panel hides when leaving single-location mode)
+				bus.emit(
+					EVENTS.LOCATION_CHANGED,
+					locations.length === 1 && locations[0] !== "__all__"
+						? locations[0]
+						: "__all__",
+				);
 			}
 
 			// UI Update
@@ -226,11 +244,15 @@ export function initSearch(container: HTMLElement): () => void {
 				bus.emit(EVENTS.DEALS_UPDATED);
 			}
 		} catch (error) {
+			if ((error as Error).name === "AbortError") return;
 			hide(globalElements.loadingIndicator);
-			globalElements.resultsContainer.replaceChildren();
+			if (!isPagination) globalElements.resultsContainer.replaceChildren();
 			toast((error as Error).message, true);
 		} finally {
-			state.loading = false;
+			if (searchAbortController === controller) {
+				searchAbortController = null;
+				state.loading = false;
+			}
 		}
 	}
 

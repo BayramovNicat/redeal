@@ -80,7 +80,7 @@ export function MultiSelect({
 			variant === "embedded"
 				? "w-full h-7 flex items-center justify-between gap-2 bg-transparent border-none text-[13.5px] text-(--text) text-left transition-colors duration-150 focus:outline-none p-0"
 				: "w-full h-10 flex items-center justify-between gap-2.5 px-3.5 bg-(--surface-2)/90 border border-(--border) rounded-(--r) text-[13px] text-(--text) text-left transition-all duration-150 hover:border-(--border-h) hover:bg-(--surface-2) focus:outline-none focus:border-(--accent) focus:shadow-[0_0_0_3px_var(--accent-dim)]",
-		content: html`
+		content: frag`
 			<span class="flex items-center gap-2 min-w-0 flex-1">
 				<span class="text-(--muted) shrink-0">${Icons.map(14)}</span>
 				${label}

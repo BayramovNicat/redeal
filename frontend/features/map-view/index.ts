@@ -42,9 +42,9 @@ async function fitPins(animate = true) {
 }
 
 const debouncedFetch = debounce(async () => {
-	if (!state.lmap) return;
+	if (!state.lmap || globalState.currentView !== "map") return;
 	const pins = await fetchMapPins(state);
-	if (pins === null || !state.lmap) return;
+	if (pins === null || !state.lmap || globalState.currentView !== "map") return;
 
 	const filteredPins = pins
 		.filter((p) => !globalState.hidden.has(p.source_url))
@@ -315,6 +315,10 @@ export async function showMapView(): Promise<void> {
 }
 
 export function hideMapView(): void {
+	if (state.abortController) {
+		state.abortController.abort();
+		state.abortController = null;
+	}
 	if (mapContainer) mapContainer.style.display = "none";
 }
 

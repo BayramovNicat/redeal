@@ -72,9 +72,14 @@ export async function deleteItem(p: Property): Promise<boolean> {
 		const { deleteDealApi } = await import("@/features/auth/api");
 		await deleteDealApi(p.source_url);
 
+		const prevCount = state.allResults.length;
 		state.allResults = state.allResults.filter(
 			(item) => item.source_url !== p.source_url,
 		);
+		if (state.allResults.length < prevCount) {
+			state.currentTotal = Math.max(0, state.currentTotal - 1);
+			state.currentOffset = Math.max(0, state.currentOffset - 1);
+		}
 		state.savedOnlyResults = state.savedOnlyResults.filter(
 			(item) => item.source_url !== p.source_url,
 		);

@@ -1,6 +1,6 @@
 import { bus, EVENTS } from "@/core/events";
 import { t } from "@/core/i18n";
-import { cn, html, timeAgo } from "@/core/utils";
+import { cn, frag, html, timeAgo } from "@/core/utils";
 import {
 	type AccessRequestItem,
 	addWhitelistEmail,
@@ -284,7 +284,7 @@ export function WhitelistManager(): WhitelistManagerHandle {
 										<span>${ago}</span>
 										${
 											item.attempts > 1
-												? html`<span>•</span><span class="text-(--yellow) font-medium">${t("accessAttemptCount", { n: item.attempts })}</span>`
+												? frag`<span>•</span><span class="text-(--yellow) font-medium">${t("accessAttemptCount", { n: item.attempts })}</span>`
 												: ""
 										}
 									</div>
@@ -364,7 +364,7 @@ export function WhitelistManager(): WhitelistManagerHandle {
 							<div class="flex flex-col min-w-0">
 								<span class="text-xs font-bold text-(--text) truncate">${item.email}</span>
 								<div class="flex items-center gap-2 text-[10px] text-(--muted) mt-0.5">
-									${item.note ? html`<span class="text-(--accent) font-medium">${item.note}</span><span>•</span>` : ""}
+									${item.note ? frag`<span class="text-(--accent) font-medium">${item.note}</span><span>•</span>` : ""}
 									<span>${t("whitelistAddedDate", { date: addedDate })}</span>
 								</div>
 							</div>

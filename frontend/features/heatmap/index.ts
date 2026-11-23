@@ -71,9 +71,9 @@ export function initHeatmap(root: HTMLElement): () => void {
 		}
 
 		if (isFirstOpen) {
-			isFirstOpen = false;
 			cachedData = await fetchHeatmapData();
 			if (cachedData.length > 0 && lmap && overlay) {
+				isFirstOpen = false;
 				cleanupDragSelection = await renderPoints(
 					lmap,
 					cachedData,

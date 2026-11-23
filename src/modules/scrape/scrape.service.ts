@@ -136,11 +136,19 @@ export class ScrapingService {
 			posted_date: l.posted_date ?? null,
 		}));
 
+		// Deduplicate by source_url (latest wins) so PostgreSQL ON CONFLICT DO UPDATE
+		// never sees duplicate keys within the same VALUES chunk (SQLSTATE 21000).
+		const dedupedByUrl = new Map<string, (typeof rows)[number]>();
+		for (const row of rows) {
+			dedupedByUrl.set(row.source_url, row);
+		}
+		const uniqueRows = Array.from(dedupedByUrl.values());
+
 		// 24 params per row → max safe chunk well below PG's 65 535-param limit.
 		const CHUNK_SIZE = 500;
 
-		for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-			const chunk = rows.slice(i, i + CHUNK_SIZE);
+		for (let i = 0; i < uniqueRows.length; i += CHUNK_SIZE) {
+			const chunk = uniqueRows.slice(i, i + CHUNK_SIZE);
 			try {
 				const now = new Date();
 				const sourceUrls = chunk.map((r) => r.source_url);
@@ -148,7 +156,7 @@ export class ScrapingService {
 					(r) => Prisma.sql`(
             ${r.source_url}, ${r.price}, ${r.area_sqm}, ${r.price_per_sqm},
             ${r.district}, ${r.location_name}, ${r.latitude}, ${r.longitude},
-            ${r.rooms}, ${r.floor}, ${r.total_floors}, ${r.category}, ${r.listing_type},
+            ${r.rooms}, ${r.floor}, ${r.total_floors}, ${r.category}::"PropertyCategory", ${r.listing_type}::"ListingType",
             ${r.has_document}, ${r.has_mortgage}, ${r.has_repair},
             ${r.description}, ${r.image_urls}, ${r.is_urgent}, ${r.has_active_mortgage}, ${r.posted_date},
             ${0},

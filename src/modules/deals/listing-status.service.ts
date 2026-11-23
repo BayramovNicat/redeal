@@ -211,7 +211,7 @@ async function fetchBinaGraphQLStatus(itemId: string): Promise<BinaItemStatus> {
 	}
 
 	const json = (await resp.json()) as GraphQLResponse<BinaItemStatus>;
-	if (json.errors?.length && !json.data) {
+	if (json.errors?.length && !json.data?.item) {
 		throw new Error(json.errors[0]?.message ?? "bina.az GraphQL error");
 	}
 	return json.data ?? { item: null };
@@ -270,11 +270,26 @@ async function fetchBinaGraphQLStatuses(
 
 	const json = (await resp.json()) as GraphQLResponse<
 		Record<string, BinaBatchItemStatus>
-	>;
+	> & { errors?: Array<{ message?: string; path?: Array<string | number> }> };
 	if (!json.data || typeof json.data !== "object") {
 		throw new Error(
 			json.errors?.[0]?.message ?? "bina.az GraphQL returned empty data",
 		);
+	}
+	if (json.errors?.length) {
+		const errorKeys = new Set<string>();
+		for (const err of json.errors) {
+			const fieldKey = err.path?.[0];
+			if (typeof fieldKey === "string") errorKeys.add(fieldKey);
+		}
+		if (errorKeys.size === 0) {
+			throw new Error(json.errors[0]?.message ?? "bina.az GraphQL error");
+		}
+		const filtered: Record<string, BinaBatchItemStatus> = { ...json.data };
+		for (const key of errorKeys) {
+			if (filtered[key] === null) delete filtered[key];
+		}
+		return filtered;
 	}
 	return json.data;
 }

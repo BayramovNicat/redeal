@@ -4,7 +4,7 @@ export function Sparkline(
 	history: PriceHistoryEntry[],
 	color: string,
 ): SVGSVGElement | null {
-	const prices = [...history].reverse().map((h) => Number(h.price));
+	const prices = history.map((h) => Number(h.price));
 	if (prices.length < 2) return null;
 
 	const W = 56,

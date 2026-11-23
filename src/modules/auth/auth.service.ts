@@ -25,7 +25,20 @@ export function isGoogleConfigured(): boolean {
 export function resolveRedirectUri(req: Request): string {
 	if (GOOGLE_REDIRECT_URI) return GOOGLE_REDIRECT_URI;
 	const url = new URL(req.url);
-	return `${url.origin}/api/auth/google/callback`;
+	const forwardedProto = req.headers
+		.get("x-forwarded-proto")
+		?.split(",")[0]
+		?.trim();
+	const forwardedHost = req.headers
+		.get("x-forwarded-host")
+		?.split(",")[0]
+		?.trim();
+	const proto =
+		forwardedProto === "http" || forwardedProto === "https"
+			? forwardedProto
+			: url.protocol.replace(/:$/, "");
+	const host = forwardedHost || req.headers.get("host")?.trim() || url.host;
+	return `${proto}://${host}/api/auth/google/callback`;
 }
 
 export function buildGoogleAuthUrl(state: string, redirectUri: string): string {
@@ -102,6 +115,9 @@ export async function fetchGoogleUserProfile(
 	const profile = (await response.json()) as GoogleUserProfile;
 	if (!profile.email) {
 		throw new Error("Google user profile did not return an email address");
+	}
+	if (profile.email_verified === false) {
+		throw new Error("Google account email is not verified");
 	}
 
 	return profile;
@@ -234,7 +250,7 @@ export async function upsertGoogleUser(profile: GoogleUserProfile) {
 			name: profile.name ?? null,
 			avatar: profile.picture ?? null,
 			google_id: profile.sub ?? null,
-			...(assignedRole === "admin" ? { role: "admin" } : {}),
+			role: assignedRole,
 		},
 		create: {
 			email: normalizedEmail,

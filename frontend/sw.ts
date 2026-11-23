@@ -44,7 +44,12 @@ sw.addEventListener("fetch", (event: FetchEvent) => {
 	const url = new URL(request.url);
 	const isNavigation = request.mode === "navigate";
 
-	if (url.origin === sw.location.origin && url.pathname.startsWith("/api/")) {
+	if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+	if (
+		url.origin === sw.location.origin &&
+		(url.pathname.startsWith("/api/") || url.pathname === "/health")
+	) {
 		event.respondWith(fetch(request));
 		return;
 	}
@@ -66,15 +71,24 @@ sw.addEventListener("fetch", (event: FetchEvent) => {
 		return;
 	}
 
+	if (url.origin !== sw.location.origin) return;
+
 	event.respondWith(
 		caches.match(request).then((cachedResponse) => {
 			const fetchPromise = fetch(request)
 				.then((networkResponse) => {
-					if (networkResponse?.ok) {
+					const contentType = networkResponse.headers.get("content-type") ?? "";
+					const isHtmlFallback =
+						contentType.includes("text/html") &&
+						/\.(js|css|png|jpg|jpeg|webp|svg|ico|woff2?|ttf|json)$/i.test(
+							url.pathname,
+						);
+					if (networkResponse?.ok && !isHtmlFallback) {
 						const responseClone = networkResponse.clone();
-						caches.open(CACHE_NAME).then((cache) => {
-							cache.put(request, responseClone);
-						});
+						caches
+							.open(CACHE_NAME)
+							.then((cache) => cache.put(request, responseClone))
+							.catch(() => {});
 					}
 					return networkResponse;
 				})
@@ -88,7 +102,11 @@ sw.addEventListener("fetch", (event: FetchEvent) => {
 					);
 				});
 
-			return cachedResponse || fetchPromise;
+			if (cachedResponse) {
+				event.waitUntil(fetchPromise);
+				return cachedResponse;
+			}
+			return fetchPromise;
 		}),
 	);
 });

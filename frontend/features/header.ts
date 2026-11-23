@@ -268,7 +268,8 @@ export function initHeader(container: HTMLElement): () => void {
 
 		let avatarEl: HTMLElement;
 		if (user.avatar) {
-			const img = html`<img src="${user.avatar}" alt="" referrerpolicy="no-referrer" width="26" height="26" class="size-6.5 shrink-0 block rounded-full object-cover ring-1 ring-white/15" />` as HTMLImageElement;
+			const img =
+				html`<img src="${user.avatar}" alt="" referrerpolicy="no-referrer" width="26" height="26" class="size-6.5 shrink-0 block rounded-full object-cover ring-1 ring-white/15" />` as HTMLImageElement;
 			img.onerror = () => img.replaceWith(fallbackAvatar());
 			avatarEl = img;
 		} else {

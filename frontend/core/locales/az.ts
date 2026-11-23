@@ -267,8 +267,7 @@ export default {
 	loginBenefitAll:
 		"50 elanlıq önizləmədən kənar bütün elanlar və fərdi sıralama",
 	loginBenefitAlerts: "Yeni ucuz elanlar düşəndə ani Telegram bildirişləri",
-	loginWhitelistNote:
-		"Şəxsi giriş · Yalnız ağ siyahıda olan Google hesabları",
+	loginWhitelistNote: "Şəxsi giriş · Yalnız ağ siyahıda olan Google hesabları",
 	continuePreview: "Önizləməyə davam et",
 	previewBannerBadge: "İctimai önizləmə",
 	previewBannerText:
