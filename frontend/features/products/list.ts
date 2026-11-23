@@ -47,12 +47,14 @@ export function renderList(
 
 			if (newItems.length > 0) {
 				let newCount = 0;
-				for (const property of newItems) {
+				for (let i = 0; i < newItems.length; i++) {
+					const property = newItems[i];
 					const el = Product({
 						property,
 						bookmarked: state.bookmarks.has(property.source_url),
 						view: state.currentView as "grid" | "row",
 						callbacks,
+						eager: realCount + i < 4,
 					});
 
 					el.style.animationDelay = `${Math.min(newCount, 15) * 22}ms`;

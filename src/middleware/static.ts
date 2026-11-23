@@ -1,9 +1,10 @@
 import { resolve, sep } from "node:path";
-import { brotliCompressSync } from "node:zlib";
+import { brotliCompressSync, constants } from "node:zlib";
 import { CSP, IS_DEV } from "@/config.js";
 
 const brAssets = new Map<string, { data: Buffer; contentType: string }>();
 let cachedVersionedHtml: string | null = null;
+let cachedVersionedHtmlBr: Buffer | null = null;
 let assetVersion = "dev";
 
 export async function initStatic(publicDir: string): Promise<void> {
@@ -55,6 +56,16 @@ async function getVersionedHtml(publicDir: string): Promise<string> {
 		.replace('href="/main.js"', `href="/main.js?v=${version}"`);
 	if (!IS_DEV) cachedVersionedHtml = html;
 	return html;
+}
+
+async function getVersionedHtmlBr(publicDir: string): Promise<Buffer> {
+	if (!IS_DEV && cachedVersionedHtmlBr !== null) return cachedVersionedHtmlBr;
+	const html = await getVersionedHtml(publicDir);
+	const compressed = brotliCompressSync(Buffer.from(html), {
+		params: { [constants.BROTLI_PARAM_QUALITY]: 4 },
+	});
+	if (!IS_DEV) cachedVersionedHtmlBr = compressed;
+	return compressed;
 }
 
 const IMMUTABLE_EXTS = new Set([
@@ -166,6 +177,18 @@ export async function serveStatic(
 		}
 
 		return new Response(file, { headers });
+	}
+
+	if (acceptsBr) {
+		return new Response(new Uint8Array(await getVersionedHtmlBr(publicDir)), {
+			headers: {
+				"Content-Type": "text/html; charset=utf-8",
+				"Content-Encoding": "br",
+				Vary: "Accept-Encoding",
+				"Cache-Control": CACHE_REVALIDATE,
+				"Content-Security-Policy": CSP,
+			},
+		});
 	}
 
 	return new Response(await getVersionedHtml(publicDir), {
