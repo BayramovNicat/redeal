@@ -69,12 +69,14 @@ export function renderList(
 	const newWrap = html`<div class="${viewClass}"></div>`;
 
 	let newCount = 0;
-	for (const property of list) {
+	for (let i = 0; i < list.length; i++) {
+		const property = list[i];
 		const el = Product({
 			property,
 			bookmarked: state.bookmarks.has(property.source_url),
 			view: state.currentView as "grid" | "row",
 			callbacks,
+			eager: i < 4,
 		});
 
 		if (state.renderedSet.has(property.source_url)) {

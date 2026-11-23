@@ -79,6 +79,8 @@ function enqueue(img: HTMLImageElement): void {
 export type ImageProps = {
 	/** Source URL of the image. */
 	src: string;
+	/** Load immediately with high fetch priority (for above-the-fold LCP images). */
+	eager?: boolean;
 } & Partial<Omit<HTMLImageElement, "src">>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -94,13 +96,13 @@ export type ImageProps = {
  */
 export function Image({
 	src,
+	eager = false,
 	className = "",
 	...props
 }: ImageProps): HTMLImageElement {
 	const img = ce<HTMLImageElement>(
 		html`<img
 			alt=""
-			loading="lazy"
 			decoding="async"
 			referrerpolicy="no-referrer"
 			class="${cn("opacity-0 transition-[opacity,transform,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]", className)}"
@@ -148,8 +150,12 @@ export function Image({
 	img.addEventListener("load", handleLoad, { once: true });
 	img.addEventListener("error", handleError, { once: true });
 
-	// Register with observer
-	observer.observe(img);
+	if (eager) {
+		img.fetchPriority = "high";
+		enqueue(img);
+	} else {
+		observer.observe(img);
+	}
 
 	return img;
 }

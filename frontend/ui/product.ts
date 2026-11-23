@@ -21,6 +21,7 @@ interface ProductProps {
 	bookmarked: boolean;
 	view: "grid" | "row";
 	callbacks: CardCallbacks;
+	eager?: boolean;
 }
 
 function fmtDiscount(pct: number): string {
@@ -39,6 +40,7 @@ export function Product({
 	bookmarked,
 	view,
 	callbacks,
+	eager = false,
 }: ProductProps): HTMLElement {
 	const tier = ts(property.tier);
 	const floorStr = fmtFloor(property.floor, property.total_floors);
@@ -187,6 +189,7 @@ export function Product({
 					thumbUrl
 						? Image({
 								src: toThumbUrl(thumbUrl),
+								eager,
 								className: "w-full h-full object-cover thumb-zoom",
 							})
 						: html`<div
@@ -415,6 +418,7 @@ export function Product({
 					rowThumbUrl
 						? Image({
 								src: toThumbUrl(rowThumbUrl),
+								eager,
 								className: "w-full h-full object-cover thumb-zoom",
 							})
 						: html`<div
