@@ -2,6 +2,7 @@ import { bus, EVENTS } from "@/core/events";
 import { t } from "@/core/i18n";
 import { state as globalState } from "@/core/state";
 import { fmt, frag, hide, makeEventManager, show } from "@/core/utils";
+import { getPreloadedTrendData } from "@/features/search/preload";
 import { fetchTrendData } from "./api";
 import { dfmt, renderTrendChart } from "./chart";
 import type { TrendState, TrendUI } from "./types";
@@ -29,15 +30,10 @@ export function initTrend(container: HTMLElement): () => void {
 	globalState.refs.trendPanel = layout;
 	container.appendChild(layout);
 
-	async function updateTrend(location: string): Promise<void> {
-		if (!location || location === "__all__") {
-			hide(ui.panel);
-			return;
-		}
-		ui.locEl.textContent = location;
-		show(ui.panel);
-
-		const data = await fetchTrendData(location, state);
+	function renderTrend(
+		location: string,
+		data: import("@/core/types").TrendPoint[] | null,
+	): void {
 		if (!data) {
 			hide(ui.panel);
 			return;
@@ -85,6 +81,33 @@ export function initTrend(container: HTMLElement): () => void {
 		if (state.currentSvg) state.currentSvg.remove();
 		state.currentSvg = renderTrendChart(ui, data, up, dn);
 		if (state.currentSvg) ui.chartEl.insertBefore(state.currentSvg, ui.tipEl);
+	}
+
+	async function updateTrend(location: string): Promise<void> {
+		if (!location || location === "__all__") {
+			hide(ui.panel);
+			return;
+		}
+
+		const preloaded = getPreloadedTrendData(location);
+		if (preloaded !== undefined) {
+			if (preloaded) state.cache[location] = { data: preloaded, at: Date.now() };
+			renderTrend(location, preloaded);
+			return;
+		}
+
+		const data = await fetchTrendData(location, state);
+		renderTrend(location, data);
+	}
+
+	// Render preloaded trend synchronously before initial paint if URL has a single location
+	const initialLoc = new URLSearchParams(window.location.search).get("location");
+	if (initialLoc && initialLoc !== "__all__" && !initialLoc.includes(",")) {
+		const preloaded = getPreloadedTrendData(initialLoc);
+		if (preloaded) {
+			state.cache[initialLoc] = { data: preloaded, at: Date.now() };
+			renderTrend(initialLoc, preloaded);
+		}
 	}
 
 	const offLoc = bus.on(EVENTS.LOCATION_CHANGED, (loc) => {

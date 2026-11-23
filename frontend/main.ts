@@ -29,8 +29,8 @@ if (window.location.pathname === "/login") {
 	const { initLogin } = await import("@/features/login");
 	cleanups.push(initLogin(loginArea));
 } else {
-	preloadInitialSearch();
-	await fetchAuthUser();
+	const preloadPromise = preloadInitialSearch();
+	await Promise.all([fetchAuthUser(), preloadPromise]);
 
 	const headerArea = html`<header></header>`;
 	const searchArea = html`<section></section>`;
