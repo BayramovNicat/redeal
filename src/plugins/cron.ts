@@ -1,6 +1,29 @@
 import { runAlerts } from "@/modules/alerts/alerts.service.js";
 import { scrapeRunsService } from "@/modules/scrape/scrape-runs.service.js";
 
+const JITTER_MIN_MS = 2 * 60_000;
+const JITTER_MAX_MS = 17 * 60_000;
+
+export function getNextHourlyDelayMs(now = new Date()): {
+	next: Date;
+	delayMs: number;
+} {
+	const nextHour = new Date(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate(),
+		now.getHours() + 1,
+		0,
+		0,
+		0,
+	);
+	const jitterMs =
+		JITTER_MIN_MS +
+		Math.floor(Math.random() * (JITTER_MAX_MS - JITTER_MIN_MS + 1));
+	const next = new Date(nextHour.getTime() + jitterMs);
+	return { next, delayMs: next.getTime() - now.getTime() };
+}
+
 export function startCron(): void {
 	async function runCronScrape() {
 		console.log("[Cron] Hourly scrape started", new Date().toISOString());
@@ -21,26 +44,16 @@ export function startCron(): void {
 	}
 
 	function scheduleNext() {
-		const now = new Date();
-		const next = new Date(
-			now.getFullYear(),
-			now.getMonth(),
-			now.getDate(),
-			now.getHours() + 1,
-			0,
-			0,
-			0,
-		);
-		const delay = next.getTime() - now.getTime();
+		const { next, delayMs } = getNextHourlyDelayMs();
 
 		console.log(
-			`[Cron] Next hourly scrape scheduled in ${Math.round(delay / 60000)} min (at ${next.toISOString()})`,
+			`[Cron] Next hourly scrape scheduled in ${Math.round(delayMs / 60000)} min (at ${next.toISOString()})`,
 		);
 
 		setTimeout(async () => {
 			await runCronScrape();
 			scheduleNext();
-		}, delay);
+		}, delayMs);
 	}
 
 	scheduleNext();
